@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
             $table->string('name');
-            $table->string('brand');
             $table->string('serial_number')->unique();
-            $table->dateTime('expiry_date');
+            $table->string('asset_code')->unique();
+            $table->dateTime('expiry_date')->nullable();
             $table->string('status');
             $table->timestamps();
         });

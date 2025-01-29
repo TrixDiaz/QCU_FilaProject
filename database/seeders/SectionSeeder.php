@@ -12,6 +12,6 @@ class SectionSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        \App\Models\Section::factory(10)->create();
     }
 }

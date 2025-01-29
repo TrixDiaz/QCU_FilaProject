@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Building;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Classroom>
@@ -17,7 +18,13 @@ class ClassroomFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name'=> fake()->text(50),
+            'slug'=> fake()->slug(),
+            'is_active'=> fake()->boolean(),    
+            'deleted_at'=> fake()->dateTime(),
+            'created_at'=> fake()->dateTime(),
+            'updated_at'=> fake()->dateTime(),
+            'building_id'=> Building::factory(),
         ];
     }
 }

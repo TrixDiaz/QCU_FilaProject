@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Filament\Actions\CreateAction;
 
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -22,13 +23,14 @@ class AppServiceProvider extends ServiceProvider
     {
         \Filament\Resources\Pages\CreateRecord::disableCreateAnother();
         \Filament\Actions\CreateAction::configureUsing(fn(CreateAction $action) => $action->createAnother(false));
+
+        \Filament\Pages\Page::$reportValidationErrorUsing = function (\Illuminate\Validation\ValidationException $exception) {
+            \Filament\Notifications\Notification::make()
+                ->title($exception->getMessage())
+                ->danger()
+                ->send();
+        };
     }
 
-    protected function onValidationError(\Illuminate\Validation\ValidationException $exception): void
-    {
-        \Filament\Notifications\Notification::make()
-            ->title($exception->getMessage())
-            ->danger()
-            ->send();
-    }
+
 }

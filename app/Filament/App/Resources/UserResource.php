@@ -33,15 +33,30 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
                             ->email()
-                            ->unique(table: User::class)
+                            ->unique(ignoreRecord: true)
                             ->validationMessages([
                                 'unique' => 'Email has already been registered.',
                             ])
                             ->required(),
-                        Forms\Components\DateTimePicker::make('email_verified_at'),
+                        Forms\Components\Placeholder::make('email_verified_at')
+                            ->label('Email Verified')
+                            ->content(fn(User $record) => $record->email_verified_at === null ? 'Pending' : $record->email_verified_at->toFormattedDateString())
+                            ->visibleOn('view'),
                         Forms\Components\TextInput::make('password')
                             ->password()
-                            ->required(),
+                            ->required()
+                            ->confirmed()
+                            ->visibleOn('create'),
+                        Forms\Components\TextInput::make('password_confirmation')
+                            ->password()
+                            ->required()
+                            ->visibleOn('create'),
+                        Forms\Components\Toggle::make('email_verified_at')
+                            ->label('Verified Email')
+                            ->onIcon('heroicon-m-bolt')
+                            ->offIcon('heroicon-m-user')
+                            ->visibleOn('create')
+                            ->dehydrateStateUsing(fn($state) => $state ? now() : null)
                     ])->columns(2),
             ]);
     }
@@ -86,15 +101,22 @@ class UserResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('')
-                    ->tooltip('View'),
-                Tables\Actions\EditAction::make()
-                    ->label('')
-                    ->tooltip('Edit'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('')
-                    ->tooltip('Delete'),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->tooltip('View'),
+                    Tables\Actions\EditAction::make()
+                        ->tooltip('Edit')
+                        ->color('warning'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Archive')
+                        ->tooltip('Archive')
+                        ->modalHeading('Archive User'),
+                    Tables\Actions\ForceDeleteAction::make(),
+                    Tables\Actions\RestoreAction::make()
+                        ->color('secondary'),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->tooltip('Actions')
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

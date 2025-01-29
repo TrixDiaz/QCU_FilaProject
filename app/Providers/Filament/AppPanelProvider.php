@@ -58,6 +58,9 @@ class AppPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->plugins([
+                \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+            ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s');
     }

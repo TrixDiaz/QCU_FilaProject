@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('assets', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        Schema::create('buildings', function (Blueprint $table) {
+            $table->id();
             $table->string('name');
-            $table->string('brand');
-            $table->string('serial_number')->unique();
-            $table->dateTime('expiry_date');
-            $table->string('status');
+            $table->string('slug')->unique();
+            $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('assets');
+        Schema::dropIfExists('buildings');
     }
 };

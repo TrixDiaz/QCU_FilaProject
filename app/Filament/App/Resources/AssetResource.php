@@ -13,11 +13,10 @@ use Filament\Tables\Table;
 class AssetResource extends Resource
 {
     protected static ?string $model = Asset::class;
-
     protected static ?string $navigationGroup = 'Assets';
-
     protected static ?string $navigationLabel = 'Asset';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
     public static function form(Form $form): Form
     {

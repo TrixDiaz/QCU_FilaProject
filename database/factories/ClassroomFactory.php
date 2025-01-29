@@ -20,10 +20,7 @@ class ClassroomFactory extends Factory
         return [
             'name'=> fake()->text(50),
             'slug'=> fake()->slug(),
-            'is_active'=> fake()->boolean(),    
-            'deleted_at'=> fake()->dateTime(),
-            'created_at'=> fake()->dateTime(),
-            'updated_at'=> fake()->dateTime(),
+            'is_active'=> fake()->boolean(),
             'building_id'=> Building::factory(),
         ];
     }

@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -27,6 +28,8 @@ class AppPanelProvider extends PanelProvider
             ->id('app')
             ->path('app')
             ->login()
+            ->profile()
+            ->emailVerification()
             ->passwordReset()
             ->colors([
                 'primary' => Color::Violet,
@@ -35,6 +38,23 @@ class AppPanelProvider extends PanelProvider
                 'danger' => Color::Red,
                 'info' => Color::Blue
             ])
+            ->userMenuItems([
+                'Profile' => MenuItem::make()->url(fn (): string => \Filament\Pages\Auth\EditProfile::getUrl())
+            ])
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('dashboard')
+                    ->label(fn(): string => __('filament-panels::pages/dashboard.title'))
+                    ->url(fn(): string => \Filament\Pages\Dashboard::getUrl())
+                    ->isActiveWhen(fn() => request()->routeIs('filament.app.pages.dashboard')),
+            ])
+            ->navigationGroups([
+                'Assets',
+                'Location',
+                'System Users',
+            ])
+            ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
@@ -60,8 +80,6 @@ class AppPanelProvider extends PanelProvider
             ])
             ->plugins([
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
-            ])
-            ->databaseNotifications()
-            ->databaseNotificationsPolling('30s');
+            ]);
     }
 }

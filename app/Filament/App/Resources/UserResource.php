@@ -7,6 +7,7 @@ use App\Filament\App\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,11 +17,16 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-
     protected static ?string $navigationGroup = 'System Users';
     protected static ?string $navigationLabel = 'User';
     protected static ?string $navigationIcon = 'heroicon-o-finger-print';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    protected static ?string $navigationBadgeTooltip = 'The number of users';
     public static function form(Form $form): Form
     {
         return $form
@@ -71,6 +77,7 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
+                    ->icon('heroicon-m-envelope')
                     ->tooltip('Click to Copy')
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -122,7 +129,7 @@ class UserResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])->poll('30s');
     }
 
     public static function getRelations(): array

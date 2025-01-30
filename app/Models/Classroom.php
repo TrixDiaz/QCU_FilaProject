@@ -16,13 +16,18 @@ class Classroom extends Model
     use SoftDeletes;
     protected $guarded = [];
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
     public function building(): BelongsTo
     {
-        return $this->belongsTo(Building::class)->where('is_active', true);
+        return $this->belongsTo(Building::class);
     }
 
     public function sections(): HasMany
     {
-        return $this->HasMany(Section::class)->where('is_active', true);
+        return $this->HasMany(Section::class);
     }
 }

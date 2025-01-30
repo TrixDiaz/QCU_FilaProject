@@ -22,6 +22,6 @@ class Building extends Model
 
     public function classrooms(): HasMany
     {
-        return $this->HasMany(Classroom::class)->where('is_active', true);
+        return $this->HasMany(Classroom::class);
     }
 }

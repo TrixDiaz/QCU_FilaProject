@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Classroom;   
+use App\Models\Classroom;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Section>
@@ -18,13 +18,10 @@ class SectionFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'=> fake()->text(50),
+            'classroom_id'=> Classroom::factory(),
+            'name'=> fake()->text(20),
             'slug'=> fake()->slug(),
-            'is_active'=> fake()->boolean(),    
-            'deleted_at'=> fake()->dateTime(),
-            'created_at'=> fake()->dateTime(),
-            'updated_at'=> fake()->dateTime(),
-            'classroom_id'=> Classroom::factory(),  
+            'is_active'=> fake()->boolean(),
         ];
     }
 }

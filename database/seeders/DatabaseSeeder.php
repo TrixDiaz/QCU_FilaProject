@@ -7,6 +7,7 @@ namespace Database\Seeders;
 
 
 use App\Models\Classroom;
+use App\Models\Section;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,6 +20,6 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(BuildingSeeder::class);
         $this->call(ClassroomSeeder::class);
-
+        $this->call(SectionSeeder::class);
     }
 }

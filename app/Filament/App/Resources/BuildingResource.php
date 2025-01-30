@@ -180,10 +180,10 @@ class BuildingResource extends Resource
                 Tables\Columns\TextColumn::make('slug')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\IconColumn::make('is_active')
+                Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Publish')
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->onIcon('heroicon-m-bolt')
+                    ->offIcon('heroicon-m-bolt-slash'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

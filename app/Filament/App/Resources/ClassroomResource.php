@@ -58,7 +58,23 @@ class ClassroomResource extends Resource
                         Forms\Components\Section::make()
                             ->schema([
                                 Forms\Components\Select::make('building_id')
-                                    ->relationship('building', 'name')
+                                    ->relationship(
+                                        name: 'building',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
+                                            // Get the current building_id if we're in edit mode
+                                            $currentBuildingId = $get ? $get('building_id') : null;
+
+                                            return $query->where(function ($query) use ($currentBuildingId) {
+                                                $query->where('is_active', true);
+
+                                                // Only include the current building if it exists
+                                                if ($currentBuildingId) {
+                                                    $query->orWhere('id', $currentBuildingId);
+                                                }
+                                            });
+                                        }
+                                    )
                                     ->required()
                                     ->searchable()
                                     ->preload()
@@ -227,18 +243,14 @@ class ClassroomResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('building.name')
-                    ->label('Building Name')
-                    ->sortable(),
+                    ->label('Building Name'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable('name')
                     ->description(fn(\App\Models\Classroom $record): string => $record->slug),
-                Tables\Columns\IconColumn::make('is_active')
+                Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Publish')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->onIcon('heroicon-m-bolt')
+                    ->offIcon('heroicon-m-bolt-slash'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -18,10 +18,10 @@ class ClassroomFactory extends Factory
     public function definition(): array
     {
         return [
+            'building_id' => \App\Models\Building::factory(),
             'name'=> fake()->text(50),
             'slug'=> fake()->slug(),
             'is_active'=> fake()->boolean(),
-            'building_id'=> Building::factory(),
         ];
     }
 }

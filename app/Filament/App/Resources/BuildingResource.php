@@ -24,7 +24,7 @@ class BuildingResource extends Resource
         return static::getModel()::where('is_active', true)->count();
     }
 
-    protected static ?string $navigationBadgeTooltip = 'The number of Active Building';
+    protected static ?string $navigationBadgeTooltip = 'The number of active building';
 
     public static function form(Form $form): Form
     {
@@ -53,7 +53,8 @@ class BuildingResource extends Resource
                                 ->maxLength(255)
                                 ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
                         ])->columns(2),
-                ])->columnSpan(['lg' => fn (string $operation) => $operation === 'create' ? 3 : 2]),
+                ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
+
                 Forms\Components\Grid::make(1)->schema([
                     Forms\Components\Section::make()->schema([
                         Forms\Components\Toggle::make('is_active')
@@ -165,7 +166,7 @@ class BuildingResource extends Resource
                                 }
                             }),
                     ])->hiddenOn('create')
-                ])->columnSpan(['lg' => fn (string $operation) => $operation === 'create' ? 0 : 1]),
+                ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 0 : 1]),
             ])->columns(3);
     }
 
@@ -202,7 +203,7 @@ class BuildingResource extends Resource
                         true => 'Active',
                         false => 'Inactive'
                     ])
-                ->native(false)
+                    ->native(false)
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -214,7 +215,7 @@ class BuildingResource extends Resource
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive User'),
+                        ->modalHeading('Archive Building'),
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\RestoreAction::make()
                         ->color('secondary'),

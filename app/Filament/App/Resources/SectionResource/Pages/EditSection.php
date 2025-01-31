@@ -30,7 +30,7 @@ class EditSection extends EditRecord
 
         $notification = \Filament\Notifications\Notification::make()
             ->info()
-            ->icon('heroicon-o-finger-print')
+            ->icon('heroicon-o-rectangle-group')
             ->title('Section Resource Modified')
             ->body("Section {$record->name} Modified by {$auth->name}!")
             ->actions([\Filament\Notifications\Actions\Action::make('View')->url(SectionResource::getUrl('edit', ['record' => $record]))])

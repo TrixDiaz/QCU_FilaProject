@@ -30,7 +30,7 @@ class EditClassroom extends EditRecord
 
         $notification = \Filament\Notifications\Notification::make()
             ->info()
-            ->icon('heroicon-o-finger-print')
+            ->icon('heroicon-o-building-library')
             ->title('Classroom Resource Modified')
             ->body("Classroom {$record->name} Modified by {$auth->name}!")
             ->actions([\Filament\Notifications\Actions\Action::make('View')->url(ClassroomResource::getUrl('edit', ['record' => $record]))])

@@ -77,7 +77,7 @@ class ClassroomResource extends Resource
                             ->label('Created at')
                             ->hiddenOn('create')
                             ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Building::find($record->id);
+                                $category = \App\Models\Classroom::find($record->id);
                                 $now = \Carbon\Carbon::now();
 
                                 $diff = $category->created_at->diff($now);
@@ -127,7 +127,7 @@ class ClassroomResource extends Resource
                         Forms\Components\Placeholder::make('updated_at')
                             ->label('Last modified at')
                             ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Building::find($record->id);
+                                $category = \App\Models\Classroom::find($record->id);
                                 $now = \Carbon\Carbon::now();
 
                                 $diff = $category->updated_at->diff($now);

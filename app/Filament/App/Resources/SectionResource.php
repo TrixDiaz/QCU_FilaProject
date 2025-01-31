@@ -17,7 +17,7 @@ class SectionResource extends Resource
 {
     protected static ?string $model = Section::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 
     public static function getNavigationBadge(): ?string
     {
@@ -77,7 +77,7 @@ class SectionResource extends Resource
                             ->label('Created at')
                             ->hiddenOn('create')
                             ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Building::find($record->id);
+                                $category = \App\Models\Section::find($record->id);
                                 $now = \Carbon\Carbon::now();
 
                                 $diff = $category->created_at->diff($now);
@@ -127,7 +127,7 @@ class SectionResource extends Resource
                         Forms\Components\Placeholder::make('updated_at')
                             ->label('Last modified at')
                             ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Building::find($record->id);
+                                $category = \App\Models\Section::find($record->id);
                                 $now = \Carbon\Carbon::now();
 
                                 $diff = $category->updated_at->diff($now);

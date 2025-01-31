@@ -32,27 +32,7 @@ class BuildingResource extends Resource
             ->schema([
                 Forms\Components\Section::make()->schema([
                     Forms\Components\Grid::make(2)
-                        ->schema([
-                            Forms\Components\TextInput::make('name')
-                                ->required()
-                                ->maxLength(255)
-                                ->live(onBlur: true)
-                                ->unique(\App\Models\Building::class, 'name', ignoreRecord: true)
-                                ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
-                                    /*if ($operation !== 'create') {
-                                        return;
-                                    }*/
-
-                                    $set('slug', \Illuminate\Support\Str::slug($state));
-                                }),
-
-                            Forms\Components\TextInput::make('slug')
-                                ->disabled()
-                                ->dehydrated()
-                                ->required()
-                                ->maxLength(255)
-                                ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
-                        ])->columns(2),
+                        ->schema(\App\Services\DynamicForm::schema())->columns(2),
                 ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
 
                 Forms\Components\Grid::make(1)->schema([

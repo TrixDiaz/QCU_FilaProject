@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Filament\App\Resources\CategoryResource;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,9 +18,11 @@ class AssetFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->text(50),
-            'brand' => fake()->firstName(),
+            'category_id' => \App\Models\Category::factory(),
+            'brand_id' => \App\Models\Brands::factory(),
+            'name' => fake()->text(20),
             'serial_number' => fake()->uuid(),
+            'asset_code' => fake()->text(6),
             'expiry_date' => now(),
             'status' => 'active'
         ];

@@ -12,6 +12,11 @@ class Section extends Model
     /** @use HasFactory<\Database\Factories\SectionFactory> */
     use HasFactory;
     use SoftDeletes;
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
     protected $guarded = [];
 
     public function classroom(): BelongsTo

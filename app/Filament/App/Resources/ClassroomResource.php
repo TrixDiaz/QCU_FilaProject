@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\ClassroomResource\Pages;
 use App\Filament\App\Resources\ClassroomResource\RelationManagers;
 use App\Models\Classroom;
+use App\Services\DynamicForm;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -34,27 +35,7 @@ class ClassroomResource extends Resource
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\Section::make()
-                            ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->live(onBlur: true)
-                                    ->unique(\App\Models\Classroom::class, 'name', ignoreRecord: true)
-                                    ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
-                                        /*if ($operation !== 'create') {
-                                            return;
-                                        }*/
-
-                                        $set('slug', \Illuminate\Support\Str::slug($state));
-                                    }),
-
-                                Forms\Components\TextInput::make('slug')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->unique(\App\Models\Classroom::class, 'slug', ignoreRecord: true),
-                            ])->columns(2),
+                            ->schema(\App\Services\DynamicForm::schema())->columns(2),
                         Forms\Components\Section::make()
                             ->schema([
                                 Forms\Components\Select::make('building_id')
@@ -79,48 +60,8 @@ class ClassroomResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->native(false)
-                                    ->editOptionForm([
-                                        Forms\Components\TextInput::make('name')
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->live(onBlur: true)
-                                            ->unique(\App\Models\Building::class, 'name', ignoreRecord: true)
-                                            ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
-                                                /*if ($operation !== 'create') {
-                                                    return;
-                                                }*/
-
-                                                $set('slug', \Illuminate\Support\Str::slug($state));
-                                            }),
-
-                                        Forms\Components\TextInput::make('slug')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
-                                    ])
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('name')
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->live(onBlur: true)
-                                            ->unique(\App\Models\Building::class, 'name', ignoreRecord: true)
-                                            ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
-                                                /*if ($operation !== 'create') {
-                                                    return;
-                                                }*/
-
-                                                $set('slug', \Illuminate\Support\Str::slug($state));
-                                            }),
-
-                                        Forms\Components\TextInput::make('slug')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
-                                    ]),
+                                    ->editOptionForm(\App\Services\DynamicForm::schema())
+                                    ->createOptionForm(\App\Services\DynamicForm::schema()),
                             ]),
                     ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
                 Forms\Components\Grid::make(1)->schema([

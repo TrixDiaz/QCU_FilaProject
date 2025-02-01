@@ -11,6 +11,11 @@ class Asset extends Model
 {
     use HasFactory;
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
     protected $guarded = [];
 
     protected $casts = [
@@ -23,10 +28,6 @@ class Asset extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Category::class);
-    }
-    public function tag(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\Tag::class);
     }
 
 }

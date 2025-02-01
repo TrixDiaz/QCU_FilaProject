@@ -99,30 +99,30 @@ class AssetResource extends Resource
                             ->native(false)
                             ->createOptionForm(\App\Services\DynamicForm::schema())
                             ->editOptionForm(\App\Services\DynamicForm::schema()),
-                        Forms\Components\Select::make('tag_id')
-                            ->relationship(
-                                name: 'tag',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    // Get the current tag_id if we're in edit mode
-                                    $currentTagId = $get ? $get('tag_id') : null;
-
-                                    return $query->where(function ($query) use ($currentTagId) {
-                                        $query->where('is_active', true);
-
-                                        // Only include the current category if it exists
-                                        if ($currentTagId) {
-                                            $query->orWhere('id', $currentTagId);
-                                        }
-                                    });
-                                }
-                            )
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->native(false)
-                            ->createOptionForm(\App\Services\DynamicForm::schema())
-                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+//                        Forms\Components\Select::make('tag_id')
+//                            ->relationship(
+//                                name: 'tag',
+//                                titleAttribute: 'name',
+//                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
+//                                    // Get the current tag_id if we're in edit mode
+//                                    $currentTagId = $get ? $get('tag_id') : null;
+//
+//                                    return $query->where(function ($query) use ($currentTagId) {
+//                                        $query->where('is_active', true);
+//
+//                                        // Only include the current category if it exists
+//                                        if ($currentTagId) {
+//                                            $query->orWhere('id', $currentTagId);
+//                                        }
+//                                    });
+//                                }
+//                            )
+//                            ->required()
+//                            ->searchable()
+//                            ->preload()
+//                            ->native(false)
+//                            ->createOptionForm(\App\Services\DynamicForm::schema())
+//                            ->editOptionForm(\App\Services\DynamicForm::schema()),
                         Forms\Components\Toggle::make('show_expiry_date')
                             ->label('Add Expiry Date')
                             ->reactive(),
@@ -137,13 +137,20 @@ class AssetResource extends Resource
                                 }*/
 
                                 $set('asset_code', \Illuminate\Support\Str::slug($state) . '-' . self::generateUniqueCode());
+                                $set('slug', \Illuminate\Support\Str::slug($state));
                             })
                             ->required(),
+                        Forms\Components\TextInput::make('slug')
+                            ->disabled()
+                            ->dehydrated()
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
                         Forms\Components\TextInput::make('asset_code')
                             ->required()
                             ->disabled()
                             ->dehydrated()
-                            ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
+                            ->unique(\App\Models\Building::class, 'asset_code', ignoreRecord: true),
 
                         Forms\Components\TextInput::make('serial_number')
                             ->required(),

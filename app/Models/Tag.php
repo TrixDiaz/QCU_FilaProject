@@ -15,8 +15,5 @@ class Tag extends Model
 
     protected $guarded = [];
 
-    public function asset(): HasMany
-    {
-        return $this->hasMany(\App\Models\Asset::class);
-    }
+
 }

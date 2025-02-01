@@ -21,7 +21,7 @@ class AssetResource extends Resource
 
     protected static ?string $navigationLabel = 'Asset';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
     public static function getNavigationBadge(): ?string
@@ -31,25 +31,133 @@ class AssetResource extends Resource
 
     protected static ?string $navigationBadgeTooltip = 'The number of active Asset';
 
+//    public function randomUniqueCode() {
+//        return substr(str_shuffle(str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)), 0, 10);
+//    }
+
+    public static function generateUniqueCode()
+    {
+        do {
+            $code = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(10)); // Generate a 10-character uppercase alphanumeric string
+        } while (\Illuminate\Support\Facades\DB::table('assets')->where('asset_code', $code)->exists()); // Ensure uniqueness
+
+        return $code;
+    }
+
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('category_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('brand_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('serial_number')
-                    ->required(),
-                Forms\Components\TextInput::make('asset_code')
-                    ->required(),
-                Forms\Components\DateTimePicker::make('expiry_date'),
-                Forms\Components\TextInput::make('status')
-                    ->required(),
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\Select::make('category_id')
+                            ->relationship(
+                                name: 'category',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
+                                    // Get the current category_id if we're in edit mode
+                                    $currentCategoryId = $get ? $get('category_id') : null;
+
+                                    return $query->where(function ($query) use ($currentCategoryId) {
+                                        $query->where('is_active', true);
+
+                                        // Only include the current category if it exists
+                                        if ($currentCategoryId) {
+                                            $query->orWhere('id', $currentCategoryId);
+                                        }
+                                    });
+                                }
+                            )
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->createOptionForm(\App\Services\DynamicForm::schema())
+                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                        Forms\Components\Select::make('brand_id')
+                            ->relationship(
+                                name: 'brand',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
+                                    // Get the current brand_id if we're in edit mode
+                                    $currentBrandId = $get ? $get('brand_id') : null;
+
+                                    return $query->where(function ($query) use ($currentBrandId) {
+                                        $query->where('is_active', true);
+
+                                        // Only include the current category if it exists
+                                        if ($currentBrandId) {
+                                            $query->orWhere('id', $currentBrandId);
+                                        }
+                                    });
+                                }
+                            )
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->createOptionForm(\App\Services\DynamicForm::schema())
+                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                        Forms\Components\Select::make('tag_id')
+                            ->relationship(
+                                name: 'tag',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
+                                    // Get the current tag_id if we're in edit mode
+                                    $currentTagId = $get ? $get('tag_id') : null;
+
+                                    return $query->where(function ($query) use ($currentTagId) {
+                                        $query->where('is_active', true);
+
+                                        // Only include the current category if it exists
+                                        if ($currentTagId) {
+                                            $query->orWhere('id', $currentTagId);
+                                        }
+                                    });
+                                }
+                            )
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->createOptionForm(\App\Services\DynamicForm::schema())
+                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                        Forms\Components\Toggle::make('show_expiry_date')
+                            ->label('Add Expiry Date')
+                            ->reactive(),
+                    ])->columns(2),
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
+                                /*if ($operation !== 'create') {
+                                    return;
+                                }*/
+
+                                $set('asset_code', \Illuminate\Support\Str::slug($state) . '-' . self::generateUniqueCode());
+                            })
+                            ->required(),
+                        Forms\Components\TextInput::make('asset_code')
+                            ->required()
+                            ->disabled()
+                            ->dehydrated()
+                            ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
+
+                        Forms\Components\TextInput::make('serial_number')
+                            ->required(),
+                        Forms\Components\DatePicker::make('expiry_date')
+                            ->native(false)
+                            ->visible(fn(Forms\Get $get) => $get('show_expiry_date')),
+
+                        Forms\Components\Select::make('status')
+                            ->options(\App\Enums\AssetStatus::class)
+                            ->native(false)
+                            ->extraAttributes(['style' => 'text-transform:uppercase'])
+                            ->visibleOn(['edit', 'view'])
+                            ->required(),
+                    ])->columns(2),
             ]);
     }
 
@@ -57,23 +165,26 @@ class AssetResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('category_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('brand_id')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('brand.name')
+                    ->label('Brand & Category')
+                    ->description(fn($record): string => $record->category?->name)
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->description(fn($record): string => $record->asset_code)
+                    ->searchable(['name', 'asset_code'])
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('serial_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('asset_code')
-                    ->searchable(),
+                    ->searchable()
+                    ->extraAttributes(['style' => 'text-transform:uppercase'])
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('expiry_date')
-                    ->dateTime()
-                    ->sortable(),
+                    ->dateTime('M d, Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                    ->badge()
+                    ->extraAttributes(['style' => 'text-transform:uppercase'])
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -87,13 +198,29 @@ class AssetResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->tooltip('View'),
+                    Tables\Actions\EditAction::make()
+                        ->tooltip('Edit')
+                        ->color('warning'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Archive')
+                        ->tooltip('Archive')
+                        ->modalHeading('Archive Building'),
+                    Tables\Actions\ForceDeleteAction::make(),
+                    Tables\Actions\RestoreAction::make()
+                        ->color('secondary'),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->tooltip('Actions')
             ])
+            ->headerActions([])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])->poll('30s');
     }
 
     public static function getRelations(): array

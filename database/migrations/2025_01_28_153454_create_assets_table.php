@@ -15,11 +15,12 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
+            $table->foreignId('tag_id')->constrained('tags')->onDelete('cascade');
             $table->string('name');
             $table->string('serial_number')->unique();
             $table->string('asset_code')->unique();
             $table->dateTime('expiry_date')->nullable();
-            $table->string('status');
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }

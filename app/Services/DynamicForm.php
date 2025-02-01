@@ -15,7 +15,7 @@ final class DynamicForm
                 ->required()
                 ->maxLength(255)
                 ->live(onBlur: true)
-                ->unique(\App\Models\Building::class, 'name', ignoreRecord: true)
+//                ->unique(\App\Models\Building::class, 'name', ignoreRecord: true)
                 ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
                     /*if ($operation !== 'create') {
                         return;

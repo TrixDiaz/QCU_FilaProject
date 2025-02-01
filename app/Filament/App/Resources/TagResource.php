@@ -2,9 +2,9 @@
 
 namespace App\Filament\App\Resources;
 
-use App\Filament\App\Resources\BrandsResource\Pages;
-use App\Filament\App\Resources\BrandsResource\RelationManagers;
-use App\Models\Brand;
+use App\Filament\App\Resources\TagResource\Pages;
+use App\Filament\App\Resources\TagResource\RelationManagers;
+use App\Models\Tag;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,21 +13,23 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class BrandsResource extends Resource
+class TagResource extends Resource
 {
-    protected static ?string $model = Brand::class;
+    protected static ?string $model = Tag::class;
 
     protected static ?string $navigationGroup = 'Assets';
-    protected static ?string $navigationLabel = 'Brand';
-    protected static ?int $navigationSort = 2;
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
+
+    protected static ?string $navigationLabel = 'Tag';
+
+    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationIcon = 'heroicon-o-swatch';
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_active', true)->count();
     }
 
-    protected static ?string $navigationBadgeTooltip = 'The number of active brand';
+    protected static ?string $navigationBadgeTooltip = 'The number of active tags';
 
     public static function form(Form $form): Form
     {
@@ -51,7 +53,7 @@ class BrandsResource extends Resource
                             ->label('Created at')
                             ->hiddenOn('create')
                             ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Brand::find($record->id);
+                                $category = \App\Models\Tag::find($record->id);
                                 $now = \Carbon\Carbon::now();
 
                                 $diff = $category->created_at->diff($now);
@@ -101,7 +103,7 @@ class BrandsResource extends Resource
                         Forms\Components\Placeholder::make('updated_at')
                             ->label('Last modified at')
                             ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Brand::find($record->id);
+                                $category = \App\Models\Tag::find($record->id);
                                 $now = \Carbon\Carbon::now();
 
                                 $diff = $category->updated_at->diff($now);
@@ -198,7 +200,7 @@ class BrandsResource extends Resource
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive Building'),
+                        ->modalHeading('Archive Tag'),
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\RestoreAction::make()
                         ->color('secondary'),
@@ -223,9 +225,9 @@ class BrandsResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListBrands::route('/'),
-            'create' => Pages\CreateBrands::route('/create'),
-            'edit' => Pages\EditBrands::route('/{record}/edit'),
+            'index' => Pages\ListTags::route('/'),
+            'create' => Pages\CreateTag::route('/create'),
+            'edit' => Pages\EditTag::route('/{record}/edit'),
         ];
     }
 }

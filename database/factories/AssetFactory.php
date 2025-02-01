@@ -19,7 +19,8 @@ class AssetFactory extends Factory
     {
         return [
             'category_id' => \App\Models\Category::factory(),
-            'brand_id' => \App\Models\Brands::factory(),
+            'brand_id' => \App\Models\Brand::factory(),
+            'tag_id' => \App\Models\Tag::factory(),
             'name' => fake()->text(20),
             'serial_number' => fake()->uuid(),
             'asset_code' => fake()->text(6),

@@ -31,9 +31,9 @@ class AssetResource extends Resource
 
     protected static ?string $navigationBadgeTooltip = 'The number of active Asset';
 
-//    public function randomUniqueCode() {
-//        return substr(str_shuffle(str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)), 0, 10);
-//    }
+    //    public function randomUniqueCode() {
+    //        return substr(str_shuffle(str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)), 0, 10);
+    //    }
 
     public static function generateUniqueCode()
     {
@@ -99,30 +99,32 @@ class AssetResource extends Resource
                             ->native(false)
                             ->createOptionForm(\App\Services\DynamicForm::schema())
                             ->editOptionForm(\App\Services\DynamicForm::schema()),
-//                        Forms\Components\Select::make('tag_id')
-//                            ->relationship(
-//                                name: 'tag',
-//                                titleAttribute: 'name',
-//                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-//                                    // Get the current tag_id if we're in edit mode
-//                                    $currentTagId = $get ? $get('tag_id') : null;
-//
-//                                    return $query->where(function ($query) use ($currentTagId) {
-//                                        $query->where('is_active', true);
-//
-//                                        // Only include the current category if it exists
-//                                        if ($currentTagId) {
-//                                            $query->orWhere('id', $currentTagId);
-//                                        }
-//                                    });
-//                                }
-//                            )
-//                            ->required()
-//                            ->searchable()
-//                            ->preload()
-//                            ->native(false)
-//                            ->createOptionForm(\App\Services\DynamicForm::schema())
-//                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                        Forms\Components\Select::make('asset_tag_id')
+                            ->relationship(
+                                name: 'assetTags',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
+                                    // Get the current tag_id if we're in edit mode
+                                    $currentTagIds = $get ? $get('asset_tag_id') : [];
+
+                                    // Ensure $currentTagIds is an array
+                                    if (!is_array($currentTagIds)) {
+                                        $currentTagIds = [];
+                                    }
+
+                                    return $query->where(function ($query) use ($currentTagIds) {
+                                        $query->where('tags.is_active', true)
+                                            ->orWhereIn('tags.id', $currentTagIds);
+                                    });
+                                }
+                            )
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->multiple()
+                            ->native(false)
+                            ->createOptionForm(\App\Services\DynamicForm::schema())
+                            ->editOptionForm(\App\Services\DynamicForm::schema()),
                         Forms\Components\Toggle::make('show_expiry_date')
                             ->label('Add Expiry Date')
                             ->reactive(),
@@ -145,12 +147,12 @@ class AssetResource extends Resource
                             ->dehydrated()
                             ->required()
                             ->maxLength(255)
-                            ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
+                            ->unique(\App\Models\Asset::class, 'slug', ignoreRecord: true),
                         Forms\Components\TextInput::make('asset_code')
                             ->required()
                             ->disabled()
                             ->dehydrated()
-                            ->unique(\App\Models\Building::class, 'asset_code', ignoreRecord: true),
+                            ->unique(\App\Models\Asset::class, 'asset_code', ignoreRecord: true),
 
                         Forms\Components\TextInput::make('serial_number')
                             ->required(),
@@ -184,6 +186,12 @@ class AssetResource extends Resource
                     ->searchable()
                     ->extraAttributes(['style' => 'text-transform:uppercase'])
                     ->toggleable(isToggledHiddenByDefault: false),
+                    Tables\Columns\TextColumn::make('assetTags.name')
+                    ->label('Tags')
+                    ->listWithLineBreaks()
+                    ->bulleted()
+                    ->limitList(1)
+                    ->expandableLimitedList(),
                 Tables\Columns\TextColumn::make('expiry_date')
                     ->dateTime('M d, Y')
                     ->sortable()
@@ -245,4 +253,5 @@ class AssetResource extends Resource
             'edit' => Pages\EditAsset::route('/{record}/edit'),
         ];
     }
+
 }

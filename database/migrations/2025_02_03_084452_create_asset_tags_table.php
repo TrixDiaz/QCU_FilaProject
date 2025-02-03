@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('terminal_assets_group', function (Blueprint $table) {
+        Schema::create('asset_tags', function (Blueprint $table) {
             $table->id();
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
+            $table->foreignId('asset_tag_id')->constrained('tags')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('terminal_assets');
+        Schema::dropIfExists('asset_tags');
     }
 };

@@ -149,6 +149,15 @@ final class DeployComputer
                             ->preload()
                             ->required(),
                     ])->columns(2),
+                \Filament\Forms\Components\Wizard\Step::make('Location')
+                    ->schema([
+                        // Classroom
+                        \Filament\Forms\Components\Select::make('classroom')
+                            ->options(\App\Models\Classroom::where('is_active', true)->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                    ]),
             ]),
         ];
     }

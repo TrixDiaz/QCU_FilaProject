@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ClassroomSeeder extends Seeder
@@ -12,6 +11,17 @@ class ClassroomSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\Classroom::factory(10)->create();   
+        $buildings = \App\Models\Building::all();
+
+        $classrooms = [
+            ['building_id' => $buildings[0]->id, 'name' => 'Classroom 1', 'slug' => 'classroom-1', 'is_active' => true],
+            ['building_id' => $buildings[0]->id, 'name' => 'Classroom 2', 'slug' => 'classroom-2', 'is_active' => true],
+            ['building_id' => $buildings[1]->id, 'name' => 'Classroom 3', 'slug' => 'classroom-3', 'is_active' => true],
+            ['building_id' => $buildings[1]->id, 'name' => 'Classroom 4', 'slug' => 'classroom-4', 'is_active' => true],
+            ['building_id' => $buildings[2]->id, 'name' => 'Classroom 5', 'slug' => 'classroom-5', 'is_active' => true],
+        ];
+
+        \Illuminate\Support\Facades\DB::table('classrooms')->insert($classrooms);
+
     }
 }

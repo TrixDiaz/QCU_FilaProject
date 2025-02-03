@@ -174,18 +174,18 @@ class AssetResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('brand.name')
-                    ->label('Brand & Category')
-                    ->description(fn($record): string => $record->category?->name)
-                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('name')
                     ->description(fn($record): string => $record->asset_code)
                     ->searchable(['name', 'asset_code'])
                     ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\TextColumn::make('brand.name')
+                    ->label('Brand & Category')
+                    ->description(fn($record): string => $record->category?->name)
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('serial_number')
                     ->searchable()
                     ->extraAttributes(['style' => 'text-transform:uppercase'])
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                     Tables\Columns\TextColumn::make('assetTags.name')
                     ->label('Tags')
                     ->listWithLineBreaks()
@@ -234,6 +234,10 @@ class AssetResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\Action::make('assign')
+                        ->label('Assign Asset Selected')
+                        ->color('danger')
+                        ->icon('heroicon-m-square-2-stack'),
                 ]),
             ])->poll('30s');
     }

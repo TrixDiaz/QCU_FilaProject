@@ -19,7 +19,21 @@ class ListAssets extends ListRecords
             Actions\Action::make('deploy')
                 ->label('Deploy Computer')
                 ->color('secondary')
-                ->form(\App\Services\DeployComputer::schema()),
+                ->form(\App\Services\DeployComputer::schema())
+                ->action(function (array $data) {
+                    // Loop through each selected asset and create a new AssetTag record
+                    foreach (['computer_case', 'power_supply', 'motherboard', 'processor', 'drive', 'ram', 'graphics_card', 'monitor', 'keyboard', 'mouse', 'headphone', 'speaker'] as $assetType) {
+                        if (isset($data[$assetType])) {
+                            $assetIds = is_array($data[$assetType]) ? $data[$assetType] : [$data[$assetType]];
+                            foreach ($assetIds as $assetId) {
+                                \App\Models\TerminalAsset::create([
+                                    'asset_id' => $assetId,
+                                    'classroom_id' => $data['classroom'], // Assuming classroom is the asset_tag_id
+                                ]);
+                            }
+                        }
+                    }
+                }),
             Actions\CreateAction::make(),
         ];
     }

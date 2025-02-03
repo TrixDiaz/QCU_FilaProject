@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class BrandSeeder extends Seeder
 {
@@ -11,6 +12,15 @@ class BrandSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\Brand::factory(10)->create();
+        $brands = [
+            ['name' => 'asus', 'slug' => 'asus', 'is_active' => true],
+            ['name' => 'dell', 'slug' => 'dell', 'is_active' => true],
+            ['name' => 'lenovo', 'slug' => 'lenovo', 'is_active' => true],
+            ['name' => 'apple', 'slug' => 'apple', 'is_active' => true],
+
+        ];
+
+        DB::table('brands')->insert($brands);
+      //  \App\Models\Brand::factory(10)->create();
     }
 }

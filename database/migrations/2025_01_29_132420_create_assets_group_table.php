@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('assets_group', function (Blueprint $table) {
+        Schema::create('terminal_assets_group', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
+            $table->foreignId('classroom_id')->constrained('classrooms')->onDelete('cascade');
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
             $table->timestamps();
         });

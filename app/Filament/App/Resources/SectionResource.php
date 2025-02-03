@@ -34,7 +34,7 @@ class SectionResource extends Resource
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\Section::make()
-                            ->schema(\App\Services\DynamicForm::schema())
+                            ->schema(\App\Services\DynamicForm::schema(\App\Models\Section::class))
                             ->columns(2),
                         Forms\Components\Section::make()
                             ->schema([
@@ -60,8 +60,8 @@ class SectionResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->native(false)
-                                    ->editOptionForm(\App\Services\DynamicForm::schema())
-                                    ->createOptionForm(\App\Services\DynamicForm::schema()),
+                                    ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Section::class))
+                                    ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Section::class)),
                             ]),
                     ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
                 Forms\Components\Grid::make(1)->schema([

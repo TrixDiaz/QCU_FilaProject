@@ -73,8 +73,8 @@ class AssetResource extends Resource
                             ->searchable()
                             ->preload()
                             ->native(false)
-                            ->createOptionForm(\App\Services\DynamicForm::schema())
-                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                            ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Category::class))
+                            ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Category::class)),
                         Forms\Components\Select::make('brand_id')
                             ->relationship(
                                 name: 'brand',
@@ -97,8 +97,8 @@ class AssetResource extends Resource
                             ->searchable()
                             ->preload()
                             ->native(false)
-                            ->createOptionForm(\App\Services\DynamicForm::schema())
-                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                            ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Brand::class))
+                            ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Brand::class)),
                         Forms\Components\Select::make('asset_tag_id')
                             ->relationship(
                                 name: 'assetTags',
@@ -123,8 +123,8 @@ class AssetResource extends Resource
                             ->preload()
                             ->multiple()
                             ->native(false)
-                            ->createOptionForm(\App\Services\DynamicForm::schema())
-                            ->editOptionForm(\App\Services\DynamicForm::schema()),
+                            ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\AssetTag::class))
+                            ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\AssetTag::class)),
                         Forms\Components\Toggle::make('show_expiry_date')
                             ->label('Add Expiry Date')
                             ->reactive(),

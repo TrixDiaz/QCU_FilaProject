@@ -37,7 +37,7 @@ class TagResource extends Resource
             ->schema([
                 Forms\Components\Section::make()->schema([
                     Forms\Components\Grid::make(2)
-                        ->schema(\App\Services\DynamicForm::schema())->columns(2),
+                        ->schema(\App\Services\DynamicForm::schema(\App\Models\Tag::class))->columns(2),
                 ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
 
                 Forms\Components\Grid::make(1)->schema([

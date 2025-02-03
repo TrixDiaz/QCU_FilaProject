@@ -1,0 +1,155 @@
+<?php
+
+namespace App\Services;
+
+use Filament\Forms;
+
+final class DeployComputer
+{
+    public static function schema(): array
+    {
+        return [
+            \Filament\Forms\Components\Wizard::make([
+                \Filament\Forms\Components\Wizard\Step::make('Internal Hardware')
+                    ->schema([
+                        // Computer Case
+                        \Filament\Forms\Components\Select::make('computer_case')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'computer-case')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Power Supply
+                        \Filament\Forms\Components\Select::make('power_supply')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'power-supply')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Motherboard
+                        \Filament\Forms\Components\Select::make('motherboard')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'motherboard')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Processor
+                        \Filament\Forms\Components\Select::make('processor')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'processor')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Drive's
+                        \Filament\Forms\Components\Select::make('drive')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'drive')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->multiple()
+                            ->required(),
+                        // Ram's
+                        \Filament\Forms\Components\Select::make('ram')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'ram')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->multiple()
+                            ->required(),
+                        // Graphic's Card
+                        \Filament\Forms\Components\Select::make('graphics_card')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'graphics-card')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload(),
+                    ])->columns(2),
+                \Filament\Forms\Components\Wizard\Step::make('Peripheral Components')
+                    ->schema([
+                        // Monitor
+                        \Filament\Forms\Components\Select::make('monitor')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'monitor')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Keyboard
+                        \Filament\Forms\Components\Select::make('keyboard')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'keyboard')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Mouse
+                        \Filament\Forms\Components\Select::make('mouse')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'mouse')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Headphone
+                        \Filament\Forms\Components\Select::make('headphone')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'headphone')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        // Speaker
+                        \Filament\Forms\Components\Select::make('speaker')
+                            ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
+                                $query->where('slug', 'speaker')
+                                    ->where('is_active', true); // Ensure the tag is active
+                            })
+                                ->where('status', 'active') // Ensure the asset status is active
+                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                    ])->columns(2),
+            ]),
+        ];
+    }
+}

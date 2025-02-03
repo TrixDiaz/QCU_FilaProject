@@ -16,6 +16,10 @@ class ListAssets extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('deploy')
+                ->label('Deploy Computer')
+                ->color('secondary')
+                ->form(\App\Services\DeployComputer::schema()),
             Actions\CreateAction::make(),
         ];
     }

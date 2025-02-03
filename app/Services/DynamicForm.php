@@ -6,9 +6,7 @@ use Filament\Forms;
 
 final class DynamicForm
 {
-
-
-    public static function schema($concourseId = null, $spaceId = null, $concourseLeaseTerm = null): array
+    public static function schema($model): array
     {
         return [
             Forms\Components\TextInput::make('name')
@@ -29,7 +27,7 @@ final class DynamicForm
                 ->dehydrated()
                 ->required()
                 ->maxLength(255)
-                ->unique(\App\Models\Building::class, 'slug', ignoreRecord: true),
+                ->unique($model, 'slug', ignoreRecord: true),
         ];
     }
 }

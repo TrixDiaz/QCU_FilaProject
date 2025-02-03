@@ -35,7 +35,7 @@ class ClassroomResource extends Resource
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\Section::make()
-                            ->schema(\App\Services\DynamicForm::schema())->columns(2),
+                            ->schema(\App\Services\DynamicForm::schema(\App\Models\Classroom::class))->columns(2),
                         Forms\Components\Section::make()
                             ->schema([
                                 Forms\Components\Select::make('building_id')
@@ -60,8 +60,8 @@ class ClassroomResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->native(false)
-                                    ->editOptionForm(\App\Services\DynamicForm::schema())
-                                    ->createOptionForm(\App\Services\DynamicForm::schema()),
+                                    ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Classroom::class))
+                                    ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Classroom::class)),
                             ]),
                     ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
                 Forms\Components\Grid::make(1)->schema([

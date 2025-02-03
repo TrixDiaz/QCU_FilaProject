@@ -13,7 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class BrandsResource extends Resource
+class BrandResource extends Resource
 {
     protected static ?string $model = Brand::class;
 
@@ -35,7 +35,7 @@ class BrandsResource extends Resource
             ->schema([
                 Forms\Components\Section::make()->schema([
                     Forms\Components\Grid::make(2)
-                        ->schema(\App\Services\DynamicForm::schema())->columns(2),
+                        ->schema(\App\Services\DynamicForm::schema(\App\Models\Brand::class))->columns(2),
                 ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
 
                 Forms\Components\Grid::make(1)->schema([

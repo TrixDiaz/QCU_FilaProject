@@ -10,12 +10,14 @@ enum AssetStatus: string implements HasLabel, HasColor, HasIcon
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
+    case DEPLOY = 'deploy';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::ACTIVE => 'active',
             self::INACTIVE => 'inactive',
+            self::DEPLOY => 'deploy',
         };
     }
 
@@ -24,6 +26,7 @@ enum AssetStatus: string implements HasLabel, HasColor, HasIcon
         return match ($this) {
             self::ACTIVE => 'primary',
             self::INACTIVE => 'gray',
+            self::DEPLOY => 'secondary',
 
         };
     }
@@ -33,6 +36,7 @@ enum AssetStatus: string implements HasLabel, HasColor, HasIcon
         return match ($this) {
             self::ACTIVE => 'heroicon-m-bolt',
             self::INACTIVE => 'heroicon-m-bolt-slash',
+            self::DEPLOY => 'heroicon-m-computer-desktop',
         };
     }
 }

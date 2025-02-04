@@ -154,16 +154,41 @@ final class DeployComputer
                         // Name and Slug
                         \Filament\Forms\Components\Grid::make(2)
                                 ->schema(\App\Services\DynamicForm::schema(\App\Models\TerminalAsset::class)),
-                        // Terminal Code
-                        \Filament\Forms\Components\TextInput::make('terminal_code')
-                                ->label('Terminal Code')
-                                ->required(),
                         // Classroom
                         \Filament\Forms\Components\Select::make('classroom')
                             ->options(\App\Models\Classroom::where('is_active', true)->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->reactive()
+                            ->disabled(fn(\Filament\Forms\Get $get) => !$get('name') || !$get('slug'))
+                            ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) {
+                                $classroom = \App\Models\Classroom::find($state);
+                                if ($classroom) {
+                                    $building = $classroom->building;
+                                    $slug = \Illuminate\Support\Str::slug($classroom->name);
+                                    $enteredSlug = $get('slug'); // Assuming 'slug' is the field where the new entered slug is stored
+
+                                    $buildingSlugFirstLetter = substr($building->slug, 0, 1);
+                                    $buildingSlugLastLetter = substr($building->slug, -1);
+                                    $classroomSlugFirstLetter = substr($slug, 0, 1);
+                                    $classroomSlugLastLetter = substr($slug, -1);
+                                    $enteredSlugFirstLetter = substr($enteredSlug, 0, 1);
+                                    $enteredSlugLastLetter = substr($enteredSlug, -1);
+
+                                    $set('terminal_code', strtoupper("{$buildingSlugFirstLetter}{$buildingSlugLastLetter}-{$classroomSlugFirstLetter}{$classroomSlugLastLetter}-{$enteredSlugFirstLetter}{$enteredSlugLastLetter}"));
+                                }
+                            }),
+                        // Terminal Code
+                        \Filament\Forms\Components\TextInput::make('terminal_code')
+                            ->label('Terminal Code')
+                            ->required()
+                            ->disabled()
+                            ->dehydrated()
+                            ->extraAttributes([
+                                'style' => 'text-transform:uppercase',
+                                'class' => 'uppercase'
+                            ]),
                     ]),
             ]),
         ];

@@ -35,10 +35,14 @@ class ListAssets extends ListRecords
                                 \App\Models\TerminalAsset::create([
                                     'asset_id' => $assetId,
                                     'classroom_id' => $data['classroom'], // Assuming classroom is the asset_tag_id
+                                    'name' => $data['name'],
+                                    'slug' => $data['slug'],
+                                    'terminal_code' => $data['terminal_code'],
+                                    'status' => 'active'
                                 ]);
 
                                 // Update the status of the asset to 'deployed'
-                                \App\Models\Asset::where('id', $assetId)->update(['status' => 'deploy']);
+//                                \App\Models\Asset::where('id', $assetId)->update(['status' => 'deploy']);
                             }
                         }
                     }

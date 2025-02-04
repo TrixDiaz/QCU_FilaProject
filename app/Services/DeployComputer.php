@@ -151,6 +151,13 @@ final class DeployComputer
                     ])->columns(2),
                 \Filament\Forms\Components\Wizard\Step::make('Location')
                     ->schema([
+                        // Name and Slug
+                        \Filament\Forms\Components\Grid::make(2)
+                                ->schema(\App\Services\DynamicForm::schema(\App\Models\TerminalAsset::class)),
+                        // Terminal Code
+                        \Filament\Forms\Components\TextInput::make('terminal_code')
+                                ->label('Terminal Code')
+                                ->required(),
                         // Classroom
                         \Filament\Forms\Components\Select::make('classroom')
                             ->options(\App\Models\Classroom::where('is_active', true)->pluck('name', 'id'))

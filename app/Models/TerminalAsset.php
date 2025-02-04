@@ -15,5 +15,9 @@ class TerminalAsset extends Model
     protected $fillable = [
         'asset_id',
         'classroom_id',
+        'name',
+        'slug',
+        'terminal_code',
+        'status'
     ];
 }

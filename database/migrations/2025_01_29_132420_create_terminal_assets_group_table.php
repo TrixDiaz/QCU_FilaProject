@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('classroom_id')->constrained('classrooms')->onDelete('cascade');
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
+            $table->string('name');
+            $table->string('slug');
+            $table->string('terminal_code');
+            $table->string('status');
             $table->timestamps();
         });
     }

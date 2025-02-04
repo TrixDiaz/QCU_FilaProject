@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Models\TerminalAsset;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
@@ -21,12 +22,15 @@ class Terminal extends Page implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(\App\Models\TerminalAsset::query())
+           ->query(\App\Models\TerminalAsset::query())
             ->columns([
-                Tables\Columns\TextColumn::make('classroom.id')
-                    ->label('Classroom'),
-                Tables\Columns\TextColumn::make('asset.id')
-                    ->label('Asset')
+                Tables\Columns\TextColumn::make('classroom.name'),
+                Tables\Columns\TextColumn::make('asset.name'),
+                Tables\Columns\TextColumn::make('name'),
+                Tables\Columns\TextColumn::make('slug'),
+                Tables\Columns\TextColumn::make('terminal_code'),
+                Tables\Columns\TextColumn::make('status'),
+
             ]);
     }
 }

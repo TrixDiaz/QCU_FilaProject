@@ -29,7 +29,6 @@ class Terminal extends Page implements HasForms, HasTable
                     ->select([
                         'terminal_assets_group.terminal_code',
                         'terminal_assets_group.name',
-                        'terminal_assets_group.slug',
                         'terminal_assets_group.status',
                         'terminal_assets_group.classroom_id',
                         DB::raw('MIN(terminal_assets_group.id) as id'),
@@ -39,7 +38,6 @@ class Terminal extends Page implements HasForms, HasTable
                     ->groupBy(
                         'terminal_assets_group.terminal_code',
                         'terminal_assets_group.name',
-                        'terminal_assets_group.slug',
                         'terminal_assets_group.status',
                         'terminal_assets_group.classroom_id'
                     )
@@ -50,25 +48,26 @@ class Terminal extends Page implements HasForms, HasTable
             ])
             ->columns([
                 Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('classroom_info')
+                    Tables\Columns\TextColumn::make('classroom.building.name')
                         ->label('Building and Classroom')
-                        ->default(fn($record): string => $record->classroom?->building?->name . ' ' . $record->classroom?->name)
+                        ->description(fn($record): string => $record->classroom?->name)
                         ->extraAttributes(['class' => 'capitalize']),
-                    Tables\Columns\TextColumn::make('terminal_info')
-                        ->label('Name')
-                        ->searchable(['name', 'terminal_code'])
-                        ->default(fn($record): string => $record->name . ' ' . $record->terminal_code),
                     Tables\Columns\TextColumn::make('asset_list')
                         ->label('Assets')
-                        ->formatStateUsing(fn($state) => $state ? str_replace(',', "\n", $state) : ''),
+                        ->description('List of all asset names under this terminal'),
+                    Tables\Columns\TextColumn::make('name')
+                        ->label('Name')
+                        ->searchable(['name', 'terminal_code'])
+                        ->description(fn($record): string => $record->terminal_code),
                     Tables\Columns\TextColumn::make('status')
                         ->label('Status')
-                        ->badge()
                         ->extraAttributes(['class' => 'capitalize']),
                 ])
             ])
             ->defaultSort('terminal_code');
     }
+
+
 
 
 

@@ -163,13 +163,13 @@ final class DeployComputer
                                     ->preload()
                                     ->required()
                                     ->reactive()
-                                    ->disabled(fn(\Filament\Forms\Get $get) => !$get('name') || !$get('slug'))
+                                    ->disabled(fn(\Filament\Forms\Get $get) => !$get('name'))
                                     ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) {
                                         $classroom = \App\Models\Classroom::find($state);
                                         if ($classroom) {
                                             $building = $classroom->building;
                                             $slug = \Illuminate\Support\Str::slug($classroom->name);
-                                            $enteredSlug = $get('slug'); // Assuming 'slug' is the field where the new entered slug is stored
+                                            $enteredSlug = $get('name'); // Assuming 'name' is the field where the new entered slug is stored
 
                                             $buildingSlugFirstLetter = substr($building->slug, 0, 1);
                                             $buildingSlugLastLetter = substr($building->slug, -1);

@@ -20,6 +20,7 @@ class Terminal extends Page implements HasForms, HasTable
     use HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
     protected static string $view = 'filament.app.pages.terminal';
     protected static ?string $navigationLabel = 'Terminal Asset';
 
@@ -67,7 +68,8 @@ class Terminal extends Page implements HasForms, HasTable
                         ->badge(),
                 ])
             ])
-            ->defaultSort('terminal_code');
+            ->defaultSort('terminal_code')
+            ->emptyStateHeading('No Computers yet');
     }
 
 

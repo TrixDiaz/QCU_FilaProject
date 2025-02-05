@@ -27,59 +27,49 @@ class Terminal extends Page implements HasForms, HasTable
             ->query(
                 TerminalAsset::query()
                     ->select([
-                        'terminal_code',
-                        'name',
-                        'slug',
-                        'status',
-                        'classroom_id',
-                        DB::raw('MIN(id) as id'),
-                        DB::raw('GROUP_CONCAT(DISTINCT asset_id) as asset_list')
+                        'terminal_assets_group.terminal_code',
+                        'terminal_assets_group.name',
+                        'terminal_assets_group.slug',
+                        'terminal_assets_group.status',
+                        'terminal_assets_group.classroom_id',
+                        DB::raw('MIN(terminal_assets_group.id) as id'),
+                        DB::raw('GROUP_CONCAT(DISTINCT assets.name) as asset_list') // Concatenates asset names instead of IDs
                     ])
-                    ->groupBy('terminal_code','slug', 'classroom_id')
+                    ->leftJoin('assets', 'terminal_assets_group.asset_id', '=', 'assets.id') // Join with the Asset table
+                    ->groupBy(
+                        'terminal_assets_group.terminal_code',
+                        'terminal_assets_group.name',
+                        'terminal_assets_group.slug',
+                        'terminal_assets_group.status',
+                        'terminal_assets_group.classroom_id'
+                    )
             )
+            ->contentGrid([
+                'md' => 2,
+                'lg' => 3,
+            ])
             ->columns([
-                Tables\Columns\TextColumn::make('classroom.name')
-                    ->label('Classroom')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('classroom.building.name')
-                    ->label('Building')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('asset_list')
-                    ->label('Assets')
-                    ->formatStateUsing(function ($state) {
-                        $assetIds = explode(',', $state);
-                        $assets = DB::table('terminal_assets_group as t')
-                            ->whereIn('t.asset_id', $assetIds)
-                            ->join('assets', 'assets.id', '=', 't.asset_id')
-                            ->pluck('assets.name')
-                            ->unique()
-                            ->filter()
-                            ->toArray();
-
-                        return view('components.asset-list', [
-                            'assets' => $assets
-                        ]);
-                    })
-                    ->html(),
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('terminal_code')
-                    ->label('Terminal Code')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
-                    ->sortable()
-                    ->searchable(),
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\TextColumn::make('classroom_info')
+                        ->label('Building and Classroom')
+                        ->default(fn($record): string => $record->classroom?->building?->name . ' ' . $record->classroom?->name)
+                        ->extraAttributes(['class' => 'capitalize']),
+                    Tables\Columns\TextColumn::make('terminal_info')
+                        ->label('Name')
+                        ->searchable(['name', 'terminal_code'])
+                        ->default(fn($record): string => $record->name . ' ' . $record->terminal_code),
+                    Tables\Columns\TextColumn::make('asset_list')
+                        ->label('Assets')
+                        ->formatStateUsing(fn($state) => $state ? str_replace(',', "\n", $state) : ''),
+                    Tables\Columns\TextColumn::make('status')
+                        ->label('Status')
+                        ->badge()
+                        ->extraAttributes(['class' => 'capitalize']),
+                ])
             ])
             ->defaultSort('terminal_code');
     }
+
+
+
 }

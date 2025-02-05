@@ -48,20 +48,20 @@ class Terminal extends Page implements HasForms, HasTable
             ])
             ->columns([
                 Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\TextColumn::make('name')
+                        ->label('Name')
+                        ->searchable(['name', 'terminal_code'])
+                        ->description(fn($record): string => $record->terminal_code),
                     Tables\Columns\TextColumn::make('classroom.building.name')
                         ->label('Building and Classroom')
                         ->description(fn($record): string => $record->classroom?->name)
                         ->extraAttributes(['class' => 'capitalize']),
                     Tables\Columns\TextColumn::make('asset_list')
-                        ->label('Assets')
-                        ->description('List of all asset names under this terminal'),
-                    Tables\Columns\TextColumn::make('name')
-                        ->label('Name')
-                        ->searchable(['name', 'terminal_code'])
-                        ->description(fn($record): string => $record->terminal_code),
+                        ->label('Assets'),
                     Tables\Columns\TextColumn::make('status')
                         ->label('Status')
-                        ->extraAttributes(['class' => 'capitalize']),
+                        ->extraAttributes(['class' => 'capitalize'])
+                        ->badge(),
                 ])
             ])
             ->defaultSort('terminal_code');

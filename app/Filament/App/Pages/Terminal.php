@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\TerminalAsset;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
@@ -14,7 +15,9 @@ use Illuminate\Support\Facades\DB;
 
 class Terminal extends Page implements HasForms, HasTable
 {
-    use InteractsWithForms, InteractsWithTable;
+    use InteractsWithForms;
+    use InteractsWithTable;
+    use HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.app.pages.terminal';

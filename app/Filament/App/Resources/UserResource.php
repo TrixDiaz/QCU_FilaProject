@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\UserResource\Pages;
 use App\Filament\App\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Components\Tab;
@@ -14,10 +15,21 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class UserResource extends Resource
+class UserResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'publish'
+        ];
+    }
     protected static ?string $model = User::class;
-    protected static ?string $navigationGroup = 'System Users';
+    protected static ?string $navigationGroup = 'System Settings';
     protected static ?string $navigationLabel = 'User';
     protected static ?string $navigationIcon = 'heroicon-o-finger-print';
 
@@ -62,7 +74,16 @@ class UserResource extends Resource
                             ->onIcon('heroicon-m-bolt')
                             ->offIcon('heroicon-m-user')
                             ->visibleOn('create')
-                            ->dehydrateStateUsing(fn($state) => $state ? now() : null)
+                            ->dehydrateStateUsing(fn($state) => $state ? now() : null),
+                        Forms\Components\Select::make('roles')
+                            ->relationship('roles', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable(),
+                        Forms\Components\Select::make('permissions')
+                            ->multiple()
+                            ->relationship('permissions', 'name')
+                            ->preload(),
                     ])->columns(2),
             ]);
     }

@@ -50,7 +50,7 @@ class AppPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Assets',
                 'Location',
-                'System Users',
+                'System Settings',
             ])
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()
@@ -80,6 +80,22 @@ class AppPanelProvider extends PanelProvider
             ])
             ->plugins([
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
+                    ->gridColumns([
+                        'default' => 1,
+                        'sm' => 2,
+                        'lg' => 3
+                    ])
+                    ->sectionColumnSpan(1)
+                    ->checkboxListColumns([
+                        'default' => 1,
+                        'sm' => 2,
+                        'lg' => 2,
+                    ])
+                    ->resourceCheckboxListColumns([
+                        'default' => 1,
+                        'sm' => 2,
+                    ]),
             ]);
     }
 }

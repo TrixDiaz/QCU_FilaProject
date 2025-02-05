@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TerminalAsset extends Model
 {
-    /** @use HasFactory<\Database\Factories\AssetTagFactory> */
     use HasFactory;
 
     public $table = 'terminal_assets_group';
@@ -24,11 +23,11 @@ class TerminalAsset extends Model
 
     public function classroom(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Classroom::class);
+        return $this->belongsTo(Classroom::class);
     }
 
-    public function asset(): BelongsTo
+    public function classroomAsset(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Asset::class);
+        return $this->belongsTo(Asset::class, 'asset_id', 'id');
     }
 }

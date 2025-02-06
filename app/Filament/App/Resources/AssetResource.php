@@ -231,7 +231,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->label('Assign')
                     ->button()
                     ->color('secondary')
-                    ->visible(fn($record) => $record->status === \App\Enums\AssetStatus::ACTIVE->value)
+                    ->visible(fn($record) => $record->status === 'active')
                     ->form(function ($record) {
                         return \App\Services\AssignAssetForm::schema($record);
                     })
@@ -245,7 +245,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                         ]);
 
                         // Update the status of the asset to 'deploy'
-                        $record->update(['status' => \App\Enums\AssetStatus::DEPLOY->value]);
+                        $record->update(['status' => 'deploy']);
 
                         // Optionally, you can add a notification here
                         \Filament\Notifications\Notification::make()

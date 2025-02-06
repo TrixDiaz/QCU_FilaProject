@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\SubjectResource\Pages;
 use App\Filament\App\Resources\SubjectResource\RelationManagers;
 use App\Models\Subject;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\FormsComponent;
@@ -14,11 +15,23 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class SubjectResource extends Resource
+class SubjectResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'publish'
+        ];
+    }
+
     protected static ?string $model = Subject::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
     public static function getNavigationBadge(): ?string
     {
@@ -31,17 +44,25 @@ class SubjectResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('subject_code')
-                    ->required(),
-                Forms\Components\TextInput::make('subject_units')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('lab_time')
-                    ->required(),
-                Forms\Components\TextInput::make('lecture_time')
-                    ->required(),
+              Forms\Components\Section::make()
+                ->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->required(),
+                    Forms\Components\TextInput::make('subject_code')
+                        ->required(),
+                    Forms\Components\TextInput::make('subject_units')
+                        ->required()
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(10)
+                        ->step(1),
+                    Forms\Components\TimePicker::make('lab_time')
+                        ->required()
+                        ->native(false),
+                    Forms\Components\TimePicker::make('lecture_time')
+                        ->required()
+                        ->native(false),
+                ])->columns(2),
             ]);
     }
 

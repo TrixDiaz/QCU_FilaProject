@@ -7,6 +7,14 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/hello', function (Request $request) {
+Route::get('/hello', function () {
     return 'Hello';
-})->middleware('auth:sanctum');
+});
+
+Route::get('/sections', function() {
+    return response()->json(\App\Models\Section::with('classroom.building')->get());
+});
+
+Route::get('/sections/{id}', function ($id) {
+    return \App\Models\Section::with('classroom.building')->findOrFail($id);
+});

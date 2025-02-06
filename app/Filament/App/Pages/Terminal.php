@@ -2,7 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Models\TerminalAsset;
+use App\Models\AssetGroup;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -29,7 +29,7 @@ class Terminal extends Page implements HasForms, HasTable
     {
         return $table
             ->query(
-                TerminalAsset::query()
+                AssetGroup::query()
                     ->select([
                         'terminal_assets_group.terminal_code',
                         'terminal_assets_group.name',

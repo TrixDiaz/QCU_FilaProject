@@ -7,7 +7,7 @@ use App\Models\Tag;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TerminalAsset>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\AssetGroup>
  */
 class AssetTagFactory extends Factory
 {

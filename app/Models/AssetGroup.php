@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TerminalAsset extends Model
+class AssetGroup extends Model
 {
     use HasFactory;
 
@@ -17,7 +17,7 @@ class TerminalAsset extends Model
         'classroom_id',
         'name',
         'slug',
-        'terminal_code',
+        'code',
         'status'
     ];
 

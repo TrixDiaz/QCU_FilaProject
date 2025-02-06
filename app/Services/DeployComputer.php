@@ -178,13 +178,13 @@ final class DeployComputer
                                             $enteredSlugFirstLetter = substr($enteredSlug, 0, 1);
                                             $enteredSlugLastLetter = substr($enteredSlug, -1);
 
-                                            $set('terminal_code', strtoupper("{$buildingSlugFirstLetter}{$buildingSlugLastLetter}-{$classroomSlugFirstLetter}{$classroomSlugLastLetter}-{$enteredSlugFirstLetter}{$enteredSlugLastLetter}"));
+                                            $set('code', strtoupper("{$buildingSlugFirstLetter}{$buildingSlugLastLetter}-{$classroomSlugFirstLetter}{$classroomSlugLastLetter}-{$enteredSlugFirstLetter}{$enteredSlugLastLetter}"));
                                         }
                                     }),
                             ]),
                         // Terminal Code
-                        \Filament\Forms\Components\TextInput::make('terminal_code')
-                            ->label('Terminal Code')
+                        \Filament\Forms\Components\TextInput::make('code')
+                            ->label('Code')
                             ->required()
                             ->disabled()
                             ->dehydrated()

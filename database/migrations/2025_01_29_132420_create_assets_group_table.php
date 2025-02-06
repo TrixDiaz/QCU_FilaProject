@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('terminal_assets_group', function (Blueprint $table) {
+        Schema::create('assets_group', function (Blueprint $table) {
             $table->id();
             $table->foreignId('classroom_id')->constrained('classrooms')->onDelete('cascade');
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
             $table->string('name');
-            $table->string('terminal_code');
+            $table->string('code');
             $table->string('status');
             $table->timestamps();
         });

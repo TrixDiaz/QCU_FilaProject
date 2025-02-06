@@ -32,11 +32,11 @@ class ListAssets extends ListRecords
                         if (isset($data[$assetType])) {
                             $assetIds = is_array($data[$assetType]) ? $data[$assetType] : [$data[$assetType]];
                             foreach ($assetIds as $assetId) {
-                                \App\Models\TerminalAsset::create([
+                                \App\Models\AssetGroup::create([
                                     'asset_id' => $assetId,
                                     'classroom_id' => $data['classroom'], // Assuming classroom is the asset_tag_id
                                     'name' => $data['name'],
-                                    'terminal_code' => $data['terminal_code'],
+                                    'code' => $data['code'],
                                     'status' => 'active'
                                 ]);
 

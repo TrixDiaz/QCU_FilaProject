@@ -31,19 +31,19 @@ class Terminal extends Page implements HasForms, HasTable
             ->query(
                 AssetGroup::query()
                     ->select([
-                        'terminal_assets_group.terminal_code',
-                        'terminal_assets_group.name',
-                        'terminal_assets_group.status',
-                        'terminal_assets_group.classroom_id',
-                        DB::raw('MIN(terminal_assets_group.id) as id'),
+                        'assets_group.code',
+                        'assets_group.name',
+                        'assets_group.status',
+                        'assets_group.classroom_id',
+                        DB::raw('MIN(assets_group.id) as id'),
                         DB::raw('GROUP_CONCAT(DISTINCT assets.name) as asset_list') // Concatenates asset names instead of IDs
                     ])
-                    ->leftJoin('assets', 'terminal_assets_group.asset_id', '=', 'assets.id') // Join with the Asset table
+                    ->leftJoin('assets', 'assets_group.asset_id', '=', 'assets.id') // Join with the Asset table
                     ->groupBy(
-                        'terminal_assets_group.terminal_code',
-                        'terminal_assets_group.name',
-                        'terminal_assets_group.status',
-                        'terminal_assets_group.classroom_id'
+                        'assets_group.code',
+                        'assets_group.name',
+                        'assets_group.status',
+                        'assets_group.classroom_id'
                     )
             )
             ->contentGrid([
@@ -55,7 +55,7 @@ class Terminal extends Page implements HasForms, HasTable
                     Tables\Columns\TextColumn::make('name')
                         ->label('Name')
                         ->searchable(['name', 'terminal_code'])
-                        ->description(fn($record): string => $record->terminal_code),
+                        ->description(fn($record): string => $record->code),
                     Tables\Columns\TextColumn::make('classroom.building.name')
                         ->label('Building and Classroom')
                         ->description(fn($record): string => $record->classroom?->name)

@@ -41,7 +41,7 @@ class ListAssets extends ListRecords
                                 ]);
 
                                 // Update the status of the asset to 'deployed'
-                           //     \App\Models\Asset::where('id', $assetId)->update(['status' => 'deploy']);
+                                \App\Models\Asset::where('id', $assetId)->update(['status' => 'deploy']);
                             }
                         }
                     }

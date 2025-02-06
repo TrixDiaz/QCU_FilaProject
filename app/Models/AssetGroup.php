@@ -10,7 +10,7 @@ class AssetGroup extends Model
 {
     use HasFactory;
 
-    public $table = 'terminal_assets_group';
+    public $table = 'assets_group';
 
     protected $fillable = [
         'asset_id',

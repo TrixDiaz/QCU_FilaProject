@@ -200,7 +200,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->extraAttributes(['style' => 'text-transform:uppercase'])
                     ->toggleable(isToggledHiddenByDefault: true),
-                    Tables\Columns\TextColumn::make('assetTags.name')
+                Tables\Columns\TextColumn::make('assetTags.name')
                     ->label('Tags')
                     ->listWithLineBreaks()
                     ->bulleted()
@@ -227,6 +227,33 @@ class AssetResource extends Resource implements HasShieldPermissions
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('assign')
+                    ->label('Assign')
+                    ->button()
+                    ->color('secondary')
+                    ->visible(fn($record) => $record->status === \App\Enums\AssetStatus::ACTIVE->value)
+                    ->form(function ($record) {
+                        return \App\Services\AssignAssetForm::schema($record);
+                    })
+                    ->action(function (array $data, $record) {
+                        \App\Models\AssetGroup::create([
+                            'asset_id' => $record->id,
+                            'classroom_id' => $data['classroom'],
+                            'name' => $data['name'],
+                            'code' => $data['code'],
+                            'status' => 'active',
+                        ]);
+
+                        // Update the status of the asset to 'deploy'
+                        $record->update(['status' => \App\Enums\AssetStatus::DEPLOY->value]);
+
+                        // Optionally, you can add a notification here
+                        \Filament\Notifications\Notification::make()
+                            ->title('Asset Assigned')
+                            ->body('The asset has been successfully assigned.')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()
                         ->tooltip('View'),

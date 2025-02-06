@@ -30,7 +30,7 @@ class Asset extends Model
     ];
 
     protected $casts = [
-        'status' => AssetStatus::class,
+//        'status' => AssetStatus::class,
     ];
 
     public function brand(): BelongsTo

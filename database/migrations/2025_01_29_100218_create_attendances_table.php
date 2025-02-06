@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('professor_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
-            $table->foreignId('terminal_id')->constrained('terminal_assets')->onDelete('cascade');
+            $table->foreignId('terminal_id')->constrained('assets_group')->onDelete('cascade');
             $table->string('student_full_name');
             $table->string('student_email');
             $table->integer('student_number');

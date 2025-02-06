@@ -11,9 +11,7 @@ Route::get('/hello', function () {
     return 'Hello';
 });
 
-Route::get('/sections', function() {
-    return response()->json(\App\Models\Section::with('classroom.building')->get());
-});
+Route::get('/sections', [\App\Http\Controllers\SectionController::class, 'index']);
 
 Route::get('/sections/{id}', function ($id) {
     return \App\Models\Section::with('classroom.building')->findOrFail($id);

@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\AssetGroup;
+use App\Models\Section;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -24,6 +25,11 @@ class Terminal extends Page implements HasForms, HasTable
     protected static string $view = 'filament.app.pages.terminal';
     protected static ?string $navigationLabel = 'Terminal Asset';
 
+    public $sections;
+    public function mount()
+    {
+        $this->sections = Section::all();
+    }
 
     public function table(Table $table): Table
     {

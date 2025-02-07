@@ -20,6 +20,8 @@ class Terminal extends Page implements HasForms, HasTable
     use InteractsWithTable;
     use HasPageShield;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.app.pages.terminal';

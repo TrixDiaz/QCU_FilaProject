@@ -25,11 +25,7 @@ class Terminal extends Page implements HasForms, HasTable
     protected static string $view = 'filament.app.pages.terminal';
     protected static ?string $navigationLabel = 'Terminal Asset';
 
-    public $sections;
-    public function mount()
-    {
-        $this->sections = Section::all();
-    }
+
 
     public function table(Table $table): Table
     {

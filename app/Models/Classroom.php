@@ -14,7 +14,12 @@ class Classroom extends Model
     /** @use HasFactory<\Database\Factories\ClassroomFactory> */
     use HasFactory;
     use SoftDeletes;
-    protected $guarded = [];
+    protected $fillable = [
+        'building_id',
+        'name',
+        'slug',
+        'is_active'
+    ];
 
     public function getRouteKeyName()
     {

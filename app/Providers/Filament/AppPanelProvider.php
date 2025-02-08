@@ -81,6 +81,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->plugins([
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+                FilamentApexChartsPlugin::make(),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,
@@ -97,7 +98,14 @@ class AppPanelProvider extends PanelProvider
                         'default' => 1,
                         'sm' => 2,
                     ]),
-                FilamentApexChartsPlugin::make(),
+                \Saade\FilamentFullCalendar\FilamentFullCalendarPlugin::make()
+                    ->schedulerLicenseKey('')
+                    ->selectable(true)
+                    ->editable()
+                    ->timezone(config('app.timezone'))
+                    ->locale(config('app.locale'))
+                    ->plugins(['dayGrid', 'timeGrid'])
+                    ->config([])
             ]);
     }
 }

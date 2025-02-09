@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Filament\App\Widgets;
+namespace App\Livewire;
 
 use App\Filament\App\Resources\EventResource;
 use App\Models\Event;
-use Filament\Forms\Components\Section;
 use Illuminate\Database\Eloquent\Model;
 use Saade\FilamentFullCalendar\Actions\DeleteAction;
 use Saade\FilamentFullCalendar\Actions\EditAction;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 
-class CalendarWidget extends FullCalendarWidget
+
+class Calendar extends FullCalendarWidget
 {
     public Model|string|null $model = Event::class;
 
@@ -67,4 +67,5 @@ class CalendarWidget extends FullCalendarWidget
             DeleteAction::make(),
         ];
     }
+
 }

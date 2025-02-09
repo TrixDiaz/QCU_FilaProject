@@ -20,16 +20,14 @@ class Terminal extends Page implements HasForms, HasTable
     use InteractsWithTable;
     use HasPageShield;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.app.pages.terminal';
     protected static ?string $navigationLabel = 'Terminal Asset';
 
-    public $sections;
-    public function mount()
-    {
-        $this->sections = Section::all();
-    }
+
 
     public function table(Table $table): Table
     {

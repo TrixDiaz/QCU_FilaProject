@@ -18,7 +18,12 @@ class Section extends Model
     {
         return 'slug';
     }
-    protected $guarded = [];
+    protected $fillable = [
+        'classroom_id',
+        'name',
+        'slug',
+        'is_active'
+    ];
 
     public function classroom(): BelongsTo
     {

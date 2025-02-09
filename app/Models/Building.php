@@ -18,10 +18,21 @@ class Building extends Model
         return 'slug';
     }
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'slug',
+        'is_active'
+    ];
 
     public function classrooms(): HasMany
     {
         return $this->HasMany(Classroom::class);
+    }
+
+    public function getAssetsCountAttribute()
+    {
+        return $this->classrooms->sum(function ($classroom) {
+            return $classroom->assets()->count();
+        });
     }
 }

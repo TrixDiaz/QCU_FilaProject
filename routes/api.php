@@ -7,12 +7,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/hello', function () {
-    return 'Hello';
-});
+Route::get('/sections', [\App\Http\Controllers\SectionController::class, 'showSections']);
 
-Route::get('/sections', [\App\Http\Controllers\SectionController::class, 'index']);
+Route::get('/sections/{id}', [\App\Http\Controllers\SectionController::class, 'showClassroomBuildingById']);
 
-Route::get('/sections/{id}', function ($id) {
-    return \App\Models\Section::with('classroom.building')->findOrFail($id);
-});
+Route::post('/store/attendance', [\App\Http\Controllers\SectionController::class, 'storeAttendance']);

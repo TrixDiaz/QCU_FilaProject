@@ -5,6 +5,9 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\EventResource\Pages;
 use App\Filament\App\Resources\EventResource\RelationManagers;
 use App\Models\Event;
+use App\Models\Section;
+use App\Models\Subject;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -31,6 +34,21 @@ class EventResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('title'),
                                 Forms\Components\ColorPicker::make('color'),
+                                Forms\Components\Select::make('professor_id')
+                                    ->label('Professor')
+                                    ->options(User::all()->pluck('name', 'id'))
+                                    ->preload()
+                                    ->native(false),
+                                Forms\Components\Select::make('section_id')
+                                    ->label('Section')
+                                    ->options(Section::all()->pluck('name', 'id'))
+                                    ->preload()
+                                    ->native(false),
+                                Forms\Components\Select::make('subject_id')
+                                    ->label('Subject')
+                                    ->options(Subject::all()->pluck('name', 'id'))
+                                    ->preload()
+                                    ->native(false),
                                 Forms\Components\DateTimePicker::make('starts_at')->native(false),
                                 Forms\Components\DateTimePicker::make('ends_at')->native(false),
                             ])->columns(2),

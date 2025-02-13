@@ -9,6 +9,7 @@
         "php": "^8.2",
         "awcodes/light-switch": "^1.0",
         "bezhansalleh/filament-shield": "^3.3",
+        "eightynine/filament-excel-import": "^3.1",
         "filament/filament": "^3.2",
         "guava/calendar": "*",
         "laravel/framework": "^11.31",

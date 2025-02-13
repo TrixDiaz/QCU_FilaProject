@@ -25,8 +25,7 @@ return new class extends Migration
             $table->dateTime('due_date')->nullable();
             $table->dateTime('date_finished')->nullable();
             $table->string('attachment')->nullable();
-            $table->string('status')->default('in progress');
-            $table->softDeletes();
+            $table->string('status')->default('in-progress');
             $table->timestamps();
         });
     }

@@ -2,7 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Asset;
+use App\Models\Section;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 
 /**
@@ -18,13 +22,15 @@ class TicketFactory extends Factory
     public function definition(): array
     {
         return [
-            'asset_id' => \App\Models\Asset::factory(),
-            'user_id' => \App\Models\User::factory(),
-            'section_id' => \App\Models\Section::factory(),
-            'title' => fake()->sentence(),
-            'description' => fake()->paragraph(),
-            'ticket_type' => fake()->randomElement(['maintenance', 'repair', 'replacement']),
-            'priority' => fake()->randomElement(['low', 'medium', 'high']),
+            'ticket_number' => strtoupper(Str::random(10)),
+            'title' => $this->faker->sentence,
+            'description' => $this->faker->paragraph,
+            'ticket_type' => $this->faker->randomElement(['bug', 'feature', 'support']),
+            'priority' => $this->faker->randomElement(['low', 'medium', 'high']),
+            'due_date' => $this->faker->optional()->dateTimeBetween('now', '+1 month'),
+            'date_finished' => $this->faker->optional()->dateTimeBetween('now', '+2 months'),
+            'attachment' => $this->faker->optional()->imageUrl(),
+            'status' => $this->faker->randomElement(['in-progress', 'completed', 'pending']),
         ];
     }
 }

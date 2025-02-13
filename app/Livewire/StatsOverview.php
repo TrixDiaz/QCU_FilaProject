@@ -13,6 +13,8 @@ class StatsOverview extends BaseWidget
         return [
             Stat::make('Total Users', '100')
                 ->description('Active ' . '50'),
+            Stat::make('Total Users', '100')
+                ->description('Active ' . '50'),
             Stat::make('Total Assets', '21%')
                 ->description('3% decrease' . PHP_EOL . 'Compared to last quarter'),
             Stat::make('Tickets', '3:12')

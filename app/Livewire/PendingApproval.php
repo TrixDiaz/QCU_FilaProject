@@ -21,7 +21,14 @@ class PendingApproval extends BaseWidget implements HasForms, HasTable
         return $table
             ->query(\App\Models\Ticket::query())
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('name'),
-            ])->emptyStateHeading('No Tickets yet');
+                \Filament\Tables\Columns\TextColumn::make('ticket_number'),
+                \Filament\Tables\Columns\TextColumn::make('ticket_type'),
+                \Filament\Tables\Columns\TextColumn::make('priority'),
+                \Filament\Tables\Columns\TextColumn::make('status'),
+            ])
+            ->emptyStateHeading('No Tickets yet')
+            ->defaultPaginationPageOption(5)
+            ->paginationPageOptions([5, 10, 25, 50])
+            ->striped();
     }
 }

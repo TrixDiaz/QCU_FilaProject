@@ -38,8 +38,8 @@ class TicketType extends ApexChartWidget
                 'type' => 'donut',
                 'height' => 300,
             ],
-            'series' => [2, 4, 6, 10, 14],
-            'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            'series' => [2, 4,],
+            'labels' => ['Request', 'Incident'],
             'legend' => [
                 'labels' => [
                     'fontFamily' => 'inherit',

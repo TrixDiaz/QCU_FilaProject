@@ -2,50 +2,66 @@
 
 namespace App\Livewire;
 
+use App\Models\Asset;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
 class AssetAvailability extends ApexChartWidget
 {
     /**
      * Chart Id
-     *
-     * @var string
      */
     protected static ?string $chartId = 'assetAvailability';
 
     /**
-     * Widget content height
-     */
-    protected static ?int $contentHeight = 275;
-
-    /**
      * Widget Title
-     *
-     * @var string|null
      */
     protected static ?string $heading = 'Asset Availability';
 
     /**
-     * Chart options (series, labels, types, size, animations...)
-     * https://apexcharts.com/docs/options
-     *
-     * @return array
+     * Widget content height
+     */
+    protected static ?int $contentHeight = 300;
+
+    /**
+     * Get Chart Options
      */
     protected function getOptions(): array
     {
+        $assets = ['Asset 1', 'Asset 2', 'Asset 3', 'Asset 4', 'Asset 5'];
+
+        //  Fetch ACTIVE and INACTIVE counts
+        $active = [];
+        $inactive = [];
+        $deploy =[];
+
+        foreach ($assets as $assetName) {
+            $active[] = Asset::where('name', $assetName)->where('status', 'ACTIVE')->count();
+            $inactive[] = Asset::where('name', $assetName)->where('status', 'INACTIVE')->count();
+            $deploy[] = Asset::where('name', $assetName)->where('status', 'DEPLOY')->count();
+        }
+
         return [
             'chart' => [
                 'type' => 'bar',
+                'stacked' => true, //  Enable stacked bars
                 'height' => 300,
             ],
             'series' => [
                 [
-                    'name' => 'BasicBarChart',
-                    'data' => [7, 10, 13, 15, 18],
+                    'name' => 'Active', 
+                    'data' => $active, //  Use ACTIVE status data
+                ],
+                [
+                    'name' => 'Inactive',
+                    'data' => $inactive, //  Use INACTIVE status data
+                ],
+                [
+                    'name' => 'Deployed',
+                    'data' => $deploy, //  Use DEPLOYED status data
                 ],
             ],
             'xaxis' => [
-                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                'categories' => $assets, //  Asset names on X-axis
                 'labels' => [
                     'style' => [
                         'fontFamily' => 'inherit',
@@ -59,12 +75,15 @@ class AssetAvailability extends ApexChartWidget
                     ],
                 ],
             ],
-            'colors' => ['#f59e0b'],
+            'colors' => ['#22C55E', '#EF4444', '#FACC15'], // Green (Active), Red (Inactive), Yellow (Deployed)
             'plotOptions' => [
                 'bar' => [
-                    'borderRadius' => 3,
+                    'borderRadius' => 4,
                     'horizontal' => false,
                 ],
+            ],
+            'legend' => [
+                'position' => 'bottom',
             ],
         ];
     }

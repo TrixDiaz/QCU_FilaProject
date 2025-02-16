@@ -2,37 +2,47 @@
 
 namespace App\Livewire;
 
+use App\Models\Asset;
+use Carbon\Carbon;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
 class InventoryTrends extends ApexChartWidget
 {
     /**
      * Chart Id
-     *
-     * @var string
      */
     protected static ?string $chartId = 'inventoryTrends';
 
     /**
-     * Widget content height
-     */
-    protected static ?int $contentHeight = 275;
-
-    /**
      * Widget Title
-     *
-     * @var string|null
      */
     protected static ?string $heading = 'Inventory Trends';
 
     /**
-     * Chart options (series, labels, types, size, animations...)
-     * https://apexcharts.com/docs/options
-     *
-     * @return array
+     * Widget content height
+     */
+    protected static ?int $contentHeight = 300;
+
+    /**
+     * Get Chart Options (Dynamically Fetch Data)
      */
     protected function getOptions(): array
     {
+        // Get the last 12 months dynamically
+        $months = collect(range(0, 11))->map(function ($i) {
+            return Carbon::now()->subMonths($i)->format('M');
+        })->reverse()->toArray();
+
+        // Fetch total assets added per month dynamically
+        $monthlyAssets = [];
+        foreach ($months as $month) {
+            $date = Carbon::parse($month . ' 1 ' . now()->year); // Convert to full date format
+
+            $monthlyAssets[] = Asset::whereMonth('created_at', $date->month)
+                ->whereYear('created_at', $date->year)
+                ->count();
+        }
+
         return [
             'chart' => [
                 'type' => 'line',
@@ -40,12 +50,12 @@ class InventoryTrends extends ApexChartWidget
             ],
             'series' => [
                 [
-                    'name' => 'InventoryTrends',
-                    'data' => [2, 4, 6, 10, 14, 7, 2, 9, 10, 15, 13, 18],
+                    'name' => 'Total Assets Added',
+                    'data' => $monthlyAssets, //  Use dynamic data from the database
                 ],
             ],
             'xaxis' => [
-                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                'categories' => $months, //  Use real month names dynamically
                 'labels' => [
                     'style' => [
                         'fontFamily' => 'inherit',
@@ -59,9 +69,12 @@ class InventoryTrends extends ApexChartWidget
                     ],
                 ],
             ],
-            'colors' => ['#f59e0b'],
+            'colors' => ['#f59e0b'], // Orange color for visibility
             'stroke' => [
-                'curve' => 'smooth',
+                'curve' => 'smooth', // Make the trend line smooth
+            ],
+            'legend' => [
+                'position' => 'bottom',
             ],
         ];
     }

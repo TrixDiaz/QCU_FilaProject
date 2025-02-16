@@ -19,6 +19,7 @@ class PendingApproval extends BaseWidget implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->heading('Pending Approval')
             ->query(\App\Models\Ticket::query())
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('ticket_number'),

@@ -25,7 +25,7 @@ class TicketFactory extends Factory
             'ticket_number' => strtoupper(Str::random(10)),
             'title' => $this->faker->sentence,
             'description' => $this->faker->paragraph,
-            'ticket_type' => $this->faker->randomElement(['bug', 'feature', 'support']),
+            'ticket_type' => $this->faker->randomElement(['request', 'incident']),
             'priority' => $this->faker->randomElement(['low', 'medium', 'high']),
             'due_date' => $this->faker->optional()->dateTimeBetween('now', '+1 month'),
             'date_finished' => $this->faker->optional()->dateTimeBetween('now', '+2 months'),

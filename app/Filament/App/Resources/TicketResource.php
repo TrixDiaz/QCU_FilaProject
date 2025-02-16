@@ -20,6 +20,7 @@ use Filament\Forms\Components\FileUpload;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\TextInput;
 
+
 class TicketResource extends Resource implements HasShieldPermissions
 {
     public static function getPermissionPrefixes(): array
@@ -53,15 +54,17 @@ class TicketResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
+                Forms\Components\TextInput::make('ticket_number')
+                ->required(),
                 Forms\Components\Select::make('asset_id')
                 ->relationship('asset', 'name')
                 ->required()
                 ->searchable()
                 ->preload(),
-                Forms\Components\Select::make('created_by')
+                Forms\Components\TextInput::make('created_by')
                     ->required()
-                    ->options(User::all()->pluck('name', 'id'))
-                    ->searchable(),
+                    ->default(fn () => auth()->user()->name)
+                    ->dehydrateStateUsing(fn () => auth()->id()),
                Forms\Components\Select::make('assigned_to')
                     ->required()
                     ->options(User::all()->pluck('name', 'id'))
@@ -75,13 +78,14 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->required(),
-                Select::make('ticket_type')
-                    ->required()
+                Forms\Components\Select::make('ticket_type')
                     ->options([
-                        'request' => 'Request',
-                        'report' => 'Report',
-                    ]),
-                Select::make('priority')
+                    'request' => 'Request',
+                    'incident' => 'Incident',
+                    ])
+                    ->required()
+                    ->reactive(),
+                Forms\Components\Select::make('priority')
                     ->required()
                     ->options([
                         'low' => 'Low',
@@ -91,7 +95,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                     
                 Forms\Components\DateTimePicker::make('due_date'),
                 Forms\Components\DateTimePicker::make('date_finished'),
-                Forms\Components\FileUpload::make('attachment'),
+                Forms\Components\FileUpload::make('attachment')
+                ->multiple(),
             ]);
     }
 
@@ -125,7 +130,11 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('ticket_type')
-                    ->searchable()
+                ->formatStateUsing(fn (string $state): string => match ($state) {
+                    'request' => 'Request',
+                    'incident' => 'Incident',
+                    default => $state,
+                })
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('priority')
                     ->searchable()
@@ -206,9 +215,7 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -220,3 +227,5 @@ class TicketResource extends Resource implements HasShieldPermissions
         ];
     }
 }
+
+

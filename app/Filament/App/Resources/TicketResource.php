@@ -6,8 +6,6 @@ use App\Filament\App\Resources\TicketResource\Pages;
 use App\Filament\App\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Models\Post;
-use App\Models\Asset;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,11 +13,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\FileUpload;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
-use Filament\Forms\Components\TextInput;
-
+use Filament\Forms\Components\Wizard;
+use Illuminate\Support\Str;
+use Filament\Forms\Set;
 
 class TicketResource extends Resource implements HasShieldPermissions
 {
@@ -35,7 +32,7 @@ class TicketResource extends Resource implements HasShieldPermissions
             'publish'
         ];
     }
-    
+
     protected static ?string $model = Ticket::class;
 
     protected static ?string $navigationLabel = 'ticket';
@@ -45,7 +42,7 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('is_active', true)->count();
+        return static::getModel()::all()->count();
     }
 
     protected static ?string $navigationBadgeTooltip = 'The number of active ticket';
@@ -54,75 +51,104 @@ class TicketResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('ticket_number')
-                ->required(),
-                Forms\Components\Select::make('asset_id')
-                ->relationship('asset', 'name')
-                ->required()
-                ->searchable()
-                ->preload(),
-                Forms\Components\TextInput::make('created_by')
-                    ->required()
-                    ->default(fn () => auth()->user()->name)
-                    ->dehydrateStateUsing(fn () => auth()->id()),
-               Forms\Components\Select::make('assigned_to')
-                    ->required()
-                    ->options(User::all()->pluck('name', 'id'))
-                    ->searchable(), 
-                Forms\Components\Select::make('section_id')
-                    ->relationship('section', 'name')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
-                Forms\Components\TextInput::make('title')
-                    ->required(),
-                Forms\Components\TextInput::make('description')
-                    ->required(),
-                Forms\Components\Select::make('ticket_type')
-                    ->options([
-                    'request' => 'Request',
-                    'incident' => 'Incident',
-                    ])
-                    ->required()
-                    ->reactive(),
-                Forms\Components\Select::make('priority')
-                    ->required()
-                    ->options([
-                        'low' => 'Low',
-                        'medium' => 'Medium',
-                        'high' => 'High',
-                    ]), 
-                    
-                Forms\Components\DateTimePicker::make('due_date'),
-                Forms\Components\DateTimePicker::make('date_finished'),
-                Forms\Components\FileUpload::make('attachment')
-                ->multiple(),
+                Forms\Components\Grid::make(2) // Creating a 2-column grid
+                ->schema([
+                    Forms\Components\Grid::make() // Right column for Placeholder
+                    ->schema([
+                        //.....
+                    ])->columnSpan(1),
+                    Forms\Components\Section::make() // Right column for Placeholder
+                    ->schema([
+                        Forms\Components\Placeholder::make('ticket')
+                            ->label('Ticket Number')
+                            ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
+                    ])->columnSpan(1),
+                    Forms\Components\Section::make()
+                        ->schema([
+                            Wizard::make([
+                                Wizard\Step::make('Ticket Information')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('title')
+                                                    ->required(),
+                                                Forms\Components\Select::make('ticket_type')
+                                                    ->options([
+                                                        'request' => 'Request',
+                                                        'incident' => 'Incident',
+                                                    ])
+                                                    ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
+                                                    ->required()
+                                                    ->reactive()
+                                                    ->live(onBlur: true)
+                                                    ->native(false),
+                                                Forms\Components\Select::make('asset_id')
+                                                    ->relationship('asset', 'name')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5),
+                                                Forms\Components\Select::make('section_id')
+                                                    ->relationship('section', 'name')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5),
+                                                Forms\Components\TextArea::make('description')
+                                                    ->required()
+                                                    ->columnSpanFull(),
+                                            ]),
+                                    ]),
+                                Wizard\Step::make('Other Information')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('ticket_number')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->unique('tickets', ignoreRecord: true),
+                                        Forms\Components\TextInput::make('created_by')
+                                            ->required()
+                                            ->default(fn() => auth()->user()->name)
+                                            ->dehydrateStateUsing(fn() => auth()->id()),
+                                        Forms\Components\Select::make('assigned_to')
+                                            ->required()
+                                            ->options(User::all()->pluck('name', 'id'))
+                                            ->searchable(),
+                                        Forms\Components\Select::make('priority')
+                                            ->required()
+                                            ->default('low')
+                                            ->options([
+                                                'low' => 'Low',
+                                                'medium' => 'Medium',
+                                                'high' => 'High',
+                                            ]),
+//                                        Forms\Components\DateTimePicker::make('due_date'),
+//                                        Forms\Components\DateTimePicker::make('date_finished'),
+//                                        Forms\Components\FileUpload::make('attachments')
+//                                            ->disk('public')
+//                                            ->multiple(),
+                                    ]),
+                            ])->columnSpan(1), // Ensures the Wizard takes one column
+                        ]),
+
+                ])->columnSpanFull(), // Full width grid with two equal columns
             ]);
     }
+
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('ticket_number')
+                Tables\Columns\TextColumn::make('Ticket Information')
                     ->searchable()
-                    ->sortable(),
+                    ->default(fn($record): string => $record->ticket_number)
+                    ->description(fn($record): string => $record->creator?->name),
                 Tables\Columns\TextColumn::make('asset.name')
                     ->label('Asset')
-                    ->description(fn($record): string => $record->Asset?->name)
+                    ->description(fn($record): string => $record->ticket_type)
                     ->sortable(),
-                    Tables\Columns\TextColumn::make('creator.name')
-                    ->label('Created By')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('assignedUser.name')
-                    ->label('Assigned To')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('section.name')
-                    ->label('section')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -130,46 +156,26 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('ticket_type')
-                ->formatStateUsing(fn (string $state): string => match ($state) {
-                    'request' => 'Request',
-                    'incident' => 'Incident',
-                    default => $state,
-                })
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'request' => 'Request',
+                        'incident' => 'Incident',
+                        default => $state,
+                    })
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('priority')
                     ->searchable()
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                       'low' => 'gray',
-                       'medium' => 'warning',
-                       'high' => 'danger',
+                    ->color(fn(string $state): string => match ($state) {
+                        'low' => 'gray',
+                        'medium' => 'warning',
+                        'high' => 'danger',
                     }),
-
-
-                Tables\Columns\TextColumn::make('due_date')
-                    ->dateTime()
+                Tables\Columns\TextColumn::make('status')
+                    ->badge(),
+                Tables\Columns\TextColumn::make('section.name')
+                    ->label('section')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('date_finished')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('attachment')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\SelectColumn::make('status')
-                ->beforeStateUpdated(function ($record, $state) {
-                    // Runs before the state is saved to the database.
-                })
-                ->afterStateUpdated(function ($record, $state) {
-                    // Runs after the state is saved to the database.
-                })
-                    ->options([
-                        'open' => 'Open',
-                        'in progress' => 'In Progress',
-                        'resolved' => 'Resolved',
-                        'closed' => 'Closed',
-                    ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -180,13 +186,13 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-            Tables\Filters\SelectFilter::make('is_active')
-                ->label('Status')
-                ->options([
-                    true => 'Active',
-                    false => 'Inactive'
-                ])
-                ->native(false)
+                Tables\Filters\SelectFilter::make('is_active')
+                    ->label('Status')
+                    ->options([
+                        true => 'Active',
+                        false => 'Inactive'
+                    ])
+                    ->native(false)
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

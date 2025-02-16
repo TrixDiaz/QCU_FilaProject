@@ -27,6 +27,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AssetSeeder::class);
         $this->call(TagSeeder::class);
         $this->call(AssetTagSeeder::class);
-        $this->call(TicketSeeder::class);
+//        $this->call(TicketSeeder::class);
     }
 }

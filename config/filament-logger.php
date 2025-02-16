@@ -12,12 +12,12 @@ return [
         'log_name' => 'Resource',
         'logger' => \Z3d0X\FilamentLogger\Loggers\ResourceLogger::class,
         'color' => 'success',
-		
+
         'exclude' => [
             //App\Filament\Resources\UserResource::class,
         ],
         'cluster' => null,
-        'navigation_group' =>'Settings',
+        'navigation_group' =>'System Settings',
     ],
 
     'access' => [

@@ -102,6 +102,9 @@ class AppPanelProvider extends PanelProvider
                     ->locale(config('app.locale'))
                     ->plugins(['dayGrid', 'timeGrid'])
                     ->config([])
+            ])
+            ->resources([
+                config('filament-logger.activity_resource')
             ]);
     }
 }

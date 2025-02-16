@@ -2,37 +2,21 @@
 
 namespace App\Livewire;
 
+use App\Models\Asset;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
 class AssetCategories extends ApexChartWidget
 {
-    /**
-     * Chart Id
-     *
-     * @var string
-     */
-    protected static ?string $chartId = 'assetCategories';
-
-    /**
-     * Widget content height
-     */
+    protected static ?string $chartId = 'monthlyAssetTrends';
     protected static ?int $contentHeight = 275;
-
-    /**
-     * Widget Title
-     *
-     * @var string|null
-     */
-    protected static ?string $heading = 'Asset Categories';
-
-    /**
-     * Chart options (series, labels, types, size, animations...)
-     * https://apexcharts.com/docs/options
-     *
-     * @return array
-     */
+    protected static ?string $heading = 'Asset Distribution';
+    
     protected function getOptions(): array
     {
+        $data = $this->getChartData();
+        
         return [
             'chart' => [
                 'type' => 'line',
@@ -40,12 +24,12 @@ class AssetCategories extends ApexChartWidget
             ],
             'series' => [
                 [
-                    'name' => 'AssetCategories',
-                    'data' => [2, 4, 6, 10, 14, 7, 2, 9, 10, 15, 13, 18],
+                    'name' => 'New Assets',
+                    'data' => $data['counts'],
                 ],
             ],
             'xaxis' => [
-                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                'categories' => $data['months'],
                 'labels' => [
                     'style' => [
                         'fontFamily' => 'inherit',
@@ -58,11 +42,49 @@ class AssetCategories extends ApexChartWidget
                         'fontFamily' => 'inherit',
                     ],
                 ],
+              
             ],
             'colors' => ['#f59e0b'],
             'stroke' => [
                 'curve' => 'smooth',
             ],
+            'tooltip' => [
+                'y' => [
+                    'formatter' => 'function (val) { return val + " assets" }'
+                ]
+            ]
+        ];
+    }
+
+    protected function getChartData(): array
+    {
+        // Count new assets created per month for the last 12 months
+        $results = Asset::select(
+            DB::raw('COUNT(*) as count'),
+            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month")
+        )
+            ->where('created_at', '>=', now()->subMonths(11))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $months = collect([]);
+        $counts = collect([]);
+
+        // Ensure all months are represented, even those with no new assets
+        for ($i = 11; $i >= 0; $i--) {
+            $monthDate = now()->subMonths($i);
+            $monthKey = $monthDate->format('Y-m');
+            
+            $monthData = $results->firstWhere('month', $monthKey);
+            
+            $months->push($monthDate->format('M'));
+            $counts->push($monthData ? $monthData->count : 0);
+        }
+
+        return [
+            'months' => $months->toArray(),
+            'counts' => $counts->toArray(),
         ];
     }
 }

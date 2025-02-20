@@ -20,7 +20,7 @@ class AssetAvailability extends ApexChartWidget
     /**
      * Widget content height
      */
-    protected static ?int $contentHeight = 300;
+    protected static ?int $contentHeight = 275;
 
     /**
      * Get Chart Options
@@ -48,7 +48,7 @@ class AssetAvailability extends ApexChartWidget
             ],
             'series' => [
                 [
-                    'name' => 'Active', 
+                    'name' => 'Active',
                     'data' => $active, //  Use ACTIVE status data
                 ],
                 [

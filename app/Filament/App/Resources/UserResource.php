@@ -109,7 +109,7 @@ class UserResource extends Resource implements HasShieldPermissions
                         'success' => fn(User $record) => $record->email_verified_at !== null,
                         'warning' => fn(User $record) => $record->email_verified_at === null,
                     ])
-                    ->badge()
+
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
@@ -147,6 +147,7 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->tooltip('Actions')
             ])
             ->bulkActions([
+                \pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction::make(),
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

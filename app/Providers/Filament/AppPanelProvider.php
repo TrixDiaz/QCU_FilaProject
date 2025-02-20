@@ -18,7 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
+
 
 class AppPanelProvider extends PanelProvider
 {
@@ -76,8 +76,9 @@ class AppPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
+                \EightyNine\Reports\ReportsPlugin::make(),
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
-                FilamentApexChartsPlugin::make(),
+                \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,

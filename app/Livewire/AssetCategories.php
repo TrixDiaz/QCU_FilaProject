@@ -12,11 +12,11 @@ class AssetCategories extends ApexChartWidget
     protected static ?string $chartId = 'monthlyAssetTrends';
     protected static ?int $contentHeight = 275;
     protected static ?string $heading = 'Asset Distribution';
-    
+
     protected function getOptions(): array
     {
         $data = $this->getChartData();
-        
+
         return [
             'chart' => [
                 'type' => 'line',
@@ -42,7 +42,7 @@ class AssetCategories extends ApexChartWidget
                         'fontFamily' => 'inherit',
                     ],
                 ],
-              
+
             ],
             'colors' => ['#f59e0b'],
             'stroke' => [
@@ -61,7 +61,8 @@ class AssetCategories extends ApexChartWidget
         // Count new assets created per month for the last 12 months
         $results = Asset::select(
             DB::raw('COUNT(*) as count'),
-            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month")
+            DB::raw("strftime('%Y-%m', created_at) as month")
+
         )
             ->where('created_at', '>=', now()->subMonths(11))
             ->groupBy('month')
@@ -75,9 +76,9 @@ class AssetCategories extends ApexChartWidget
         for ($i = 11; $i >= 0; $i--) {
             $monthDate = now()->subMonths($i);
             $monthKey = $monthDate->format('Y-m');
-            
+
             $monthData = $results->firstWhere('month', $monthKey);
-            
+
             $months->push($monthDate->format('M'));
             $counts->push($monthData ? $monthData->count : 0);
         }

@@ -18,7 +18,7 @@ class SectionFactory extends Factory
     public function definition(): array
     {
         return [
-            'classroom_id'=> Classroom::factory(),
+            'classroom_id' => \App\Models\Classroom::factory(),
             'name'=> fake()->text(20),
             'slug'=> fake()->slug(),
             'is_active'=> fake()->boolean(),

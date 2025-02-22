@@ -17,6 +17,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\Wizard;
 use Illuminate\Support\Str;
 use Filament\Forms\Set;
+use Filament\Tables\Columns\SelectColumn;
 
 class TicketResource extends Resource implements HasShieldPermissions
 {
@@ -125,9 +126,11 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             ]),
 //                                        Forms\Components\DateTimePicker::make('due_date'),
 //                                        Forms\Components\DateTimePicker::make('date_finished'),
-//                                        Forms\Components\FileUpload::make('attachments')
-//                                            ->disk('public')
-//                                            ->multiple(),
+                                          Forms\Components\FileUpload::make('attachments')
+                                              ->disk('public')
+                                              ->multiple()
+                                              ->directory('ticket') // Files will be stored in storage/app/public/tickets
+                                              ->openable(), 
                                     ]),
                             ])->columnSpan(1), // Ensures the Wizard takes one column
                         ]),
@@ -170,12 +173,24 @@ class TicketResource extends Resource implements HasShieldPermissions
                         'medium' => 'warning',
                         'high' => 'danger',
                     }),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge(),
+                Tables\Columns\SelectColumn::make('status')
+                    ->options([
+                    'in progress' => 'In progress',
+                    'open' => 'Open',
+                    'closed' => 'Closed',
+                    'resolved' => 'Resolved',
+                   ])
+                    ->beforeStateUpdated(function ($record, $state) {
+                    // Runs before the state is saved to the database.
+                    })
+                    ->afterStateUpdated(function ($record, $state) {
+                    // Runs after the state is saved to the database.
+                   }),
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\ImageColumn::make('attachment'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -15,12 +15,12 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_number', 'asset_id', 'created_by', 'assigned_to', 'section_id',
         'title', 'description', 'ticket_type', 'priority', 'due_date',
-        'date_finished', 'attachments', 'status', 'created_at', 'updated_at'
+        'date_finished', 'attachment', 'status', 'created_at', 'updated_at'
     ];
 
 
     protected $cast = [
-//        'attachments' => 'array',
+          'attachment' => 'array',
 //        'due_date' => 'datetime',
 //        'date_finished' => 'datetime',
     ];

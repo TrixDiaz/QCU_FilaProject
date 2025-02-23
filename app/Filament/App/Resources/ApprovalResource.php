@@ -139,11 +139,6 @@ class ApprovalResource extends Resource
 //                    ->visible(fn (Approval $record) => $record->status === 'pending')
                     ->modalWidth('md'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
             ->defaultSort('created_at', 'desc');
     }
 
@@ -158,8 +153,8 @@ class ApprovalResource extends Resource
     {
         return [
             'index' => Pages\ListApprovals::route('/'),
-            'create' => Pages\CreateApproval::route('/create'),
-            'edit' => Pages\EditApproval::route('/{record}/edit'),
+//            'create' => Pages\CreateApproval::route('/create'),
+//            'edit' => Pages\EditApproval::route('/{record}/edit'),
         ];
     }
 }

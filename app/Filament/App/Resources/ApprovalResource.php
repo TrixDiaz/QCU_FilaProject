@@ -47,107 +47,105 @@ class ApprovalResource extends Resource
             ]);
     }
 
-        public static function table(Table $table): Table
-        {
-            return $table
-                ->contentGrid([
-                    'md' => 1,
-                    'lg' => 1,
-                ])
-                ->columns([
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\Layout\Grid::make([
-                            'default' => 3,
-                        ])
-                            ->columnSpan(1)
-                            ->schema([
-                                Tables\Columns\TextColumn::make('title')
-                                    ->size(Tables\Columns\TextColumn\TextColumnSize::Large)
-                                    ->searchable()
-                                    ->weight('bold')
-                                    ->columnSpan(2),
-                                Tables\Columns\TextColumn::make('status')
-                                    ->badge()
-                                    ->color(fn (string $state): string => match ($state) {
-                                        'approved' => 'success',
-                                        'declined' => 'danger',
-                                        'pending' => 'warning',
-                                    })
-                                    ->alignEnd(),
-                            ]),
-                        Tables\Columns\Layout\Grid::make([
-                            'default' => 2,
-                        ])
-                            ->schema([
-                                Tables\Columns\TextColumn::make('asset.name')
-                                    ->label('Asset')
-                                    ->sortable(),
-                                Tables\Columns\TextColumn::make('professor.name')
-                                    ->label('Professor')
-                                    ->sortable(),
-                                Tables\Columns\TextColumn::make('section.name')
-                                    ->label('Section')
-                                    ->sortable(),
-                                Tables\Columns\TextColumn::make('subject.name')
-                                    ->label('Subject')
-                                    ->sortable(),
-                            ]),
-                        Tables\Columns\Layout\Grid::make([
-                            'default' => 2,
-                        ])
-                            ->schema([
-                                Tables\Columns\TextColumn::make('starts_at')
-                                    ->dateTime()
-                                    ->sortable(),
-                                Tables\Columns\TextColumn::make('ends_at')
-                                    ->dateTime()
-                                    ->sortable(),
-                            ]),
-                    ]),
-                ])
-                ->filters([
-                    //
-                ])
-                ->headerActions([
-                    Tables\Actions\Action::make('approve')
-                        ->button()
-                        ->color('success')
-                        ->icon('heroicon-o-check')
-                        ->action(function (Approval $record) {
-                            $record->update(['status' => 'approved']);
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->contentGrid([
+                'md' => 1,
+                'lg' => 1,
+            ])
+            ->columns([
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\Layout\Grid::make([
+                        'default' => 3,
+                    ])
+                        ->columnSpan(1)
+                        ->schema([
+                            Tables\Columns\TextColumn::make('title')
+                                ->size(Tables\Columns\TextColumn\TextColumnSize::Large)
+                                ->searchable()
+                                ->weight('bold')
+                                ->columnSpan(2),
+                            Tables\Columns\TextColumn::make('status')
+                                ->badge()
+                                ->color(fn (string $state): string => match ($state) {
+                                    'approved' => 'success',
+                                    'declined' => 'danger',
+                                    'pending' => 'warning',
+                                })
+                                ->alignEnd(),
+                        ]),
+                    Tables\Columns\Layout\Grid::make([
+                        'default' => 2,
+                    ])
+                        ->schema([
+                            Tables\Columns\TextColumn::make('asset.name')
+                                ->label('Asset')
+                                ->sortable(),
+                            Tables\Columns\TextColumn::make('professor.name')
+                                ->label('Professor')
+                                ->sortable(),
+                            Tables\Columns\TextColumn::make('section.name')
+                                ->label('Section')
+                                ->sortable(),
+                            Tables\Columns\TextColumn::make('subject.name')
+                                ->label('Subject')
+                                ->sortable(),
+                        ]),
+                    Tables\Columns\Layout\Grid::make([
+                        'default' => 2,
+                    ])
+                        ->schema([
+                            Tables\Columns\TextColumn::make('starts_at')
+                                ->dateTime()
+                                ->sortable(),
+                            Tables\Columns\TextColumn::make('ends_at')
+                                ->dateTime()
+                                ->sortable(),
+                        ]),
+                ]),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\Action::make('approve')
+                    ->button()
+                    ->color('success')
+                    ->icon('heroicon-o-check')
+                    ->action(function (Approval $record) {
+                        $record->update(['status' => 'approved']);
 
-                            Notification::make()
-                                ->title('Approved successfully')
-                                ->success()
-                                ->send();
-                        })
-                        ->visible(fn ($record) => $record?->status === 'pending'),
+                        Notification::make()
+                            ->title('Approved successfully')
+                            ->success()
+                            ->send();
+                    })
+//                    ->visible(fn (Approval $record) => $record->status === 'pending')
+                ,
 
-                    Tables\Actions\Action::make('decline')
-                        ->button()
-                        ->color('danger')
-                        ->icon('heroicon-o-x-mark')
-                        ->action(function (Approval $record) {
-                            $record->update(['status' => 'declined']);
+                Tables\Actions\Action::make('decline')
+                    ->button()
+                    ->color('danger')
+                    ->icon('heroicon-o-x-mark')
+                    ->action(function (Approval $record) {
+                        $record->update(['status' => 'declined']);
 
-                            Notification::make()
-                                ->title('Declined successfully')
-                                ->success()
-                                ->send();
-                        })
-                        ->visible(fn ($record) => $record?->status === 'pending'),
-                ])
-                ->actions([
-                    Tables\Actions\EditAction::make()
-                        ->modalWidth('md'),
-                ])
-                ->bulkActions([
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ])
-                ->defaultSort('created_at', 'desc');
-        }
+                        Notification::make()
+                            ->title('Declined successfully')
+                            ->success()
+                            ->send();
+                    })
+//                    ->visible(fn (Approval $record) => $record->status === 'pending')
+                    ->modalWidth('md'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('created_at', 'desc');
+    }
 
     public static function getRelations(): array
     {

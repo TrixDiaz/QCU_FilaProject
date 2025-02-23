@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('color')->nullable();
             $table->dateTime('starts_at')->nullable();
             $table->dateTime('ends_at')->nullable();
+            $table->string('status')->default('pending');
             $table->timestamps();
         });
     }

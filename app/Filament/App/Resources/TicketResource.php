@@ -83,6 +83,12 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->reactive()
                                                     ->live(onBlur: true)
                                                     ->native(false),
+                                                Forms\Components\Select::make('option')
+                                                    ->options([
+                                                    'asset' => 'Asset',
+                                                    'classroom' => 'Classroom',
+                                                    ])
+                                                    ->visible(fn ($get) => $get('ticket_type') === 'request'),
                                                 Forms\Components\Select::make('asset_id')
                                                     ->relationship('asset', 'name')
                                                     ->required()
@@ -126,11 +132,15 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             ]),
 //                                        Forms\Components\DateTimePicker::make('due_date'),
 //                                        Forms\Components\DateTimePicker::make('date_finished'),
-                                          Forms\Components\FileUpload::make('attachments')
-                                              ->disk('public')
-                                              ->multiple()
-                                              ->directory('ticket') // Files will be stored in storage/app/public/tickets
-                                              ->openable(), 
+                                          Forms\Components\FileUpload::make('attachment')
+                                          ->disk('public')
+                                          ->multiple()
+                                          ->directory('ticket')
+                                          ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                          ->downloadable()
+                                          ->previewable()
+                                          ->reorderable()
+                                          ->visibility('public'), 
                                     ]),
                             ])->columnSpan(1), // Ensures the Wizard takes one column
                         ]),

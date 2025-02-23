@@ -46,5 +46,10 @@ class Ticket extends Model
         return $this->belongsTo(Section::class, 'section_id');
     }
 
+    public function setAttachmentAttribute($value)
+    {
+        $this->attributes['attachment'] = is_array($value) ? json_encode($value) : $value;
+    }
+
 }
 

@@ -61,8 +61,7 @@ class AssetCategories extends ApexChartWidget
         // Count new assets created per month for the last 12 months
         $results = Asset::select(
             DB::raw('COUNT(*) as count'),
-            DB::raw("strftime('%Y-%m', created_at) as month")
-
+            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month") // Use DATE_FORMAT() instead of strftime()
         )
             ->where('created_at', '>=', now()->subMonths(11))
             ->groupBy('month')

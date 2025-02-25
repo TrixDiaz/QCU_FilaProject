@@ -35,4 +35,6 @@ class Classroom extends Model
     {
         return $this->HasMany(Section::class);
     }
+
+
 }

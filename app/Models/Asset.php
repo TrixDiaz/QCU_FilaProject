@@ -54,4 +54,5 @@ class Asset extends Model
         return $this->hasMany(Ticket::class, 'asset_id');
     }
 
+
 }

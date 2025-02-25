@@ -86,10 +86,10 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->native(false),
                                                 Forms\Components\Select::make('option')
                                                     ->options([
-                                                    'asset' => 'Asset',
-                                                    'classroom' => 'Classroom',
+                                                        'asset' => 'Asset',
+                                                        'classroom' => 'Classroom',
                                                     ])
-                                                    ->visible(fn ($get) => $get('ticket_type') === 'request'),
+                                                    ->visible(fn($get) => $get('ticket_type') === 'request'),
                                                 Forms\Components\Select::make('asset_id')
                                                     ->relationship('asset', 'name')
                                                     ->required()
@@ -133,20 +133,12 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             ]),
 //                                        Forms\Components\DateTimePicker::make('due_date'),
 //                                        Forms\Components\DateTimePicker::make('date_finished'),
-                                          Forms\Components\FileUpload::make('attachment')
-                                          ->disk('public')
-                                          ->multiple()
-                                          ->directory('ticket')
-                                          ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                          ->downloadable()
-                                          ->previewable()
-                                          ->reorderable()
-                                          ->visibility('public'), 
                                     ]),
                             ])->columnSpan(1), // Ensures the Wizard takes one column
                         ]),
 
-                ])->columnSpanFull(), // Full width grid with two equal columns
+                ])
+                    ->columnSpanFull(),// Full width grid with two equal columns
             ]);
     }
 
@@ -186,17 +178,17 @@ class TicketResource extends Resource implements HasShieldPermissions
                     }),
                 Tables\Columns\SelectColumn::make('status')
                     ->options([
-                    'in progress' => 'In progress',
-                    'open' => 'Open',
-                    'closed' => 'Closed',
-                    'resolved' => 'Resolved',
-                   ])
+                        'in progress' => 'In progress',
+                        'open' => 'Open',
+                        'closed' => 'Closed',
+                        'resolved' => 'Resolved',
+                    ])
                     ->beforeStateUpdated(function ($record, $state) {
-                    // Runs before the state is saved to the database.
+                        // Runs before the state is saved to the database.
                     })
                     ->afterStateUpdated(function ($record, $state) {
-                    // Runs after the state is saved to the database.
-                   }),
+                        // Runs after the state is saved to the database.
+                    }),
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable()

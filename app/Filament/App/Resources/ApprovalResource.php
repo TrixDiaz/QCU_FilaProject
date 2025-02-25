@@ -20,6 +20,11 @@ class ApprovalResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::all()->count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form

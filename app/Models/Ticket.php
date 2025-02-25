@@ -25,6 +25,24 @@ class Ticket extends Model
 //        'date_finished' => 'datetime',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($ticket) {
+            if ($ticket->ticket_type === 'request') {
+                Approval::create([
+                    'asset_id' => $ticket->asset_id,
+                    'professor_id' => $ticket->assigned_to,
+                    'section_id' => $ticket->section_id,
+                    'subject_id' => null,
+                    'title' => $ticket->title,
+                    'color' => 'blue',
+                    'starts_at' => now(),
+                    'ends_at' => $ticket->due_date ?? now()->addDays(7),
+                ]);
+            }
+        });
+    }
+
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');

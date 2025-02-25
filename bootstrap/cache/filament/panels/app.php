@@ -1,6 +1,9 @@
 <?php return array (
   'livewireComponents' => 
   array (
+    'app.filament.app.resources.approval-resource.pages.create-approval' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\CreateApproval',
+    'app.filament.app.resources.approval-resource.pages.edit-approval' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\EditApproval',
+    'app.filament.app.resources.approval-resource.pages.list-approvals' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\ListApprovals',
     'app.filament.app.resources.asset-resource.pages.create-asset' => 'App\\Filament\\App\\Resources\\AssetResource\\Pages\\CreateAsset',
     'app.filament.app.resources.asset-resource.pages.edit-asset' => 'App\\Filament\\App\\Resources\\AssetResource\\Pages\\EditAsset',
     'app.filament.app.resources.asset-resource.pages.list-assets' => 'App\\Filament\\App\\Resources\\AssetResource\\Pages\\ListAssets',
@@ -84,6 +87,7 @@
   ),
   'resources' => 
   array (
+    'C:\\Users\\Trix\\Desktop\\qcu.test\\app\\Filament\\App\\Resources\\ApprovalResource.php' => 'App\\Filament\\App\\Resources\\ApprovalResource',
     'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\AssetResource.php' => 'App\\Filament\\App\\Resources\\AssetResource',
     'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\BrandResource.php' => 'App\\Filament\\App\\Resources\\BrandResource',
     'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\BuildingResource.php' => 'App\\Filament\\App\\Resources\\BuildingResource',

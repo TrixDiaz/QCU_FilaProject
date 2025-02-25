@@ -13,6 +13,13 @@
       0 => 'Awcodes\\LightSwitch\\LightSwitchServiceProvider',
     ),
   ),
+  'aymanalhattami/filament-date-scopes-filter' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'AymanAlhattami\\FilamentDateScopesFilter\\FilamentDateScopesFilterServiceProvider',
+    ),
+  ),
   'bezhansalleh/filament-shield' => 
   array (
     'aliases' => 
@@ -117,6 +124,17 @@
     'providers' => 
     array (
       0 => 'Kirschbaum\\PowerJoins\\PowerJoinsServiceProvider',
+    ),
+  ),
+  'laracraft-tech/laravel-date-scopes' => 
+  array (
+    'aliases' => 
+    array (
+      'LaravelDateScopes' => 'LaracraftTech\\LaravelDateScopes\\Facades\\LaravelDateScopes',
+    ),
+    'providers' => 
+    array (
+      0 => 'LaracraftTech\\LaravelDateScopes\\LaravelDateScopesServiceProvider',
     ),
   ),
   'laravel/pail' => 

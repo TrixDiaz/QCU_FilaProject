@@ -1,5 +1,5 @@
 <div>
-
+{{ $this->table }}
 {{--    <style>--}}
 {{--        .space { padding-block: 8px }--}}
 {{--        .building-grid, .classroom-grid, .asset-grid {--}}

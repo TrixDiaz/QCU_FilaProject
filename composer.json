@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "awcodes/light-switch": "^1.0",
+        "aymanalhattami/filament-date-scopes-filter": "^1.2",
         "bezhansalleh/filament-shield": "^3.3",
         "eightynine/filament-reports": "^3.0",
         "filament/filament": "^3.2",

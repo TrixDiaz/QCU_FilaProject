@@ -12,6 +12,6 @@ class ApprovalSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+
     }
 }

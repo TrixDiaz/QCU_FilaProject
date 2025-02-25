@@ -14,13 +14,13 @@ class Ticket extends Model
 
     protected $fillable = [
         'ticket_number', 'asset_id', 'created_by', 'assigned_to', 'section_id',
-        'title', 'description', 'ticket_type', 'priority', 'due_date',
-        'date_finished', 'attachments', 'status', 'created_at', 'updated_at'
+        'title', 'description', 'ticket_type', 'option', 'priority', 'due_date',
+        'date_finished', 'attachment', 'status', 'created_at', 'updated_at'
     ];
 
 
     protected $cast = [
-//        'attachments' => 'array',
+          'attachment' => 'array',
 //        'due_date' => 'datetime',
 //        'date_finished' => 'datetime',
     ];
@@ -44,6 +44,11 @@ class Ticket extends Model
     public function section() : BelongsTo
     {
         return $this->belongsTo(Section::class, 'section_id');
+    }
+
+    public function setAttachmentAttribute($value)
+    {
+        $this->attributes['attachment'] = is_array($value) ? json_encode($value) : $value;
     }
 
 }

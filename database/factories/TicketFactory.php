@@ -29,7 +29,7 @@ class TicketFactory extends Factory
             'priority' => $this->faker->randomElement(['low', 'medium', 'high']),
 //            'due_date' => $this->faker->optional()->dateTimeBetween('now', '+1 month'),
 //            'date_finished' => $this->faker->optional()->dateTimeBetween('now', '+2 months'),
-//            'attachments' => $this->faker->optional()->imageUrl(),
+            // 'attachment' => $this->faker->optional()->imageUrl(),
             'status' => $this->faker->randomElement(['in-progress', 'completed', 'pending']),
         ];
     }

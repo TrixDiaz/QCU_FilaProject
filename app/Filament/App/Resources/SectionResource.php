@@ -51,7 +51,7 @@ class SectionResource extends Resource implements HasShieldPermissions
                             ->columns(2),
                         Forms\Components\Section::make()
                             ->schema([
-                                Forms\Components\Select::make('building_id')
+                                Forms\Components\Select::make('classroom_id')
                                     ->relationship(
                                         name: 'classroom',
                                         titleAttribute: 'name',

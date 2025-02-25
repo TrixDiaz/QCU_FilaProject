@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class SectionSeeder extends Seeder
 {
@@ -21,7 +19,6 @@ class SectionSeeder extends Seeder
             ['classroom_id' => 3, 'name' => 'section 5', 'slug' => 'section-5', 'is_active' => true],
         ];
 
-        DB::table('sections')->insert($sections);
-//        \App\Models\Section::factory(10)->create();
+        \Illuminate\Support\Facades\DB::table('sections')->insert($sections);
     }
 }

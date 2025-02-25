@@ -3,88 +3,56 @@
 namespace App\Livewire;
 
 use App\Models\Asset;
+use App\Models\Category;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
 class AssetAvailability extends ApexChartWidget
 {
-    /**
-     * Chart Id
-     */
     protected static ?string $chartId = 'assetAvailability';
-
-    /**
-     * Widget Title
-     */
     protected static ?string $heading = 'Asset Availability';
+    protected static ?int $contentHeight = 300;
 
-    /**
-     * Widget content height
-     */
-    protected static ?int $contentHeight = 275;
-
-    /**
-     * Get Chart Options
-     */
     protected function getOptions(): array
     {
-        $assets = ['Asset 1', 'Asset 2', 'Asset 3', 'Asset 4', 'Asset 5'];
+        $categories = Category::pluck('name')->toArray();
 
-        //  Fetch ACTIVE and INACTIVE counts
         $active = [];
         $inactive = [];
-        $deploy =[];
+        $deploy = [];
 
-        foreach ($assets as $assetName) {
-            $active[] = Asset::where('name', $assetName)->where('status', 'ACTIVE')->count();
-            $inactive[] = Asset::where('name', $assetName)->where('status', 'INACTIVE')->count();
-            $deploy[] = Asset::where('name', $assetName)->where('status', 'DEPLOY')->count();
+        foreach ($categories as $category) {
+            $active[] = Asset::whereHas('category', function ($query) use ($category) {
+                $query->where('name', $category);
+            })->where('status', 'active')->count();
+
+            $inactive[] = Asset::whereHas('category', function ($query) use ($category) {
+                $query->where('name', $category);
+            })->where('status', 'inactive')->count();
+
+            $deploy[] = Asset::whereHas('category', function ($query) use ($category) {
+                $query->where('name', $category);
+            })->where('status', 'deploy')->count();
         }
 
         return [
             'chart' => [
                 'type' => 'bar',
-                'stacked' => true, //  Enable stacked bars
+                'stacked' => true,
                 'height' => 300,
             ],
             'series' => [
-                [
-                    'name' => 'Active',
-                    'data' => $active, //  Use ACTIVE status data
-                ],
-                [
-                    'name' => 'Inactive',
-                    'data' => $inactive, //  Use INACTIVE status data
-                ],
-                [
-                    'name' => 'Deployed',
-                    'data' => $deploy, //  Use DEPLOYED status data
-                ],
+                ['name' => 'Active', 'data' => $active],
+                ['name' => 'Inactive', 'data' => $inactive],
+                ['name' => 'Deployed', 'data' => $deploy],
             ],
             'xaxis' => [
-                'categories' => $assets, //  Asset names on X-axis
-                'labels' => [
-                    'style' => [
-                        'fontFamily' => 'inherit',
-                    ],
-                ],
+                'categories' => $categories,
+                'labels' => ['style' => ['fontFamily' => 'inherit']],
             ],
-            'yaxis' => [
-                'labels' => [
-                    'style' => [
-                        'fontFamily' => 'inherit',
-                    ],
-                ],
-            ],
-            'colors' => ['#22C55E', '#EF4444', '#FACC15'], // Green (Active), Red (Inactive), Yellow (Deployed)
-            'plotOptions' => [
-                'bar' => [
-                    'borderRadius' => 4,
-                    'horizontal' => false,
-                ],
-            ],
-            'legend' => [
-                'position' => 'bottom',
-            ],
+            'yaxis' => ['labels' => ['style' => ['fontFamily' => 'inherit']]],
+            'colors' => ['#22C55E', '#EF4444', '#FACC15'],
+            'plotOptions' => ['bar' => ['borderRadius' => 4, 'horizontal' => false]],
+            'legend' => ['position' => 'bottom'],
         ];
     }
 }

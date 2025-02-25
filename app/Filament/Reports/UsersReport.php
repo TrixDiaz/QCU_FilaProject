@@ -179,7 +179,7 @@ class UsersReport extends Report
             ]
         ])->concat($users->map(function ($user) {
             return [
-                'column1' => $user->created_at->format('F d, Y'),
+                'column1' => $user->created_at->timezone('Asia/Manila')->format('F d, Y'),
                 'column2' => $user->name,
                 'column3' => $user->email,
                 'column4' => $user->email_verified_at ? 'Verified' : 'Not Verified',

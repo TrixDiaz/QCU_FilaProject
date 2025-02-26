@@ -6,6 +6,7 @@ use App\Filament\App\Resources\TicketResource\Pages;
 use App\Filament\App\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -54,95 +55,120 @@ class TicketResource extends Resource implements HasShieldPermissions
         return $form
             ->schema([
                 Forms\Components\Grid::make(2) // Creating a 2-column grid
+                ->schema([
+                    Forms\Components\Grid::make() // Right column for Placeholder
                     ->schema([
-                        Forms\Components\Grid::make() // Right column for Placeholder
-                            ->schema([
-                                //.....
-                            ])->columnSpan(1),
-                        Forms\Components\Section::make() // Right column for Placeholder
-                            ->schema([
-                                Forms\Components\Placeholder::make('ticket')
-                                    ->label('Ticket Number')
-                                    ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
-                            ])->columnSpan(1),
-                        Forms\Components\Section::make()
-                            ->schema([
-                                Wizard::make([
-                                    Wizard\Step::make('Ticket Information')
-                                        ->schema([
-                                            Forms\Components\Grid::make(2)
-                                                ->schema([
-                                                    Forms\Components\TextInput::make('title')
-                                                        ->required(),
-                                                    Forms\Components\Select::make('ticket_type')
-                                                        ->options([
-                                                            'request' => 'Request',
-                                                            'incident' => 'Incident',
-                                                        ])
-                                                        ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
-                                                        ->required()
-                                                        ->reactive()
-                                                        ->live(onBlur: true)
-                                                        ->native(false),
-                                                    Forms\Components\Select::make('option')
-                                                        ->options([
-                                                            'asset' => 'Asset',
-                                                            'classroom' => 'Classroom',
-                                                        ])
-                                                        ->visible(fn($get) => $get('ticket_type') === 'request'),
-                                                    Forms\Components\Select::make('asset_id')
-                                                        ->relationship('asset', 'name')
-                                                        ->required()
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5),
-                                                    Forms\Components\Select::make('section_id')
-                                                        ->relationship('section', 'name')
-                                                        ->required()
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5),
-                                                    Forms\Components\TextArea::make('description')
-                                                        ->required()
-                                                        ->columnSpanFull(),
-                                                ]),
-                                        ]),
-                                    Wizard\Step::make('Other Information')
-                                        ->schema([
-                                            Forms\Components\TextInput::make('ticket_number')
-                                                ->disabled()
-                                                ->dehydrated()
-                                                ->required()
-                                                ->maxLength(255)
-                                                ->unique('tickets', ignoreRecord: true),
-                                            Forms\Components\TextInput::make('created_by')
-                                                ->required()
-                                                ->default(fn() => auth()->user()->name)
-                                                ->dehydrateStateUsing(fn() => auth()->id()),
-                                            Forms\Components\Select::make('assigned_to')
-                                                ->required()
-                                                ->options(User::all()->pluck('name', 'id'))
-                                                ->searchable(),
-                                            Forms\Components\Select::make('priority')
-                                                ->required()
-                                                ->default('low')
-                                                ->options([
-                                                    'low' => 'Low',
-                                                    'medium' => 'Medium',
-                                                    'high' => 'High',
-                                                ]),
-                                            Forms\Components\FileUpload::make('attachments')
-                                                ->multiple()
-                                                ->directory('public')
-                                                ->preserveFilenames() // Optional: keeps original filenames
-                                                ->maxFiles(5) // Optional: limit number of files
-                                                ->downloadable() // Allows downloading files
-                                                ->previewable() // Shows preview of images
-                                                ->openable() // Allows opening files in new tab
-                                                ->columnSpanFull(), // Makes the upload field full width
-                                        ]),
-                                ])->columnSpan(1), // Ensures the Wizard takes one column
-                            ]),
+                        //.....
+                    ])->columnSpan(1),
+                    Forms\Components\Section::make() // Right column for Placeholder
+                    ->schema([
+                        Forms\Components\Placeholder::make('ticket')
+                            ->label('Ticket Number')
+                            ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
+                    ])->columnSpan(1),
+                    Forms\Components\Section::make()
+                        ->schema([
+                            Wizard::make([
+                                Wizard\Step::make('Ticket Information')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('title')
+                                                    ->required(),
+                                                Forms\Components\Select::make('ticket_type')
+                                                    ->options([
+                                                        'request' => 'Request',
+                                                        'incident' => 'Incident',
+                                                    ])
+                                                    ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
+                                                    ->required()
+                                                    ->reactive()
+                                                    ->live(onBlur: true)
+                                                    ->native(false),
+                                                Forms\Components\Select::make('option')
+                                                    ->options([
+                                                    'asset' => 'Asset',
+                                                    'classroom' => 'Classroom',
+                                                    ])
+                                                    ->visible(fn ($get) => $get('ticket_type') === 'request')
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                    if ($state === 'classroom') {
+                                                    $set('asset_id', null);
+                                                    }
+                                                    }),
+
+                                                Forms\Components\DateTimePicker::make('starts_at')
+                                                    ->visible(fn ($get) => $get('option') === 'classroom'),
+
+                                                Forms\Components\DateTimePicker::make('ends_at')
+                                                    ->visible(fn ($get) => $get('option') === 'classroom'),
+
+                                                Forms\Components\Select::make('asset_id')
+                                                    ->relationship('asset', 'name')
+                                                    ->required(fn ($get) => $get('option') === 'asset')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn ($get) => $get('option') === 'asset'),
+
+                                                Forms\Components\Select::make('section_id')
+                                                    ->relationship('section', 'name')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5),
+
+                                                Forms\Components\Select::make('subject_id')
+                                                    ->options(Subject::all()->pluck('name', 'id'))
+                                                    ->required(fn ($get) => $get('option') === 'classroom')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn ($get) => $get('option') === 'classroom'),
+                                                Forms\Components\TextArea::make('description')
+                                                    ->required()
+                                                    ->columnSpanFull(),
+                                            ]),
+                                    ]),
+                                Wizard\Step::make('Other Information')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('ticket_number')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->unique('tickets', ignoreRecord: true),
+                                        Forms\Components\TextInput::make('created_by')
+                                            ->required()
+                                            ->default(fn() => auth()->user()->name)
+                                            ->dehydrateStateUsing(fn() => auth()->id()),
+                                        Forms\Components\Select::make('assigned_to')
+                                            ->required()
+                                            ->options(User::all()->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->visible(fn () => auth()->user()->role !== 'professor'),
+                                        Forms\Components\Select::make('priority')
+                                            ->required()
+                                            ->default('low')
+                                            ->options([
+                                                'low' => 'Low',
+                                                'medium' => 'Medium',
+                                                'high' => 'High',
+                                            ]),
+                                            Forms\Components\FileUpload::make('attachment')
+                                            ->multiple()
+                                            ->directory('ticket')
+                                            ->visibility('public')
+                                            ->acceptedFileTypes(['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                            ->downloadable()
+                                            ->previewable()
+                                            ->reorderable(),
+                                    //    Forms\Components\DateTimePicker::make('starts_at'),
+                                    //    Forms\Components\DateTimePicker::make('ends_at'),
+                                    ]),
+                            ])->columnSpan(1), // Ensures the Wizard takes one column
+                        ]),
 
                     ])
                     ->columnSpanFull(), // Full width grid with two equal columns

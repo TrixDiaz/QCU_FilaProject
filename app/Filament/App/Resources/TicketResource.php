@@ -18,6 +18,7 @@ use Filament\Forms\Components\Wizard;
 use Illuminate\Support\Str;
 use Filament\Forms\Set;
 use Filament\Tables\Columns\SelectColumn;
+use Illuminate\Database\Eloquent\Model;
 
 class TicketResource extends Resource implements HasShieldPermissions
 {
@@ -192,7 +193,18 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->label('section')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\ImageColumn::make('attachment'),
+                Tables\Columns\ImageColumn::make('attachment')
+                    ->width(50)
+                    ->height(50)
+                    ->getStateUsing(function (Model $record): string {
+                     $ticket = Ticket::query()->where('id', $record->id)->first();
+        
+                    if ($ticket === null || $ticket->image === null || $ticket->image === "" || empty($product->image)) {
+                     return "https://rd.com.pk/Resource/images/noimage.png";
+                    } else {
+                    return asset('storage/' . $ticket->image);
+                    }
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

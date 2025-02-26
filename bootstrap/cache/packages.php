@@ -45,6 +45,17 @@
       0 => 'BladeUI\\Icons\\BladeIconsServiceProvider',
     ),
   ),
+  'eightynine/filament-approvals' => 
+  array (
+    'aliases' => 
+    array (
+      'Approval' => 'EightyNine\\Approvals\\Facades\\Approval',
+    ),
+    'providers' => 
+    array (
+      0 => 'EightyNine\\Approvals\\ApprovalServiceProvider',
+    ),
+  ),
   'eightynine/filament-reports' => 
   array (
     'aliases' => 
@@ -231,6 +242,20 @@
     'providers' => 
     array (
       0 => 'pxlrbt\\FilamentExcel\\FilamentExcelServiceProvider',
+    ),
+  ),
+  'ringlesoft/laravel-process-approval' => 
+  array (
+    'aliases' => 
+    array (
+      'ProcessApproval' => 'RingleSoft\\LaravelProcessApproval\\Facade',
+    ),
+    'providers' => 
+    array (
+      0 => 'RingleSoft\\LaravelProcessApproval\\LaravelProcessApprovalServiceProvider',
+    ),
+    'dont-discover' => 
+    array (
     ),
   ),
   'ryangjchandler/blade-capture-directive' => 

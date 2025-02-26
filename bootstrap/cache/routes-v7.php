@@ -326,26 +326,6 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      '/app/approvals/create' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'filament.app.resources.approvals.create',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
       '/app/assets' => 
       array (
         0 => 
@@ -891,7 +871,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::lKuR77hXY4RqG3y6',
+            '_route' => 'generated::WW6PLENCWk7xt2yB',
           ),
           1 => NULL,
           2 => 
@@ -911,7 +891,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::WC18YGtfNfcMJ8RV',
+            '_route' => 'generated::CL8I1gXqfC6eXNvq',
           ),
           1 => NULL,
           2 => 
@@ -950,7 +930,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::Ber7UeQn0bDqZ75r',
+            '_route' => 'generated::hRdZEoeshwF7O3l6',
           ),
           1 => NULL,
           2 => 
@@ -970,7 +950,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::OTuzSMGWODAW4x6w',
+            '_route' => 'generated::GdeHLV99VNzk0TTg',
           ),
           1 => NULL,
           2 => 
@@ -990,7 +970,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::mggVHTW7KZKf2iCd',
+            '_route' => 'generated::Os0fsW4iVPesrKL1',
           ),
           1 => NULL,
           2 => 
@@ -1009,7 +989,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::CvLnxeSsIXPUnqDS',
+            '_route' => 'generated::lQWLx8xXqjuMcLUO',
           ),
           1 => NULL,
           2 => 
@@ -1029,7 +1009,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::8bhKK5sewnZyKBUf',
+            '_route' => 'generated::7IBQzbYj4UJ8cLAa',
           ),
           1 => NULL,
           2 => 
@@ -1046,7 +1026,7 @@ app('router')->setCompiledRoutes(
     ),
     2 => 
     array (
-      0 => '{^(?|/filament/(?|exports/([^/]++)/download(*:45)|imports/([^/]++)/failed\\-rows/download(*:90))|/ap(?|p/(?|e(?|mail\\-verification/verify/([^/]++)/([^/]++)(*:156)|vents/([^/]++)(?|(*:181)|/edit(*:194)))|a(?|ssets/([^/]++)/edit(*:227)|ctivity\\-logs/([^/]++)(*:257))|b(?|rands/([^/]++)/edit(*:289)|uildings/([^/]++)/edit(*:319))|c(?|ategories/([^/]++)/edit(*:355)|lassrooms/([^/]++)/edit(*:386))|s(?|hield/roles/([^/]++)(?|(*:422)|/edit(*:435))|ections/([^/]++)/edit(*:465)|ubjects/([^/]++)/edit(*:494))|t(?|ags/([^/]++)/edit(*:524)|ickets/([^/]++)/edit(*:552))|users/([^/]++)/edit(*:580))|i/sections/([^/]++)(*:608))|/livewire/preview\\-file/([^/]++)(*:649)|/storage/(.*)(*:670))/?$}sDu',
+      0 => '{^(?|/filament(?|/(?|exports/([^/]++)/download(*:48)|imports/([^/]++)/failed\\-rows/download(*:93))|\\-excel/(.*)(*:113))|/ap(?|p/(?|e(?|mail\\-verification/verify/([^/]++)/([^/]++)(*:180)|vents/([^/]++)(?|(*:205)|/edit(*:218)))|a(?|ssets/([^/]++)/edit(*:251)|ctivity\\-logs/([^/]++)(*:281))|b(?|rands/([^/]++)/edit(*:313)|uildings/([^/]++)/edit(*:343))|c(?|ategories/([^/]++)/edit(*:379)|lassrooms/([^/]++)/edit(*:410))|s(?|hield/roles/([^/]++)(?|(*:446)|/edit(*:459))|ections/([^/]++)/edit(*:489)|ubjects/([^/]++)/edit(*:518))|t(?|ags/([^/]++)/edit(*:548)|ickets/([^/]++)/edit(*:576))|users/([^/]++)/edit(*:604))|i/sections/([^/]++)(*:632))|/livewire/preview\\-file/([^/]++)(*:673)|/process\\-approval/(?|submit/([^/]++)(*:718)|approve/([^/]++)(*:742)|re(?|ject/([^/]++)(*:768)|turn/([^/]++)(*:789))|discard/([^/]++)(*:814))|/storage/(.*)(*:836))/?$}sDu',
     ),
     3 => 
     array (
@@ -1189,7 +1169,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      227 => 
+      251 => 
       array (
         0 => 
         array (
@@ -1212,7 +1192,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      257 => 
+      281 => 
       array (
         0 => 
         array (
@@ -1235,7 +1215,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      289 => 
+      313 => 
       array (
         0 => 
         array (
@@ -1258,7 +1238,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      319 => 
+      343 => 
       array (
         0 => 
         array (
@@ -1281,7 +1261,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      355 => 
+      379 => 
       array (
         0 => 
         array (
@@ -1304,7 +1284,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      386 => 
+      410 => 
       array (
         0 => 
         array (
@@ -1327,7 +1307,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      422 => 
+      446 => 
       array (
         0 => 
         array (
@@ -1350,7 +1330,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      435 => 
+      459 => 
       array (
         0 => 
         array (
@@ -1373,7 +1353,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      465 => 
+      489 => 
       array (
         0 => 
         array (
@@ -1396,7 +1376,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      494 => 
+      518 => 
       array (
         0 => 
         array (
@@ -1419,7 +1399,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      524 => 
+      548 => 
       array (
         0 => 
         array (
@@ -1442,7 +1422,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      552 => 
+      576 => 
       array (
         0 => 
         array (
@@ -1465,7 +1445,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      580 => 
+      604 => 
       array (
         0 => 
         array (
@@ -1488,13 +1468,13 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      608 => 
+      632 => 
       array (
         0 => 
         array (
           0 => 
           array (
-            '_route' => 'generated::e6eOjRsCZROCU6j4',
+            '_route' => 'generated::gQwZndn0uG3AMtli',
           ),
           1 => 
           array (
@@ -1511,7 +1491,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      649 => 
+      673 => 
       array (
         0 => 
         array (
@@ -1534,7 +1514,117 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      670 => 
+      718 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'ringlesoft.process-approval.submit',
+          ),
+          1 => 
+          array (
+            0 => 'id',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => true,
+          6 => NULL,
+        ),
+      ),
+      742 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'ringlesoft.process-approval.approve',
+          ),
+          1 => 
+          array (
+            0 => 'id',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => true,
+          6 => NULL,
+        ),
+      ),
+      768 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'ringlesoft.process-approval.reject',
+          ),
+          1 => 
+          array (
+            0 => 'id',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => true,
+          6 => NULL,
+        ),
+      ),
+      789 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'ringlesoft.process-approval.return',
+          ),
+          1 => 
+          array (
+            0 => 'id',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => true,
+          6 => NULL,
+        ),
+      ),
+      814 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'ringlesoft.process-approval.discard',
+          ),
+          1 => 
+          array (
+            0 => 'id',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => true,
+          6 => NULL,
+        ),
+      ),
+      836 => 
       array (
         0 => 
         array (
@@ -2475,110 +2565,6 @@ app('router')->setCompiledRoutes(
         'uses' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\ListApprovals@__invoke',
         'controller' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\ListApprovals',
         'as' => 'filament.app.resources.approvals.index',
-        'namespace' => NULL,
-        'prefix' => 'app/approvals',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'filament.app.resources.approvals.create' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'app/approvals/create',
-      'action' => 
-      array (
-        'domain' => NULL,
-        'middleware' => 
-        array (
-          0 => 'panel:app',
-          1 => 'Illuminate\\Cookie\\Middleware\\EncryptCookies',
-          2 => 'Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse',
-          3 => 'Illuminate\\Session\\Middleware\\StartSession',
-          4 => 'Illuminate\\Session\\Middleware\\AuthenticateSession',
-          5 => 'Illuminate\\View\\Middleware\\ShareErrorsFromSession',
-          6 => 'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
-          7 => 'Illuminate\\Routing\\Middleware\\SubstituteBindings',
-          8 => 'Filament\\Http\\Middleware\\DisableBladeIconComponents',
-          9 => 'Filament\\Http\\Middleware\\DispatchServingFilamentEvent',
-          10 => 'Filament\\Http\\Middleware\\Authenticate',
-          11 => 'verified:filament.app.auth.email-verification.prompt',
-        ),
-        'excluded_middleware' => 
-        array (
-        ),
-        'uses' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\CreateApproval@__invoke',
-        'controller' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\CreateApproval',
-        'as' => 'filament.app.resources.approvals.create',
-        'namespace' => NULL,
-        'prefix' => 'app/approvals',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'filament.app.resources.approvals.edit' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'app/approvals/{record}/edit',
-      'action' => 
-      array (
-        'domain' => NULL,
-        'middleware' => 
-        array (
-          0 => 'panel:app',
-          1 => 'Illuminate\\Cookie\\Middleware\\EncryptCookies',
-          2 => 'Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse',
-          3 => 'Illuminate\\Session\\Middleware\\StartSession',
-          4 => 'Illuminate\\Session\\Middleware\\AuthenticateSession',
-          5 => 'Illuminate\\View\\Middleware\\ShareErrorsFromSession',
-          6 => 'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
-          7 => 'Illuminate\\Routing\\Middleware\\SubstituteBindings',
-          8 => 'Filament\\Http\\Middleware\\DisableBladeIconComponents',
-          9 => 'Filament\\Http\\Middleware\\DispatchServingFilamentEvent',
-          10 => 'Filament\\Http\\Middleware\\Authenticate',
-          11 => 'verified:filament.app.auth.email-verification.prompt',
-        ),
-        'excluded_middleware' => 
-        array (
-        ),
-        'uses' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\EditApproval@__invoke',
-        'controller' => 'App\\Filament\\App\\Resources\\ApprovalResource\\Pages\\EditApproval',
-        'as' => 'filament.app.resources.approvals.edit',
         'namespace' => NULL,
         'prefix' => 'app/approvals',
         'where' => 
@@ -4747,7 +4733,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::lKuR77hXY4RqG3y6' => 
+    'generated::WW6PLENCWk7xt2yB' => 
     array (
       'methods' => 
       array (
@@ -4759,7 +4745,7 @@ app('router')->setCompiledRoutes(
       array (
         'uses' => 'Livewire\\Mechanisms\\FrontendAssets\\FrontendAssets@returnJavaScriptAsFile',
         'controller' => 'Livewire\\Mechanisms\\FrontendAssets\\FrontendAssets@returnJavaScriptAsFile',
-        'as' => 'generated::lKuR77hXY4RqG3y6',
+        'as' => 'generated::WW6PLENCWk7xt2yB',
       ),
       'fallback' => false,
       'defaults' => 
@@ -4775,7 +4761,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::WC18YGtfNfcMJ8RV' => 
+    'generated::CL8I1gXqfC6eXNvq' => 
     array (
       'methods' => 
       array (
@@ -4787,7 +4773,7 @@ app('router')->setCompiledRoutes(
       array (
         'uses' => 'Livewire\\Mechanisms\\FrontendAssets\\FrontendAssets@maps',
         'controller' => 'Livewire\\Mechanisms\\FrontendAssets\\FrontendAssets@maps',
-        'as' => 'generated::WC18YGtfNfcMJ8RV',
+        'as' => 'generated::CL8I1gXqfC6eXNvq',
       ),
       'fallback' => false,
       'defaults' => 
@@ -4858,7 +4844,208 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::Ber7UeQn0bDqZ75r' => 
+    'filament-excel-download' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'GET',
+        1 => 'HEAD',
+      ),
+      'uri' => 'filament-excel/{path}',
+      'action' => 
+      array (
+        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:259:"function (string $path) {
+    $filename = \\substr($path, 37);
+    $path = \\Illuminate\\Support\\Facades\\Storage::disk(\'filament-excel\')->path($path);
+
+    return
+        \\response()
+            ->download($path, $filename)
+            ->deleteFileAfterSend();
+}";s:5:"scope";s:34:"Illuminate\\Support\\ServiceProvider";s:4:"this";N;s:4:"self";s:32:"0000000000000fc00000000000000000";}}',
+        'middleware' => 
+        array (
+          0 => 'web',
+          1 => 'signed',
+        ),
+        'as' => 'filament-excel-download',
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+        'path' => '.*',
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'ringlesoft.process-approval.submit' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'process-approval/submit/{id}',
+      'action' => 
+      array (
+        'uses' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@submit',
+        'controller' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@submit',
+        'as' => 'ringlesoft.process-approval.submit',
+        'namespace' => NULL,
+        'prefix' => 'process-approval',
+        'where' => 
+        array (
+        ),
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'ringlesoft.process-approval.approve' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'process-approval/approve/{id}',
+      'action' => 
+      array (
+        'uses' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@approve',
+        'controller' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@approve',
+        'as' => 'ringlesoft.process-approval.approve',
+        'namespace' => NULL,
+        'prefix' => 'process-approval',
+        'where' => 
+        array (
+        ),
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'ringlesoft.process-approval.reject' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'process-approval/reject/{id}',
+      'action' => 
+      array (
+        'uses' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@reject',
+        'controller' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@reject',
+        'as' => 'ringlesoft.process-approval.reject',
+        'namespace' => NULL,
+        'prefix' => 'process-approval',
+        'where' => 
+        array (
+        ),
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'ringlesoft.process-approval.discard' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'process-approval/discard/{id}',
+      'action' => 
+      array (
+        'uses' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@discard',
+        'controller' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@discard',
+        'as' => 'ringlesoft.process-approval.discard',
+        'namespace' => NULL,
+        'prefix' => 'process-approval',
+        'where' => 
+        array (
+        ),
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'ringlesoft.process-approval.return' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'process-approval/return/{id}',
+      'action' => 
+      array (
+        'uses' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@return',
+        'controller' => 'RingleSoft\\LaravelProcessApproval\\Http\\Controllers\\ApprovalController@return',
+        'as' => 'ringlesoft.process-approval.return',
+        'namespace' => NULL,
+        'prefix' => 'process-approval',
+        'where' => 
+        array (
+        ),
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'generated::hRdZEoeshwF7O3l6' => 
     array (
       'methods' => 
       array (
@@ -4875,13 +5062,13 @@ app('router')->setCompiledRoutes(
         ),
         'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:77:"function (\\Illuminate\\Http\\Request $request) {
     return $request->user();
-}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"0000000000000fcf0000000000000000";}}',
+}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"0000000000000ff50000000000000000";}}',
         'namespace' => NULL,
         'prefix' => 'api',
         'where' => 
         array (
         ),
-        'as' => 'generated::Ber7UeQn0bDqZ75r',
+        'as' => 'generated::hRdZEoeshwF7O3l6',
       ),
       'fallback' => false,
       'defaults' => 
@@ -4897,7 +5084,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::OTuzSMGWODAW4x6w' => 
+    'generated::GdeHLV99VNzk0TTg' => 
     array (
       'methods' => 
       array (
@@ -4918,7 +5105,7 @@ app('router')->setCompiledRoutes(
         'where' => 
         array (
         ),
-        'as' => 'generated::OTuzSMGWODAW4x6w',
+        'as' => 'generated::GdeHLV99VNzk0TTg',
       ),
       'fallback' => false,
       'defaults' => 
@@ -4934,7 +5121,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::e6eOjRsCZROCU6j4' => 
+    'generated::gQwZndn0uG3AMtli' => 
     array (
       'methods' => 
       array (
@@ -4955,7 +5142,7 @@ app('router')->setCompiledRoutes(
         'where' => 
         array (
         ),
-        'as' => 'generated::e6eOjRsCZROCU6j4',
+        'as' => 'generated::gQwZndn0uG3AMtli',
       ),
       'fallback' => false,
       'defaults' => 
@@ -4971,7 +5158,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::mggVHTW7KZKf2iCd' => 
+    'generated::Os0fsW4iVPesrKL1' => 
     array (
       'methods' => 
       array (
@@ -4991,7 +5178,7 @@ app('router')->setCompiledRoutes(
         'where' => 
         array (
         ),
-        'as' => 'generated::mggVHTW7KZKf2iCd',
+        'as' => 'generated::Os0fsW4iVPesrKL1',
       ),
       'fallback' => false,
       'defaults' => 
@@ -5007,7 +5194,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::CvLnxeSsIXPUnqDS' => 
+    'generated::lQWLx8xXqjuMcLUO' => 
     array (
       'methods' => 
       array (
@@ -5017,7 +5204,7 @@ app('router')->setCompiledRoutes(
       'uri' => 'up',
       'action' => 
       array (
-        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:865:"function () {
+        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:845:"function () {
                     $exception = null;
 
                     try {
@@ -5032,11 +5219,11 @@ app('router')->setCompiledRoutes(
                         $exception = $e->getMessage();
                     }
 
-                    return response(\\Illuminate\\Support\\Facades\\View::file(\'C:\\\\Users\\\\surface\\\\OneDrive\\\\Documents\\\\GitHub\\\\QCU_FilaProject\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Configuration\'.\'/../resources/health-up.blade.php\', [
+                    return response(\\Illuminate\\Support\\Facades\\View::file(\'C:\\\\Users\\\\nocet\\\\Documents\\\\QCU_FilaProject\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Configuration\'.\'/../resources/health-up.blade.php\', [
                         \'exception\' => $exception,
                     ]), status: $exception ? 500 : 200);
-                }";s:5:"scope";s:54:"Illuminate\\Foundation\\Configuration\\ApplicationBuilder";s:4:"this";N;s:4:"self";s:32:"0000000000000fbe0000000000000000";}}',
-        'as' => 'generated::CvLnxeSsIXPUnqDS',
+                }";s:5:"scope";s:54:"Illuminate\\Foundation\\Configuration\\ApplicationBuilder";s:4:"this";N;s:4:"self";s:32:"0000000000000fe40000000000000000";}}',
+        'as' => 'generated::lQWLx8xXqjuMcLUO',
       ),
       'fallback' => false,
       'defaults' => 
@@ -5052,7 +5239,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::8bhKK5sewnZyKBUf' => 
+    'generated::7IBQzbYj4UJ8cLAa' => 
     array (
       'methods' => 
       array (
@@ -5068,13 +5255,13 @@ app('router')->setCompiledRoutes(
         ),
         'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:44:"function () {
     return \\view(\'welcome\');
-}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"0000000000000fd90000000000000000";}}',
+}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"0000000000000fff0000000000000000";}}',
         'namespace' => NULL,
         'prefix' => '',
         'where' => 
         array (
         ),
-        'as' => 'generated::8bhKK5sewnZyKBUf',
+        'as' => 'generated::7IBQzbYj4UJ8cLAa',
       ),
       'fallback' => false,
       'defaults' => 
@@ -5100,13 +5287,13 @@ app('router')->setCompiledRoutes(
       'uri' => 'storage/{path}',
       'action' => 
       array (
-        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:3:{s:4:"disk";s:5:"local";s:6:"config";a:5:{s:6:"driver";s:5:"local";s:4:"root";s:78:"C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/private";s:5:"serve";b:1;s:5:"throw";b:0;s:6:"report";b:0;}s:12:"isProduction";b:0;}s:8:"function";s:323:"function (\\Illuminate\\Http\\Request $request, string $path) use ($disk, $config, $isProduction) {
+        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:3:{s:4:"disk";s:5:"local";s:6:"config";a:5:{s:6:"driver";s:5:"local";s:4:"root";s:60:"C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\app/private";s:5:"serve";b:1;s:5:"throw";b:0;s:6:"report";b:0;}s:12:"isProduction";b:0;}s:8:"function";s:323:"function (\\Illuminate\\Http\\Request $request, string $path) use ($disk, $config, $isProduction) {
                     return (new \\Illuminate\\Filesystem\\ServeFile(
                         $disk,
                         $config,
                         $isProduction
                     ))($request, $path);
-                }";s:5:"scope";s:47:"Illuminate\\Filesystem\\FilesystemServiceProvider";s:4:"this";N;s:4:"self";s:32:"0000000000000fdc0000000000000000";}}',
+                }";s:5:"scope";s:47:"Illuminate\\Filesystem\\FilesystemServiceProvider";s:4:"this";N;s:4:"self";s:32:"00000000000010020000000000000000";}}',
         'as' => 'storage.local',
       ),
       'fallback' => false,

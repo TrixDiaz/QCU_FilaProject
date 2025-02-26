@@ -24,7 +24,9 @@ return new class extends Migration
             $table->enum('ticket_type', ['request', 'incident']);
             $table->string('priority')->default('low');
             $table->string('status')->default('in progress');
-            $table->json('attachment')->nullable();
+            $table->json('attachments')->nullable();
+            $table->dateTime('starts_at')->nullable();
+            $table->dateTime('ends_at')->nullable();
             $table->timestamps();
         });
     }

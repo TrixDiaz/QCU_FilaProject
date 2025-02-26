@@ -13,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Actions\Imports\ImportAction;
+use App\Filament\Imports\AssetImporter;
 
 class AssetResource extends Resource implements HasShieldPermissions
 {
@@ -271,7 +273,12 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->tooltip('Actions')
             ])
-            ->headerActions([])
+            ->headerActions([
+                \Filament\Tables\Actions\ImportAction::make()
+                ->importer(\App\Filament\Imports\AssetImporter::class)
+                ->label('Import Excel') // Custom label for button
+                ->color('primary'),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

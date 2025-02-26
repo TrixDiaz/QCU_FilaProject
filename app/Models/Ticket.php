@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ticket extends Model
 {
@@ -13,16 +12,27 @@ class Ticket extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ticket_number', 'asset_id', 'created_by', 'assigned_to', 'section_id',
-        'title', 'description', 'ticket_type', 'option', 'priority', 'due_date',
-        'date_finished', 'attachment', 'status', 'created_at', 'updated_at'
+        'ticket_number',
+        'asset_id',
+        'created_by',
+        'assigned_to',
+        'section_id',
+        'title',
+        'description',
+        'ticket_type',
+        'option',
+        'priority',
+        'due_date',
+        'date_finished',
+        'attachments',
+        'status',
+        'created_at',
+        'updated_at'
     ];
 
 
     protected $cast = [
-          'attachment' => 'array',
-//        'due_date' => 'datetime',
-//        'date_finished' => 'datetime',
+        'attachments' => 'array'
     ];
 
     protected static function booted()
@@ -48,7 +58,7 @@ class Ticket extends Model
         return $this->belongsTo(Asset::class, 'asset_id');
     }
 
-     public function creator(): BelongsTo
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -59,15 +69,18 @@ class Ticket extends Model
     }
 
 
-    public function section() : BelongsTo
+    public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class, 'section_id');
     }
 
-    public function setAttachmentAttribute($value)
+    public function setAttachmentsAttribute($value)
     {
-        $this->attributes['attachment'] = is_array($value) ? json_encode($value) : $value;
+        $this->attributes['attachments'] = is_array($value) ? json_encode($value) : $value;
     }
 
+    public function getAttachmentsAttribute($value)
+    {
+        return json_decode($value, true);
+    }
 }
-

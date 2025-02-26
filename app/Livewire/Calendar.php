@@ -13,10 +13,10 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Saade\FilamentFullCalendar\Actions;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
+
 
 class Calendar extends FullCalendarWidget
 {
@@ -228,14 +228,240 @@ class Calendar extends FullCalendarWidget
                     // Clean up uploaded file
                     unlink($file);
                 }),
-            Actions\CreateAction::make(),
+            \Saade\FilamentFullCalendar\Actions\CreateAction::make()
+                ->mountUsing(
+                    function (\Filament\Forms\Form $form, array $arguments) {
+                        $form->fill([
+                            'starts_at' => $arguments['start'] ?? null,
+                            'ends_at' => $arguments['end'] ?? null
+                        ]);
+                    }
+                )
+                ->action(function (array $data): void {
+                    // Parse dates for comparison
+                    $newStart = Carbon::parse($data['starts_at']);
+                    $newEnd = Carbon::parse($data['ends_at']);
+
+                    // First check for exact time matches
+                    $exactMatch = Event::query()
+                        ->where('section_id', $data['section_id'])
+                        ->where('starts_at', $newStart)
+                        ->where('ends_at', $newEnd)
+                        ->first();
+
+                    if ($exactMatch) {
+                        $conflictStart = $newStart->format('M d, Y g:i A');
+                        $conflictEnd = $newEnd->format('g:i A');
+
+                        Notification::make()
+                            ->danger()
+                            ->title('Exact Time Conflict')
+                            ->body("An event already exists at exactly the same time: {$exactMatch->title} ({$conflictStart} - {$conflictEnd})")
+                            ->persistent()
+                            ->send();
+
+                        return; // Stop here - don't check for other conflicts
+                    }
+
+                    // Then check for overlapping times
+                    $conflicts = Event::query()
+                        ->where('section_id', $data['section_id'])
+                        ->where(function ($query) use ($newStart, $newEnd) {
+                            $query->where(function ($q) use ($newStart, $newEnd) {
+                                $q->where('starts_at', '<=', $newStart)
+                                    ->where('ends_at', '>', $newStart);
+                            })->orWhere(function ($q) use ($newStart, $newEnd) {
+                                $q->where('starts_at', '<', $newEnd)
+                                    ->where('ends_at', '>=', $newEnd);
+                            })->orWhere(function ($q) use ($newStart, $newEnd) {
+                                $q->where('starts_at', '>=', $newStart)
+                                    ->where('ends_at', '<=', $newEnd);
+                            });
+                        })
+                        ->first();
+
+                    if ($conflicts) {
+                        $conflictStart = Carbon::parse($conflicts->starts_at)->format('M d, Y g:i A');
+                        $conflictEnd = Carbon::parse($conflicts->ends_at)->format('g:i A');
+
+                        Notification::make()
+                            ->warning()
+                            ->title('Schedule Conflict Detected')
+                            ->body("This time slot conflicts with an existing schedule: {$conflicts->title} ({$conflictStart} - {$conflictEnd})")
+                            ->persistent()
+                            ->send();
+
+                        return; // Don't proceed with creation
+                    }
+
+                    // Only create if there are no conflicts
+                    Event::create($data);
+                    $this->dispatch('filament-full-calendar::refresh');
+
+                    Notification::make()
+                        ->success()
+                        ->title('Schedule Created')
+                        ->body('New schedule has been successfully created.')
+                        ->send();
+                }),
         ];
     }
 
     protected function modalActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->mountUsing(
+                    function (Event $record, \Filament\Forms\Form $form, array $arguments) {
+                        if (isset($arguments['event']['start'])) {
+                            $newStart = Carbon::parse($arguments['event']['start']);
+                            $newEnd = Carbon::parse($arguments['event']['end']);
+
+                            // Check for exact time matches first
+                            $exactMatch = Event::query()
+                                ->where('section_id', $record->section_id)
+                                ->where('id', '!=', $record->id)
+                                ->where('starts_at', $newStart)
+                                ->where('ends_at', $newEnd)
+                                ->first();
+
+                            if ($exactMatch) {
+                                $conflictStart = $newStart->format('M d, Y g:i A');
+                                $conflictEnd = $newEnd->format('g:i A');
+
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Exact Time Conflict')
+                                    ->body("An event already exists at exactly the same time: {$exactMatch->title} ({$conflictStart} - {$conflictEnd})")
+                                    ->persistent()
+                                    ->send();
+
+                                // Reset to original values
+                                $form->fill([
+                                    'starts_at' => $record->starts_at,
+                                    'ends_at' => $record->ends_at,
+                                ]);
+                                return;
+                            }
+
+                            // Then check for overlapping times
+                            $conflicts = Event::query()
+                                ->where('section_id', $record->section_id)
+                                ->where('id', '!=', $record->id)
+                                ->where(function ($query) use ($newStart, $newEnd) {
+                                    $query->where(function ($q) use ($newStart, $newEnd) {
+                                        $q->where('starts_at', '<=', $newStart)
+                                            ->where('ends_at', '>', $newStart);
+                                    })->orWhere(function ($q) use ($newStart, $newEnd) {
+                                        $q->where('starts_at', '<', $newEnd)
+                                            ->where('ends_at', '>=', $newEnd);
+                                    })->orWhere(function ($q) use ($newStart, $newEnd) {
+                                        $q->where('starts_at', '>=', $newStart)
+                                            ->where('ends_at', '<=', $newEnd);
+                                    });
+                                })
+                                ->first();
+
+                            if ($conflicts) {
+                                $conflictStart = Carbon::parse($conflicts->starts_at)->format('M d, Y g:i A');
+                                $conflictEnd = Carbon::parse($conflicts->ends_at)->format('g:i A');
+
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Schedule Conflict Detected')
+                                    ->body("This time slot conflicts with an existing schedule: {$conflicts->title} ({$conflictStart} - {$conflictEnd})")
+                                    ->persistent()
+                                    ->send();
+
+                                // Reset to original values
+                                $form->fill([
+                                    'starts_at' => $record->starts_at,
+                                    'ends_at' => $record->ends_at,
+                                ]);
+                                return;
+                            }
+                        }
+
+                        // Fill the form with new values
+                        $form->fill([
+                            'title' => $record->title,
+                            'starts_at' => $arguments['event']['start'] ?? $record->starts_at,
+                            'ends_at' => $arguments['event']['end'] ?? $record->ends_at,
+                            'professor_id' => $record->professor_id,
+                            'section_id' => $record->section_id,
+                            'subject_id' => $record->subject_id,
+                            'color' => $record->color,
+                        ]);
+                    }
+                )
+                ->action(function (Event $record, array $data): void {
+                    $newStart = Carbon::parse($data['starts_at']);
+                    $newEnd = Carbon::parse($data['ends_at']);
+
+                    // Check for exact time matches first
+                    $exactMatch = Event::query()
+                        ->where('section_id', $data['section_id'])
+                        ->where('id', '!=', $record->id)
+                        ->where('starts_at', $newStart)
+                        ->where('ends_at', $newEnd)
+                        ->first();
+
+                    if ($exactMatch) {
+                        $conflictStart = $newStart->format('M d, Y g:i A');
+                        $conflictEnd = $newEnd->format('g:i A');
+
+                        Notification::make()
+                            ->danger()
+                            ->title('Exact Time Conflict')
+                            ->body("An event already exists at exactly the same time: {$exactMatch->title} ({$conflictStart} - {$conflictEnd})")
+                            ->persistent()
+                            ->send();
+
+                        return; // Don't proceed with update
+                    }
+
+                    // Then check for overlapping times
+                    $conflicts = Event::query()
+                        ->where('section_id', $data['section_id'])
+                        ->where('id', '!=', $record->id)
+                        ->where(function ($query) use ($newStart, $newEnd) {
+                            $query->where(function ($q) use ($newStart, $newEnd) {
+                                $q->where('starts_at', '<=', $newStart)
+                                    ->where('ends_at', '>', $newStart);
+                            })->orWhere(function ($q) use ($newStart, $newEnd) {
+                                $q->where('starts_at', '<', $newEnd)
+                                    ->where('ends_at', '>=', $newEnd);
+                            })->orWhere(function ($q) use ($newStart, $newEnd) {
+                                $q->where('starts_at', '>=', $newStart)
+                                    ->where('ends_at', '<=', $newEnd);
+                            });
+                        })
+                        ->first();
+
+                    if ($conflicts) {
+                        $conflictStart = Carbon::parse($conflicts->starts_at)->format('M d, Y g:i A');
+                        $conflictEnd = Carbon::parse($conflicts->ends_at)->format('g:i A');
+
+                        Notification::make()
+                            ->warning()
+                            ->title('Schedule Conflict Detected')
+                            ->body("This time slot conflicts with an existing schedule: {$conflicts->title} ({$conflictStart} - {$conflictEnd})")
+                            ->persistent()
+                            ->send();
+
+                        return; // Don't proceed with update
+                    }
+
+                    // Only update if there are no conflicts
+                    $record->update($data);
+                    $this->dispatch('filament-full-calendar::refresh');
+
+                    Notification::make()
+                        ->success()
+                        ->title('Schedule Updated')
+                        ->body('Schedule has been successfully updated.')
+                        ->send();
+                }),
             Actions\DeleteAction::make(),
         ];
     }
@@ -244,7 +470,17 @@ class Calendar extends FullCalendarWidget
     {
         return [
             \Filament\Forms\Components\Grid::make()
-                ->schema(CalendarForm::schema()),
+                ->schema(CalendarForm::schema())
         ];
+    }
+
+    public function eventDidMount(): string
+    {
+        return <<<JS
+        function({ event, timeText, isStart, isEnd, isMirror, isPast, isFuture, isToday, el, view }){
+            el.setAttribute("x-tooltip", "tooltip");
+            el.setAttribute("x-data", "{ tooltip: '"+event.title+"' }");
+        }
+    JS;
     }
 }

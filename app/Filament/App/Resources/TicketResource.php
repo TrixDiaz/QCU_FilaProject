@@ -110,8 +110,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->searchable()
                                                     ->preload()
                                                     ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') !== 'classroom'),
-                                                    // ->visible(fn ($get) => $get('option') === 'asset'),
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->visible(fn ($get) => $get('option') === 'asset'),
 
                                                 Forms\Components\Select::make('section_id')
                                                     ->relationship('section', 'name')
@@ -126,7 +126,12 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->searchable()
                                                     ->preload()
                                                     ->optionsLimit(5)
-                                                    ->visible(fn ($get) => $get('option') === 'classroom'),
+                                                    ->visible(fn ($get) => $get('option') === 'classroom')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                        $set('subject_id', null);
+                                                        }
+                                                        }),
                                                 Forms\Components\TextArea::make('description')
                                                     ->required()
                                                     ->columnSpanFull(),

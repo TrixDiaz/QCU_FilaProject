@@ -20,12 +20,12 @@ class TicketSummary extends BaseWidget implements HasForms, HasTable
     {
         return $table
             ->heading('Ticket Summary')
-            ->query(\App\Models\Ticket::query())
+            ->query(\App\Models\Ticket::query()->orderBy('priority', 'desc'))
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('ticket_number'),
                 \Filament\Tables\Columns\TextColumn::make('ticket_type'),
                 \Filament\Tables\Columns\TextColumn::make('priority'),
-                \Filament\Tables\Columns\TextColumn::make('status'),
+                \Filament\Tables\Columns\TextColumn::make('status')->badge()->extraAttributes(['class' => 'capitalize']),
             ])
             ->emptyStateHeading('No Tickets yet')
             ->defaultPaginationPageOption(5)

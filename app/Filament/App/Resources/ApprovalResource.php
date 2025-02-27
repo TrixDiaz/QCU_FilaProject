@@ -15,15 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
-
-
-
 use App\Models\User;
 use App\Models\Subject;
-
-
-
-
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\Wizard;
 use Illuminate\Support\Str;
@@ -138,26 +131,15 @@ class ApprovalResource extends Resource
                 ]),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'approved' => 'Approved',
-                        'declined' => 'Declined',
-                    ])
-                    ->default('pending'),
+                //
             ])
 
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->button()
-                    ->color('info')
-                    ->icon('heroicon-o-eye')
-                    ->tooltip('View details'),
-                
                 Tables\Actions\Action::make('approve')
                     ->button()
                     ->color('success')
                     ->icon('heroicon-o-check')
+                    ->requiresConfirmation()
                     ->action(function (Approval $record) {
                         // Check if already processed
                         if ($record->status !== 'pending') {
@@ -167,15 +149,15 @@ class ApprovalResource extends Resource
                                 ->send();
                             return;
                         }
-                        
+
                         // Get the necessary data from the record
                         $option = $record->ticket->option ?? 'asset';
-                        
+
                         // Update ticket status to 'resolved' if it exists
                         if ($record->ticket) {
                             $record->ticket->update(['status' => 'resolved']);
                         }
-                        
+
                         if($option === 'asset')
                         {
                             \App\Models\AssetGroup::create([
@@ -185,22 +167,24 @@ class ApprovalResource extends Resource
                                 'code' => $record->asset->asset_code ?? \App\Filament\App\Resources\AssetResource::generateUniqueCode(),
                                 'status' => 'active',
                             ]);
-                            
+
                             // Update asset status to 'deploy'
                             if ($record->asset) {
                                 $record->asset->update(['status' => 'deploy']);
                             }
+
+                            $record->delete();
                         } else {
                             // For classroom/event option, retrieve dates from ticket if not present on approval
                             $startsAt = $record->starts_at;
                             $endsAt = $record->ends_at;
-                            
+
                             // If the approval record doesn't have dates, check if they exist in the ticket
                             if ((!$startsAt || !$endsAt) && $record->ticket) {
                                 $startsAt = $record->ticket->starts_at ?? $record->starts_at;
                                 $endsAt = $record->ticket->ends_at ?? $record->ends_at;
                             }
-                            
+
                             \App\Models\Event::create([
                                 'professor_id' => $record->professor_id,
                                 'section_id' => $record->section_id,
@@ -219,8 +203,11 @@ class ApprovalResource extends Resource
                             ->title('Approved successfully')
                             ->success()
                             ->send();
+
+                        $record->delete();
                     })
-                    ->visible(fn (Approval $record) => $record->status === 'pending'),
+//                    ->visible(fn (Approval $record) => $record->status === 'pending')
+                ,
 
                 Tables\Actions\Action::make('decline')
                     ->button()
@@ -239,41 +226,26 @@ class ApprovalResource extends Resource
                                 ->send();
                             return;
                         }
-                        
+
                         // Update ticket status to 'closed' if it exists
                         if ($record->ticket) {
                             $record->ticket->update(['status' => 'closed']);
                         }
-                        
-                        // Update record status
-                        $record->update(['status' => 'declined']);
+
+                        // Delete record
+                        $record->delete();
 
                         Notification::make()
                             ->title('Request declined')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Approval $record) => $record->status === 'pending')
+//                    ->visible(fn (Approval $record) => $record->status === 'pending')
                     ->modalWidth('md'),
-                    
-                Tables\Actions\DeleteAction::make()
-                    ->tooltip('Remove this record')
-                    ->visible(fn (Approval $record) => $record->status !== 'pending'),
             ])
             ->defaultSort('created_at', 'desc')
-            ->poll('30s')
-            ->modifyQueryUsing(function (Builder $query) {
-                $statusFilter = request()->input('tableFilters.status');
-            
-                // Apply filter if a status is selected
-                if ($statusFilter) {
-                    return $query->where('status', $statusFilter);
-                }
-            
-                // Default to showing all statuses if no filter is applied
-                return $query;
-            });
-            
+            ->poll('30s');
+
     }
 
     public static function getRelations(): array
@@ -287,7 +259,7 @@ class ApprovalResource extends Resource
     {
         return [
             'index' => Pages\ListApprovals::route('/'),
-            
+
 //            'create' => Pages\CreateApproval::route('/create'),
 //            'edit' => Pages\EditApproval::route('/{record}/edit'),
         ];

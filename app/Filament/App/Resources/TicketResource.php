@@ -118,7 +118,13 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->required()
                                                     ->searchable()
                                                     ->preload()
-                                                    ->optionsLimit(5),
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                        $set('subject_id', null);
+                                                        }
+                                                        }),
 
                                                 Forms\Components\Select::make('subject_id')
                                                     ->options(Subject::all()->pluck('name', 'id'))
@@ -215,38 +221,27 @@ class TicketResource extends Resource implements HasShieldPermissions
                         'medium' => 'warning',
                         'high' => 'danger',
                     }),
-                Tables\Columns\SelectColumn::make('status')
-                    ->options([
-                        'in progress' => 'In progress',
-                        'open' => 'Open',
-                        'closed' => 'Closed',
-                        'resolved' => 'Resolved',
-                    ])
-                    ->beforeStateUpdated(function ($record, $state) {
-                        // Runs before the state is saved to the database.
-                    })
-                    ->afterStateUpdated(function ($record, $state) {
-                        // Runs after the state is saved to the database.
-                    }),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\ImageColumn::make('attachments')
-                    ->width(50)
-                    ->height(50)
-                    ->circular()
-                    ->stacked()
-                    ->limit(3)
-                    ->getStateUsing(function (Model $record): array {
-                        if (empty($record->attachments)) {
-                            return ["https://rd.com.pk/Resource/images/noimage.png"];
-                        }
+                // Tables\Columns\ImageColumn::make('attachments')
+                //     ->width(50)
+                //     ->height(50)
+                //     ->circular()
+                //     ->stacked()
+                //     ->limit(3)
+                //     ->getStateUsing(function (Model $record): array {
+                //         if (empty($record->attachments)) {
+                //             return ["https://rd.com.pk/Resource/images/noimage.png"];
+                //         }
 
-                        return collect($record->attachments)->map(function ($attachment) {
-                            return asset('storage/' . $attachment);
-                        })->toArray();
-                    }),
+                //         return collect($record->attachments)->map(function ($attachment) {
+                //             return asset('storage/' . $attachment);
+                //         })->toArray();
+                //     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

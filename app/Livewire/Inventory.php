@@ -40,7 +40,7 @@ class Inventory extends Component implements HasTable, HasForms
         $this->classrooms = Building::find($buildingId)?->classrooms ?? [];
         $this->assets = [];
     }
-    
+
     public function loadAssets($classroomId)
     {
         $this->selectedClassroomId = $classroomId;
@@ -69,18 +69,18 @@ class Inventory extends Component implements HasTable, HasForms
         return $table
             ->query(\App\Models\Asset::query())
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('category.name')->searchable()->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('brand.name')->searchable()->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('serial_number')->searchable()->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('name')->searchable(['name'])
+                    ->description(fn ($record): string => $record->serial_number),
+                \Filament\Tables\Columns\TextColumn::make('brand.name')->searchable()->sortable()
+                    ->description(fn ($record): string => $record->category?->name),
                 \Filament\Tables\Columns\TextColumn::make('asset_code')->searchable()->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('expiry_date')
                     ->date()
                     ->placeholder('Not Available') // Show "Not Available" for null values
-                    ->sortable(), 
-                \Filament\Tables\Columns\TextColumn::make('status')->searchable()->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('created_at')->date()->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('updated_at')->date()->sortable(),
+                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('status')->searchable()->badge()->extraAttributes(['class' => 'capitalize']),
+                \Filament\Tables\Columns\TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                \Filament\Tables\Columns\TextColumn::make('updated_at')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc') // Sort by created_at in descending order
             ->persistSortInSession() // Persist sorting between requests
@@ -94,12 +94,12 @@ class Inventory extends Component implements HasTable, HasForms
                             function ($query, $buildingId) {
                                 // Find all classrooms in this building
                                 $classroomIds = Classroom::where('building_id', $buildingId)->pluck('id')->toArray();
-                                
+
                                 // Find all asset groups in these classrooms
                                 $assetIds = AssetGroup::whereIn('classroom_id', $classroomIds)
                                     ->pluck('asset_id')
                                     ->toArray();
-                                
+
                                 // Filter assets by these IDs
                                 return $query->whereIn('id', $assetIds);
                             }
@@ -116,7 +116,7 @@ class Inventory extends Component implements HasTable, HasForms
                                 $assetIds = AssetGroup::where('classroom_id', $classroomId)
                                     ->pluck('asset_id')
                                     ->toArray();
-                                
+
                                 // Filter assets by these IDs
                                 return $query->whereIn('id', $assetIds);
                             }
@@ -152,7 +152,7 @@ class Inventory extends Component implements HasTable, HasForms
                         $filter = $data['date_filter'] ?? 'all'; // Default to 'all' if not specified
                         $customFrom = $data['custom_date_from'] ?? null;
                         $customTo = $data['custom_date_to'] ?? null;
-                        
+
                         return match($filter) {
                             'all' => $query, // Return unmodified query to show all assets
                             'today' => $query->whereDate('created_at', Carbon::today()),
@@ -176,28 +176,28 @@ class Inventory extends Component implements HasTable, HasForms
                     })
                     ->indicateUsing(function (array $data): ?string {
                         $filter = $data['date_filter'] ?? null;
-                        
+
                         if (!$filter || $filter === 'all') {
                             return null; // No indicator for 'all'
                         }
-                        
+
                         if ($filter === 'custom') {
                             $from = $data['custom_date_from'] ?? null;
                             $to = $data['custom_date_to'] ?? null;
-                            
+
                             if ($from && $to) {
                                 return "Created from $from to $to";
                             }
-                            
+
                             if ($from) {
                                 return "Created from $from";
                             }
-                            
+
                             if ($to) {
                                 return "Created until $to";
                             }
                         }
-                        
+
                         $labels = [
                             'today' => 'Created today',
                             'yesterday' => 'Created yesterday',
@@ -207,11 +207,12 @@ class Inventory extends Component implements HasTable, HasForms
                             'last_three_months' => 'Created in the last 3 months',
                             'last_year' => 'Created in the last year',
                         ];
-                        
+
                         return $labels[$filter] ?? null;
                     }),
             ])
-            ->filtersLayout(FiltersLayout::AboveContent) // Using the enum for above content
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns(4)
             ->actions([
                 \Filament\Tables\Actions\ActionGroup::make([
                     \Filament\Tables\Actions\ViewAction::make(),

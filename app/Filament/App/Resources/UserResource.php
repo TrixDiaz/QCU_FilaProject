@@ -31,8 +31,11 @@ class UserResource extends Resource implements HasShieldPermissions
         ];
     }
     protected static ?string $model = User::class;
+
     protected static ?string $navigationGroup = 'System Settings';
+    protected static ?string $modelLabel = 'User';
     protected static ?string $navigationLabel = 'User';
+
     protected static ?string $navigationIcon = 'heroicon-o-finger-print';
 
     public static function getNavigationBadge(): ?string
@@ -159,8 +162,8 @@ class UserResource extends Resource implements HasShieldPermissions
                             'name',
                             'email',
                             'verified_date',
-            
-                                
+
+
                         ])
                         ]),
                         ]),

@@ -16,6 +16,8 @@ class Attendance extends Page implements HasForms, HasTable
 
     protected static string $view = 'filament.app.pages.attendance';
 
+    protected static ?string $navigationGroup = 'School';
+
     protected static ?string $navigationLabel = 'Attendances';
 
     use InteractsWithForms;

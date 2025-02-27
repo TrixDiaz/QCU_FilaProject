@@ -32,6 +32,10 @@ class SectionResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 
+    protected static ?string $navigationGroup = 'School';
+
+    protected static ?string $navigationParentItem = 'Buildings';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_active', true)->count();
@@ -89,104 +93,10 @@ class SectionResource extends Resource implements HasShieldPermissions
                         Forms\Components\Placeholder::make('created_at')
                             ->label('Created at')
                             ->hiddenOn('create')
-                            ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Section::find($record->id);
-                                $now = \Carbon\Carbon::now();
-
-                                $diff = $category->created_at->diff($now);
-                                if ($diff->y > 0) {
-                                    return $diff->y . ' years ago';
-                                } elseif ($diff->m > 0) {
-                                    if ($diff->m == 1) {
-                                        return '1 month ago';
-                                    } else {
-                                        return $diff->m . ' months ago';
-                                    }
-                                } elseif ($diff->d >= 7) {
-                                    $weeks = floor($diff->d / 7);
-                                    if ($weeks == 1) {
-                                        return 'a week ago';
-                                    } else {
-                                        return $weeks . ' weeks ago';
-                                    }
-                                } elseif ($diff->d > 0) {
-                                    if ($diff->d == 1) {
-                                        return 'yesterday';
-                                    } else {
-                                        return $diff->d . ' days ago';
-                                    }
-                                } elseif ($diff->h > 0) {
-                                    if ($diff->h == 1) {
-                                        return '1 hour ago';
-                                    } else {
-                                        return $diff->h . ' hours ago';
-                                    }
-                                } elseif ($diff->i > 0) {
-                                    if ($diff->i == 1) {
-                                        return '1 minute ago';
-                                    } else {
-                                        return $diff->i . ' minutes ago';
-                                    }
-                                } elseif ($diff->s > 0) {
-                                    if ($diff->s == 1) {
-                                        return '1 second ago';
-                                    } else {
-                                        return $diff->s . ' seconds ago';
-                                    }
-                                } else {
-                                    return 'just now';
-                                }
-                            }),
+                            ->content(fn (\App\Models\Section $record): string => $record->created_at->toFormattedDateString()),
                         Forms\Components\Placeholder::make('updated_at')
                             ->label('Last modified at')
-                            ->content(function (\Illuminate\Database\Eloquent\Model $record): string {
-                                $category = \App\Models\Section::find($record->id);
-                                $now = \Carbon\Carbon::now();
-
-                                $diff = $category->updated_at->diff($now);
-                                if ($diff->y > 0) {
-                                    return $diff->y . ' years ago';
-                                } elseif ($diff->m > 0) {
-                                    if ($diff->m == 1) {
-                                        return '1 month ago';
-                                    } else {
-                                        return $diff->m . ' months ago';
-                                    }
-                                } elseif ($diff->d >= 7) {
-                                    $weeks = floor($diff->d / 7);
-                                    if ($weeks == 1) {
-                                        return 'a week ago';
-                                    } else {
-                                        return $weeks . ' weeks ago';
-                                    }
-                                } elseif ($diff->d > 0) {
-                                    if ($diff->d == 1) {
-                                        return 'yesterday';
-                                    } else {
-                                        return $diff->d . ' days ago';
-                                    }
-                                } elseif ($diff->h > 0) {
-                                    if ($diff->h == 1) {
-                                        return '1 hour ago';
-                                    } else {
-                                        return $diff->h . ' hours ago';
-                                    }
-                                } elseif ($diff->i > 0) {
-                                    if ($diff->i == 1) {
-                                        return '1 minute ago';
-                                    } else {
-                                        return $diff->i . ' minutes ago';
-                                    }
-                                } elseif ($diff->s > 0) {
-                                    if ($diff->s == 1) {
-                                        return '1 second ago';
-                                    } else {
-                                        return $diff->s . ' seconds ago';
-                                    }
-                                } else {
-                                    return 'just now';
-                                }
-                            }),
+                            ->content(fn (\App\Models\Section $record): string => $record->created_at->toFormattedDateString()),
                     ])->hiddenOn('create')
                 ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 0 : 1]),
             ])->columns(3);

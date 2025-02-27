@@ -8,5 +8,9 @@ class Schedule extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    protected static ?string $navigationGroup = 'School';
+
+    protected static ?int $navigationSort = 10;
+
     protected static string $view = 'filament.app.pages.schedule';
 }

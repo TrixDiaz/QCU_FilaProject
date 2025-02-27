@@ -144,7 +144,7 @@ class ApprovalResource extends Resource
                                 'ends_at' => 'active',
                         }
 
-                        $record->delete();
+//                        $record->delete();
 
                         Notification::make()
                             ->title('Approved successfully')
@@ -157,7 +157,7 @@ class ApprovalResource extends Resource
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->action(function (Approval $record) {
-                        $record->delete();
+//                        $record->delete();
 
                         Notification::make()
                             ->title('Declined successfully')

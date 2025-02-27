@@ -142,6 +142,7 @@ class ApprovalResource extends Resource
                                 'color' => '#fffff',
                                 'starts_at' => 'active',
                                 'ends_at' => 'active',
+                                ]);
                         }
 
 //                        $record->delete();

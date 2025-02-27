@@ -28,7 +28,8 @@ class Ticket extends Model
         'status',
         'created_at',
         'updated_at',
-        'subject'
+        'subject_id'
+
     ];
 
 

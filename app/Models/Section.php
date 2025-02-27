@@ -37,4 +37,9 @@ class Section extends Model
         return $this->hasMany(Ticket::class, 'section_id');
     }
 
+    public function subject(): HasMany
+    {
+        return $this->hasMany(subject::class, 'section_id');
+    }
+
 }

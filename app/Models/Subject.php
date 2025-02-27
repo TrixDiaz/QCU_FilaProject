@@ -19,4 +19,9 @@ class Subject extends Model
     {
         return $this->hasMany(Ticket::class, 'subject_id');
     }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(Section::class, 'section_id');
+    }
 }

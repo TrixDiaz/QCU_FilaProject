@@ -283,31 +283,31 @@ class AssetResource extends Resource implements HasShieldPermissions
                 ->color('primary'),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\Action::make('assign')
-                        ->label('Assign Asset Selected')
-                        ->color('danger')
-                        ->icon('heroicon-m-square-2-stack'),
-                        ExportBulkAction::make()->exports([
-                            ExcelExport::make()->withFilename(date('Y-m-d') . ' - Asset'),
-                            ExcelExport::make()->fromTable()->except([
-                                "id",'slug','category_id','brand_id',
-                                ]),
-                                ExcelExport::make()->fromTable()->only([
-                                    'name',
-                                    'brand.name',
-                                    'serial_number',
-                                    'assetTags.name',
-                                    'expiry_date',
-                                    'status',
-                                    'created_at',
-                                    'updated_at',
+                \Filament\Tables\Actions\BulkActionGroup::make([
+                    \Filament\Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->except(["id", "slug", "brand_id"])
+                            ->withFilename(date('Y-m-d') . '-Assets.xlsx'), 
+            
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->only([
+                                'name',
+                                'serial_number',
+                                'assetTags.name',
+                                'expiry_date',
+                                'status',
+                                'created_at',
+                                'updated_at',
+                            ])
+                            ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'), 
                             ])
 
                             ]),
                 ])
-            ])->poll('30s');
+            ->poll('30s');
     }
 
     public static function getRelations(): array

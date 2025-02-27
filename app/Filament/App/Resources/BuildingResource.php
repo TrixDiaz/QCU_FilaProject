@@ -231,21 +231,26 @@ class BuildingResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteBulkAction::make(),
 
                     ExportBulkAction::make()->exports([
-                        ExcelExport::make()->withFilename(date('Y-m-d') . ' - Buildings'),
-                        ExcelExport::make()->fromTable()->except([
-                            'slug',"id"
-                            ]),
-                            ExcelExport::make()->fromTable()->only([
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->except(["id", "slug",])
+                            ->withFilename(date('Y-m-d') . '-Buildings.xlsx'), 
+                            ExcelExport::make()
+                            ->fromTable()
+                            ->only([
                                 'name',
-                                'is_active', // Now properly formatted in the table
+                                'serial_number',
+                                'assetTags.name',
+                                'expiry_date',
+                                'status',
                                 'created_at',
                                 'updated_at',
-                        ])
+                            ])
+                            ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'), 
+                         ])
+
                         ]),
-
-                    ]),
-
-            ])->poll('30s');
+                ])->poll('30s');
     }
 
     public static function getRelations(): array

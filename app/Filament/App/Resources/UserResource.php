@@ -155,18 +155,22 @@ class UserResource extends Resource implements HasShieldPermissions
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()->exports([
-                        ExcelExport::make()->withFilename(date('Y-m-d') . ' - Users'),
-                        ExcelExport::make()->fromTable()->except([
-                            "id", "password"
-                        ]),
-                        ExcelExport::make()->fromTable()->only([
-                            'name',
-                            'email',
-                            'verified_date',
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->except(["id", "password"])
+                            ->withFilename(date('Y-m-d') . '- Users.xlsx'),
+                            
+                            ExcelExport::make()
+                            ->fromTable()
+                            ->only([
+                                'name', 
+                                'email',
+                                'email_Verified_at', 
+                                
+                            ])
+                            ->withFilename(date('Y-m-d') . '-Filtered-Users.xlsx'),
+                            ])
 
-
-                        ])
-                        ]),
                         ]),
             ])->poll('30s');
     }

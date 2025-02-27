@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('asset_id')->nullable();
             $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
-            $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
+            $table->foreignId('subject_id')->nullable()->constrained('subjects')->onDelete('cascade');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('title');
             $table->string('description');

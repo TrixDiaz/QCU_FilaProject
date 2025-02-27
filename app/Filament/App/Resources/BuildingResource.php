@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
- 
+
 
 
 class BuildingResource extends Resource implements HasShieldPermissions
@@ -225,21 +225,21 @@ class BuildingResource extends Resource implements HasShieldPermissions
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    
+
                     ExportBulkAction::make()->exports([
                         ExcelExport::make()->fromTable()->except([
                             'slug',"id"
                             ]),
                             ExcelExport::make()->fromTable()->only([
-                                'name', 
+                                'name',
                                 'is_active', // Now properly formatted in the table
-                                'created_at', 
-                                'updated_at'
+                                'created_at',
+                                'updated_at',
                         ])
                         ]),
-                        
-                    ]),               
-                    
+
+                    ]),
+
             ])->poll('30s');
     }
 

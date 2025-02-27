@@ -79,6 +79,11 @@ class ApprovalResource extends Resource
                                     'pending' => 'warning',
                                 })
                                 ->alignEnd(),
+                            Tables\Columns\TextColumn::make('ticket.option')
+                                ->badge()
+                                ->extraAttributes([
+                                    'class' => 'capitalize'
+                                ]),
                         ]),
                     Tables\Columns\Layout\Grid::make([
                         'default' => 2,
@@ -119,22 +124,40 @@ class ApprovalResource extends Resource
                     ->color('success')
                     ->icon('heroicon-o-check')
                     ->action(function (Approval $record) {
-                        $record->update(['status' => 'approved']);
+                        if($record->option === 'asset')
+                        {
+                            \App\Models\AssetGroup::create([
+                                'asset_id' => $record->asset_id,
+                                'classroom_id' => $data['section.classroom->id'],
+                                'name' => $data['title'],
+                                'code' => $data['asset_code'],
+                                'status' => 'active',
+                            ]);
+                        } else {
+                            \App\Models\Event::create([
+                                'professor_id' => $record->asset_id,
+                                'section_id' => $data['section.classroom->id'],
+                                'subject_id' => $data['section.classroom->id'],
+                                'title' => $data['title'],
+                                'color' => '#fffff',
+                                'starts_at' => 'active',
+                                'ends_at' => 'active',
+                        }
+
+                        $record->delete();
 
                         Notification::make()
                             ->title('Approved successfully')
                             ->success()
                             ->send();
-                    })
-//                    ->visible(fn (Approval $record) => $record->status === 'pending')
-                ,
+                    }),
 
                 Tables\Actions\Action::make('decline')
                     ->button()
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->action(function (Approval $record) {
-                        $record->update(['status' => 'declined']);
+                        $record->delete();
 
                         Notification::make()
                             ->title('Declined successfully')
@@ -144,7 +167,8 @@ class ApprovalResource extends Resource
 //                    ->visible(fn (Approval $record) => $record->status === 'pending')
                     ->modalWidth('md'),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->poll('30s');
     }
 
     public static function getRelations(): array

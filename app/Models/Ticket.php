@@ -41,6 +41,7 @@ class Ticket extends Model
         static::created(function ($ticket) {
             if ($ticket->ticket_type === 'request') {
                 Approval::create([
+                    'ticket_id' => $ticket->id,
                     'asset_id' => $ticket->asset_id,
                     'professor_id' => $ticket->assigned_to,
                     'section_id' => $ticket->section_id,

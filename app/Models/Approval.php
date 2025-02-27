@@ -12,6 +12,7 @@ class Approval extends Model
     use HasFactory;
 
     protected $fillable = [
+        'ticket_id',
         'asset_id',
         'professor_id',
         'section_id',
@@ -40,5 +41,10 @@ class Approval extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function ticket(): BelongsTo
+    {
+        return $this->belongsTo(Ticket::class);
     }
 }

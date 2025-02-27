@@ -22,7 +22,9 @@ class Section extends Model
         'classroom_id',
         'name',
         'slug',
-        'is_active'
+        'is_active',
+        'created_at',
+        'updated_at',
     ];
 
     public function classroom(): BelongsTo

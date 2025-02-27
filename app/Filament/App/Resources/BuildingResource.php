@@ -231,6 +231,7 @@ class BuildingResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteBulkAction::make(),
 
                     ExportBulkAction::make()->exports([
+                        ExcelExport::make()->withFilename(date('Y-m-d') . ' - Buildings'),
                         ExcelExport::make()->fromTable()->except([
                             'slug',"id"
                             ]),

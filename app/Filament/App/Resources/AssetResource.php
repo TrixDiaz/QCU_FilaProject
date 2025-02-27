@@ -290,6 +290,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                         ->color('danger')
                         ->icon('heroicon-m-square-2-stack'),
                         ExportBulkAction::make()->exports([
+                            ExcelExport::make()->withFilename(date('Y-m-d') . ' - Asset'),
                             ExcelExport::make()->fromTable()->except([
                                 "id",'slug','category_id','brand_id',
                                 ]),

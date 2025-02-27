@@ -233,6 +233,7 @@ class Inventory extends Component implements HasTable, HasForms
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()->exports([
+                        ExcelExport::make()->withFilename(date('Y-m-d') . ' - Inventory'),
                         ExcelExport::make()->fromTable()->except([
                             "id",'slug','brand_id',
                             ]),
@@ -244,7 +245,10 @@ class Inventory extends Component implements HasTable, HasForms
                                 'status',
                                 'created_at', 
                                 'updated_at',
-                            ])           
+                               
+                            ]) 
+                           
+                                    
                       
                       ]),
                 ]),

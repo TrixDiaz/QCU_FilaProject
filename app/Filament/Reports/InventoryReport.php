@@ -10,7 +10,7 @@ use EightyNine\Reports\Components\Header;
 use EightyNine\Reports\Components\Text;
 use Filament\Forms\Form;
 use Illuminate\Support\Collection;
-use Carbon\Carbon; 
+use Carbon\Carbon;
 
 class InventoryReport extends Report
 {
@@ -166,7 +166,7 @@ class InventoryReport extends Report
                 'column5' => $asset->asset_code,
                 'column6' => $this->formatDate($asset->expiry_date),
                 'column7' => ucfirst($asset->status),
-                'column8' => optional($asset->classroom)->name ?? 'Unassigned',
+                'column8' => optional($asset->assetGroup?->classroom)->name ?? 'Unassigned',
                 'column9' => $this->formatDate($asset->created_at),
                 'column10' => $this->formatDate($asset->updated_at),
             ];

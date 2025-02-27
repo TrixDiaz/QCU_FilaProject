@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 
 class Asset extends Model
@@ -59,6 +60,13 @@ class Asset extends Model
     {
         return $this->belongsTo(Classroom::class);
     }
+
+    public function assetGroup(): HasOne
+    {
+        return $this->hasOne(\App\Models\AssetGroup::class, 'asset_id');
+    }
+
+
 
 
 }

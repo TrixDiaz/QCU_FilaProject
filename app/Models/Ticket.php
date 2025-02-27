@@ -28,13 +28,19 @@ class Ticket extends Model
         'status',
         'created_at',
         'updated_at',
-        'subject_id'
+        'subject_id',
+        'starts_at',
+        'ends_at',
+
+
 
     ];
 
 
-    protected $cast = [
-        'attachments' => 'array'
+    protected $casts = [
+        'attachments' => 'array',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime'
     ];
 
     protected static function booted()
@@ -49,12 +55,13 @@ class Ticket extends Model
                     'subject_id' => null,
                     'title' => $ticket->title,
                     'color' => 'blue',
-                    'starts_at' => now(),
-                    'ends_at' => $ticket->due_date ?? now()->addDays(7),
+                    'starts_at' => $ticket->starts_at,
+                    'ends_at' => $ticket->ends_at,
                 ]);
             }
         });
     }
+    
 
     public function asset(): BelongsTo
     {

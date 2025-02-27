@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('approvals', function (Blueprint $table) {
             $table->id();
+            
             $table->foreignId('ticket_id')->nullable()->constrained('tickets')->onDelete('cascade');
             $table->foreignId('asset_id')->nullable()->constrained('assets')->onDelete('cascade');
             $table->foreignId('professor_id')->nullable()->constrained('users')->onDelete('cascade');

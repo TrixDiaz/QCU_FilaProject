@@ -33,9 +33,11 @@ class TagResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationGroup = 'Assets';
 
-    protected static ?string $navigationLabel = 'Tag';
+    protected static ?string $navigationParentItem = 'Asset';
+    protected static ?string $navigationLabel = 'Asset Tag';
 
     protected static ?int $navigationSort = 3;
+
     protected static ?string $navigationIcon = 'heroicon-o-swatch';
 
     public static function getNavigationBadge(): ?string

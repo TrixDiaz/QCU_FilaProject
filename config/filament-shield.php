@@ -88,4 +88,6 @@ return [
         'enabled' => true,
     ],
 
+    'nav.group' => 'System Settings',
+
 ];

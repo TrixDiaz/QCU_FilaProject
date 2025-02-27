@@ -32,6 +32,10 @@ class SectionResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 
+    protected static ?string $navigationGroup = 'School';
+
+    protected static ?string $navigationParentItem = 'Buildings';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_active', true)->count();

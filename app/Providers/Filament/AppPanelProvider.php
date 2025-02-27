@@ -50,7 +50,9 @@ class AppPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 'Assets',
-                'Location',
+                'Tickets',
+                'School',
+                'Reports',
                 'System Settings',
             ])
             ->sidebarCollapsibleOnDesktop()

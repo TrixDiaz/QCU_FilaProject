@@ -37,6 +37,10 @@ class BuildingResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
+    protected static ?string $navigationGroup = 'School';
+
+    protected static ?string $modelLabel = 'Buildings';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_active', true)->count();

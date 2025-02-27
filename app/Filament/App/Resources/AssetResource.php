@@ -36,10 +36,11 @@ class AssetResource extends Resource implements HasShieldPermissions
     protected static ?string $model = Asset::class;
 
     protected static ?string $navigationGroup = 'Assets';
-
     protected static ?string $navigationLabel = 'Asset';
 
+    protected static ?string $modelLabel = 'Asset';
     protected static ?int $navigationSort = 4;
+
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
     public static function getNavigationBadge(): ?string
@@ -293,16 +294,16 @@ class AssetResource extends Resource implements HasShieldPermissions
                                 "id",'slug','category_id','brand_id',
                                 ]),
                                 ExcelExport::make()->fromTable()->only([
-                                    'name', 
+                                    'name',
                                     'brand.name',
                                     'serial_number',
                                     'assetTags.name',
                                     'expiry_date',
                                     'status',
-                                    'created_at', 
+                                    'created_at',
                                     'updated_at',
                             ])
-                          
+
                             ]),
                 ])
             ])->poll('30s');

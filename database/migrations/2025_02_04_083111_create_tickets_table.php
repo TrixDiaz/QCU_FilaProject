@@ -14,18 +14,20 @@ return new class extends Migration
         Schema::create('tickets', function (Blueprint $table) {
             $table->id();
             $table->string('ticket_number')->unique();
-            $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
+            $table->unsignedBigInteger('asset_id')->nullable();
             $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('title');
             $table->string('description');
-            $table->string('option')->nullable();
             $table->enum('ticket_type', ['request', 'incident']);
             $table->enum('option', ['asset', 'classroom'])->nullable();
             $table->string('priority')->default('low');
             $table->string('status')->default('in progress');
             $table->json('attachment')->nullable();
+            $table->dateTime('starts_at')->nullable();
+            $table->dateTime('ends_at')->nullable();
             $table->timestamps();
         });
     }

@@ -27,7 +27,8 @@ class Ticket extends Model
         'attachments',
         'status',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'subject'
     ];
 
 

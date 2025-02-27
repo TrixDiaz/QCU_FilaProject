@@ -15,6 +15,9 @@ use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use AymanAlhattami\FilamentDateScopesFilter\DateScopeFilter;
 use Carbon\Carbon;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+
 
 class Inventory extends Component implements HasTable, HasForms
 {
@@ -228,6 +231,21 @@ class Inventory extends Component implements HasTable, HasForms
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make()->fromTable()->except([
+                            "id",'slug','brand_id',
+                            ]),
+                            ExcelExport::make()->fromTable()->only([
+                                'name', 
+                                'serial_number',
+                                'assetTags.name',
+                                'expiry_date',
+                                'status',
+                                'created_at', 
+                                'updated_at',
+                            ])           
+                      
+                      ]),
                 ]),
             ]);
     }

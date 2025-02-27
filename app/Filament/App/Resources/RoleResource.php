@@ -16,6 +16,8 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class RoleResource extends Resource implements HasShieldPermissions
 {
@@ -108,6 +110,7 @@ class RoleResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('filament-shield::filament-shield.column.updated_at'))
                     ->dateTime(),
+            
             ])
             ->filters([
                 //
@@ -118,6 +121,19 @@ class RoleResource extends Resource implements HasShieldPermissions
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
+                ExportBulkAction::make()->exports([
+                    ExcelExport::make()->fromTable()->except([
+                        'team.name',"id",'permissions_count',
+                        ]),
+                        ExcelExport::make()->fromTable()->only([
+                            'name', 
+                            'guard_name',
+                            'created_at', 
+                            'updated_at',
+                    ])
+                    ]),
+                    
+                        
             ]);
     }
 

@@ -17,12 +17,14 @@ class Building extends Model
     {
         return 'slug';
     }
-
+   
     protected $fillable = [
+        
         'name',
         'slug',
         'is_active'
     ];
+    protected $dates = ['created_at', 'updated_at', 'deleted_at']; // Ensure timestamps are treated as dates
 
     public function classrooms(): HasMany
     {

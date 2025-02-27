@@ -20,6 +20,13 @@ class User extends Authenticatable implements FilamentUser
     use SoftDeletes;
     use HasRoles;
 
+    public function getVerifiedDateAttribute()
+    {
+        return $this->email_verified_at 
+            ? $this->email_verified_at->format('M d, Y') 
+            : 'Pending';
+    }
+    
     public function canAccessPanel(Panel $panel): bool
     {
         return true;

@@ -14,6 +14,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class UserResource extends Resource implements HasShieldPermissions
 {
@@ -147,10 +149,21 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->tooltip('Actions')
             ])
             ->bulkActions([
-                \pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction::make(),
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make()->fromTable()->except([
+                            "id", "password"
+                        ]),
+                        ExcelExport::make()->fromTable()->only([
+                            'name',
+                            'email',
+                            'verified_date',
+            
+                                
+                        ])
+                        ]),
+                        ]),
             ])->poll('30s');
     }
 

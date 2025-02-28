@@ -77,10 +77,44 @@ class SectionResource extends Resource implements HasShieldPermissions
                                     ->searchable()
                                     ->preload()
                                     ->native(false)
-                                    ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Section::class))
-                                    ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Section::class)),
-                            ]),
-                    ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
+                                    ->editOptionForm(function () {
+                                        return [
+                                            // Include name and slug from DynamicForm
+                                            ...\App\Services\DynamicForm::schema(\App\Models\Classroom::class),
+
+                                            // Add the building_id field
+                                            Forms\Components\Select::make('building_id')
+                                                ->relationship(
+                                                    name: 'building',
+                                                    titleAttribute: 'name',
+                                                    modifyQueryUsing: fn(Builder $query) => $query->where('is_active', true)
+                                                )
+                                                ->required()
+                                                ->searchable()
+                                                ->preload()
+                                                ->native(false)
+                                        ];
+                                    })
+                                    ->createOptionForm(function () {
+                                        return [
+                                            // Include name and slug from DynamicForm
+                                            ...\App\Services\DynamicForm::schema(\App\Models\Classroom::class),
+
+                                            // Add the building_id field
+                                            Forms\Components\Select::make('building_id')
+                                                ->relationship(
+                                                    name: 'building',
+                                                    titleAttribute: 'name',
+                                                    modifyQueryUsing: fn(Builder $query) => $query->where('is_active', true)
+                                                )
+                                                ->required()
+                                                ->searchable()
+                                                ->preload()
+                                                ->native(false)
+                                        ];
+                                    }),
+                            ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 3 : 2]),
+                    ])->columnSpanFull(),
                 Forms\Components\Grid::make(1)->schema([
                     Forms\Components\Section::make()->schema([
                         Forms\Components\Toggle::make('is_active')
@@ -93,10 +127,10 @@ class SectionResource extends Resource implements HasShieldPermissions
                         Forms\Components\Placeholder::make('created_at')
                             ->label('Created at')
                             ->hiddenOn('create')
-                            ->content(fn (\App\Models\Section $record): string => $record->created_at->toFormattedDateString()),
+                            ->content(fn(\App\Models\Section $record): string => $record->created_at->toFormattedDateString()),
                         Forms\Components\Placeholder::make('updated_at')
                             ->label('Last modified at')
-                            ->content(fn (\App\Models\Section $record): string => $record->created_at->toFormattedDateString()),
+                            ->content(fn(\App\Models\Section $record): string => $record->created_at->toFormattedDateString()),
                     ])->hiddenOn('create')
                 ])->columnSpan(['lg' => fn(string $operation) => $operation === 'create' ? 0 : 1]),
             ])->columns(3);

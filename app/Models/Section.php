@@ -14,10 +14,6 @@ class Section extends Model
     use HasFactory;
     use SoftDeletes;
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
     protected $fillable = [
         'classroom_id',
         'name',
@@ -27,9 +23,14 @@ class Section extends Model
         'updated_at',
     ];
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
     public function classroom(): BelongsTo
     {
-        return $this->belongsTo(Classroom::class)->with('building');
+        return $this->belongsTo(Classroom::class, 'classroom_id')->with('building');
     }
 
     public function tickets(): HasMany

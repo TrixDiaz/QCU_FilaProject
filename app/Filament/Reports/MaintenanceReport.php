@@ -16,7 +16,7 @@ use Carbon\Carbon;
 
 class MaintenanceReport extends Report
 {
-
+    protected static bool $shouldRegisterNavigation = false;
     public ?string $heading = "Maintenance Report";
     public ?string $icon = 'heroicon-o-wrench-screwdriver';
 

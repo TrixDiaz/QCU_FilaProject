@@ -15,7 +15,7 @@ use Carbon\Carbon;
 
 class InventoryReport extends Report
 {
-
+    protected static bool $shouldRegisterNavigation = false;
     public ?string $heading = "Inventory Report";
     public ?string $icon = 'heroicon-o-archive-box';
 

@@ -6,11 +6,10 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\Navigation\NavigationItem;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -43,10 +42,30 @@ class AppPanelProvider extends PanelProvider
                 'Profile' => MenuItem::make()->url(fn (): string => \Filament\Pages\Auth\EditProfile::getUrl())
             ])
             ->navigationItems([
-                \Filament\Navigation\NavigationItem::make('dashboard')
-                    ->label(fn(): string => __('filament-panels::pages/dashboard.title'))
-                    ->url(fn(): string => \Filament\Pages\Dashboard::getUrl())
-                    ->isActiveWhen(fn() => request()->routeIs('filament.app.pages.dashboard')),
+                NavigationItem::make('Asset Report')
+                    ->url('app/reports/asset-report')
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('Reports')
+                    ->sort(1)
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                NavigationItem::make('Inventory Report')
+                    ->url('app/reports/inventory-report')
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('Reports')
+                    ->sort(1)
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                NavigationItem::make('Maintenance Report')
+                    ->url('app/reports/maintenance-report')
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('Reports')
+                    ->sort(1)
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                NavigationItem::make('Users Report')
+                    ->url('app/reports/users-report')
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('Reports')
+                    ->sort(1)
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
             ])
             ->navigationGroups([
                 'Assets',
@@ -54,6 +73,9 @@ class AppPanelProvider extends PanelProvider
                 'School',
                 'Reports',
                 'System Settings',
+            ])
+            ->navigationItems([
+
             ])
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()

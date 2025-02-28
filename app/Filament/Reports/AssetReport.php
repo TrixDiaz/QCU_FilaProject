@@ -3,7 +3,6 @@
 namespace App\Filament\Reports;
 
 use App\Models\Asset;
-use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -12,11 +11,12 @@ use EightyNine\Reports\Components\Text;
 use Filament\Forms\Form;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class AssetReport extends Report
 {
+    protected static bool $shouldRegisterNavigation = false;
     public ?string $heading = "Asset Report";
+
     public ?string $icon = 'heroicon-o-clipboard-document-list';
 
     public function header(Header $header): Header
@@ -116,73 +116,73 @@ class AssetReport extends Report
     }
 
     public function assetSummary(?array $filters = []): Collection
-{
-    $query = Asset::query()->with(['brand', 'category']);
+    {
+        $query = Asset::query()->with(['brand', 'category']);
 
-    $filtersApplied = false;
+        $filtersApplied = false;
 
-    if (!empty($filters['search'])) {
-        $query->where(function ($q) use ($filters) {
-            $q->where('name', 'like', '%' . $filters['search'] . '%')
-                ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%');
-        });
-        $filtersApplied = true;
-    }
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%');
+            });
+            $filtersApplied = true;
+        }
 
-    if (!empty($filters['asset_status']) && $filters['asset_status'] !== 'all') {
-        $query->where('status', $filters['asset_status']);
-        $filtersApplied = true;
-    }
+        if (!empty($filters['asset_status']) && $filters['asset_status'] !== 'all') {
+            $query->where('status', $filters['asset_status']);
+            $filtersApplied = true;
+        }
 
-    if (!empty($filters['date_from'])) {
-        $query->whereDate('created_at', '>=', $filters['date_from']);
-        $filtersApplied = true;
-    }
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+            $filtersApplied = true;
+        }
 
-    if (!empty($filters['date_to'])) {
-        $query->whereDate('created_at', '<=', $filters['date_to']);
-        $filtersApplied = true;
-    }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+            $filtersApplied = true;
+        }
 
-    $assets = $query->latest('created_at')->get();
+        $assets = $query->latest('created_at')->get();
 
-    // If no assets match the filter (e.g., no inactive assets), return a "Nothing to show" message.
-    if ($assets->isEmpty()) {
+        // If no assets match the filter (e.g., no inactive assets), return a "Nothing to show" message.
+        if ($assets->isEmpty()) {
+            return collect([
+                [
+                    'column1' => 'Nothing to show',
+                    'column2' => '',
+                    'column3' => '',
+                    'column4' => '',
+                    'column5' => '',
+                    'column6' => '',
+                    'column7' => '',
+                ]
+            ]);
+        }
+
         return collect([
             [
-                'column1' => 'Nothing to show',
-                'column2' => '',
-                'column3' => '',
-                'column4' => '',
-                'column5' => '',
-                'column6' => '',
-                'column7' => '',
+                'column1' => 'Name',
+                'column2' => 'Brand & Category',
+                'column3' => 'Serial Number',
+                'column4' => 'Expiry Date',
+                'column5' => 'Status',
+                'column6' => 'Created At',
+                'column7' => 'Updated At',
             ]
-        ]);
+        ])->concat($assets->map(function ($asset) {
+            return [
+                'column1' => $asset->name,
+                'column2' => ($asset->brand->name ?? '') . ' - ' . ($asset->category->name ?? ''),
+                'column3' => $asset->serial_number,
+                'column4' => $this->formatDate($asset->expiry_date),
+                'column5' => $asset->status,
+                'column6' => $this->formatDate($asset->created_at),
+                'column7' => $this->formatDate($asset->updated_at),
+            ];
+        }));
     }
-
-    return collect([
-        [
-            'column1' => 'Name',
-            'column2' => 'Brand & Category',
-            'column3' => 'Serial Number',
-            'column4' => 'Expiry Date',
-            'column5' => 'Status',
-            'column6' => 'Created At',
-            'column7' => 'Updated At',
-        ]
-    ])->concat($assets->map(function ($asset) {
-        return [
-            'column1' => $asset->name,
-            'column2' => ($asset->brand->name ?? '') . ' - ' . ($asset->category->name ?? ''),
-            'column3' => $asset->serial_number,
-            'column4' => $this->formatDate($asset->expiry_date),
-            'column5' => $asset->status,
-            'column6' => $this->formatDate($asset->created_at),
-            'column7' => $this->formatDate($asset->updated_at),
-        ];
-    }));
-}
 
 
     private function formatDate($date): string

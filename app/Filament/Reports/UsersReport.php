@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
 
 class UsersReport extends Report
 {
-
+    protected static bool $shouldRegisterNavigation = false;
     public ?string $heading = "Users Report";
 
      public ?string $subHeading = "A great report";

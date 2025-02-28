@@ -9,6 +9,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\Building;
 use App\Models\Classroom;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;

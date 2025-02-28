@@ -55,7 +55,7 @@ class SectionPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_section');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class SectionPolicy
      */
     public function forceDelete(User $user, Section $section): bool
     {
-        return $user->can('force_delete_section');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class SectionPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_section');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class SectionPolicy
      */
     public function restore(User $user, Section $section): bool
     {
-        return $user->can('restore_section');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class SectionPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_section');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class SectionPolicy
      */
     public function replicate(User $user, Section $section): bool
     {
-        return $user->can('replicate_section');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class SectionPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_section');
+        return $user->can('{{ Reorder }}');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Reports;
 
 use App\Models\Asset;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 
 class InventoryReport extends Report
 {
+
     public ?string $heading = "Inventory Report";
     public ?string $icon = 'heroicon-o-archive-box';
 

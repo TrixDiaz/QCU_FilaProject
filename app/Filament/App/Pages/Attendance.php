@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 
 class Attendance extends Page implements HasForms, HasTable
 {
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.app.pages.attendance';

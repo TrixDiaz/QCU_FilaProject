@@ -63,7 +63,7 @@ class ClassroomPolicy
      */
     public function forceDelete(User $user, Classroom $classroom): bool
     {
-        return $user->can('force_delete_classroom');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ClassroomPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_classroom');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ClassroomPolicy
      */
     public function restore(User $user, Classroom $classroom): bool
     {
-        return $user->can('restore_classroom');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ClassroomPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_classroom');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ClassroomPolicy
      */
     public function replicate(User $user, Classroom $classroom): bool
     {
-        return $user->can('replicate_classroom');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class ClassroomPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_classroom');
+        return $user->can('{{ Reorder }}');
     }
 }

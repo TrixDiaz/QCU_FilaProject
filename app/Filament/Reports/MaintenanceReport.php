@@ -4,6 +4,7 @@ namespace App\Filament\Reports;
 
 use App\Models\Asset;
 use App\Models\Ticket;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -11,10 +12,11 @@ use EightyNine\Reports\Components\Header;
 use EightyNine\Reports\Components\Text;
 use Filament\Forms\Form;
 use Illuminate\Support\Collection;
-use Carbon\Carbon; 
+use Carbon\Carbon;
 
 class MaintenanceReport extends Report
 {
+
     public ?string $heading = "Maintenance Report";
     public ?string $icon = 'heroicon-o-wrench-screwdriver';
 
@@ -97,7 +99,7 @@ class MaintenanceReport extends Report
                         'In Progress' => 'In Progress',
                         'Unassigned' => 'Unassigned',
                         'Resolved' => 'Resolved',
-                    ]),                
+                    ]),
                 \Filament\Forms\Components\Select::make('section')
                 ->label('Section')
                 ->native(false)

@@ -3,6 +3,7 @@
 namespace App\Filament\Reports;
 
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -14,6 +15,7 @@ use Illuminate\Support\Collection;
 
 class UsersReport extends Report
 {
+
     public ?string $heading = "Users Report";
 
      public ?string $subHeading = "A great report";

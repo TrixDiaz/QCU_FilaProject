@@ -3,6 +3,7 @@
 namespace App\Filament\Reports;
 
 use App\Models\Asset;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -10,7 +11,8 @@ use EightyNine\Reports\Components\Header;
 use EightyNine\Reports\Components\Text;
 use Filament\Forms\Form;
 use Illuminate\Support\Collection;
-use Carbon\Carbon; 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class AssetReport extends Report
 {

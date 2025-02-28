@@ -24,8 +24,22 @@ use Filament\Forms\Set;
 use Filament\Tables\Columns\SelectColumn;
 use Illuminate\Database\Eloquent\Model;
 
-class ApprovalResource extends Resource
+class ApprovalResource extends Resource implements HasShieldPermissions
 {
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'publish'
+        ];
+    }
+
     protected static ?string $model = Approval::class;
 
     protected static ?string $navigationGroup = 'Tickets';

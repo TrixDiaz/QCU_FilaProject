@@ -5,18 +5,18 @@
   14 => 'view',
   'app' => 
   array (
-    'name' => 'double_panel',
-    'env' => 'local',
+    'name' => 'QCU',
+    'env' => 'http://localhost:8000',
     'debug' => true,
-    'url' => 'http://double-panel.test',
+    'url' => 'http://localhost:8000',
     'frontend_url' => 'http://localhost:3000',
     'asset_url' => NULL,
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Manila',
     'locale' => 'en',
     'fallback_locale' => 'en',
     'faker_locale' => 'en_US',
     'cipher' => 'AES-256-CBC',
-    'key' => 'base64:/oAXWSr5Fy7j3/HjH0uMSvhKi3H36nPz1J9gsy/ic0k=',
+    'key' => 'base64:LLbDC+lZZVz4W/D2+BDPul6npCAxow6xBToo4QzKbrg=',
     'previous_keys' => 
     array (
     ),
@@ -163,8 +163,8 @@
       'file' => 
       array (
         'driver' => 'file',
-        'path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\framework/cache/data',
-        'lock_path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\framework/cache/data',
+        'path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/cache/data',
+        'lock_path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/cache/data',
       ),
       'memcached' => 
       array (
@@ -333,7 +333,7 @@
       'options' => 
       array (
         'cluster' => 'redis',
-        'prefix' => 'double_panel_database_',
+        'prefix' => 'qcu_database_',
       ),
       'default' => 
       array (
@@ -362,7 +362,7 @@
     ),
     'default_filesystem_disk' => 'public',
     'assets_path' => NULL,
-    'cache_path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\bootstrap/cache/filament',
+    'cache_path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\bootstrap/cache/filament',
     'livewire_loading_delay' => 'default',
   ),
   'filament-logger' => 
@@ -414,7 +414,7 @@
   ),
   'filament-reports' => 
   array (
-    'reports_directory' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\app\\Filament/Reports',
+    'reports_directory' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/Reports',
     'reports_namespace' => 'App\\Filament\\Reports',
     'reports_custom_menu_page' => true,
   ),
@@ -517,7 +517,7 @@
       'local' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\app/private',
+        'root' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/private',
         'serve' => true,
         'throw' => false,
         'report' => false,
@@ -525,8 +525,8 @@
       'public' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\app/public',
-        'url' => 'http://double-panel.test/storage',
+        'root' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/public',
+        'url' => 'http://localhost:8000/storage',
         'visibility' => 'public',
         'throw' => false,
         'report' => false,
@@ -547,13 +547,13 @@
       'filament-excel' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\app/filament-excel',
-        'url' => 'http://double-panel.test/filament-excel',
+        'root' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/filament-excel',
+        'url' => 'http://localhost:8000/filament-excel',
       ),
     ),
     'links' => 
     array (
-      'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\public\\storage' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\app/public',
+      'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\public\\storage' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/public',
     ),
   ),
   'logging' => 
@@ -578,14 +578,14 @@
       'single' => 
       array (
         'driver' => 'single',
-        'path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\logs/laravel.log',
         'level' => 'debug',
         'replace_placeholders' => true,
       ),
       'daily' => 
       array (
         'driver' => 'daily',
-        'path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\logs/laravel.log',
         'level' => 'debug',
         'days' => 14,
         'replace_placeholders' => true,
@@ -650,7 +650,7 @@
       ),
       'emergency' => 
       array (
-        'path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\logs/laravel.log',
       ),
     ),
   ),
@@ -669,7 +669,7 @@
         'username' => NULL,
         'password' => NULL,
         'timeout' => NULL,
-        'local_domain' => 'double-panel.test',
+        'local_domain' => 'localhost',
       ),
       'ses' => 
       array (
@@ -719,14 +719,14 @@
     'from' => 
     array (
       'address' => 'hello@example.com',
-      'name' => 'double_panel',
+      'name' => 'QCU',
     ),
     'markdown' => 
     array (
       'theme' => 'default',
       'paths' => 
       array (
-        0 => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\resources\\views/vendor/mail',
+        0 => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\resources\\views/vendor/mail',
       ),
     ),
   ),
@@ -774,7 +774,7 @@
   ),
   'queue' => 
   array (
-    'default' => 'sync',
+    'default' => 'database',
     'connections' => 
     array (
       'sync' => 
@@ -841,7 +841,7 @@
       2 => '127.0.0.1',
       3 => '127.0.0.1:8000',
       4 => '::1',
-      5 => 'double-panel.test',
+      5 => 'localhost:8000',
     ),
     'guard' => 
     array (
@@ -887,7 +887,7 @@
     'lifetime' => 120,
     'expire_on_close' => false,
     'encrypt' => false,
-    'files' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\framework/sessions',
+    'files' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/sessions',
     'connection' => NULL,
     'table' => 'sessions',
     'store' => NULL,
@@ -896,7 +896,7 @@
       0 => 2,
       1 => 100,
     ),
-    'cookie' => 'double_panel_session',
+    'cookie' => 'qcu_session',
     'path' => '/',
     'domain' => NULL,
     'secure' => NULL,
@@ -985,9 +985,9 @@
   array (
     'paths' => 
     array (
-      0 => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\resources\\views',
+      0 => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\resources\\views',
     ),
-    'compiled' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\framework\\views',
+    'compiled' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework\\views',
   ),
   'blade-heroicons' => 
   array (
@@ -1048,7 +1048,7 @@
   'livewire' => 
   array (
     'class_namespace' => 'App\\Livewire',
-    'view_path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\resources\\views/livewire',
+    'view_path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\resources\\views/livewire',
     'layout' => 'components.layouts.app',
     'lazy_placeholder' => NULL,
     'temporary_file_upload' => 
@@ -1203,7 +1203,7 @@
     ),
     'temporary_files' => 
     array (
-      'local_path' => 'C:\\Users\\nocet\\Documents\\QCU_FilaProject\\storage\\framework/cache/laravel-excel',
+      'local_path' => 'C:\\Users\\surface\\OneDrive\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/cache/laravel-excel',
       'local_permissions' => 
       array (
       ),

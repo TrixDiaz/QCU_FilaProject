@@ -6,6 +6,7 @@ use App\Filament\App\Resources\TicketResource\Pages;
 use App\Filament\App\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,7 +38,9 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = Ticket::class;
 
-    protected static ?string $navigationLabel = 'ticket';
+        protected static ?string $navigationGroup = 'Tickets';
+    protected static ?string $modelLabel = 'Tickets';
+    protected static ?string $navigationLabel = 'Tickets';
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
@@ -89,36 +92,54 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         'asset' => 'Asset',
                                                         'classroom' => 'Classroom',
                                                     ])
-                                                    ->visible(fn($get) => $get('ticket_type') === 'request'),
-                                                Forms\Components\DateTimePicker::make('starts_at')
-                                                    ->visible(fn($get) => $get('option') === 'classroom'),
-                                                Forms\Components\DateTimePicker::make('ends_at')
-                                                    ->visible(fn($get) => $get('option') === 'classroom'),
-                                                Forms\Components\Select::make('asset_id')
-                                                    ->relationship('asset', 'name')
-                                                    ->required(fn($get) => $get('option') !== 'classroom')
-                                                    ->searchable()
-                                                    ->preload()
-                                                    ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->visible(fn($get) => $get('ticket_type') === 'request')
+                                                    ->live()
                                                     ->afterStateUpdated(function ($state, callable $set) {
                                                         if ($state === 'classroom') {
                                                             $set('asset_id', null);
                                                         }
                                                     }),
+
+                                                Forms\Components\DateTimePicker::make('starts_at')
+                                                    ->visible(fn($get) => $get('option') === 'classroom'),
+
+                                                Forms\Components\DateTimePicker::make('ends_at')
+                                                    ->visible(fn($get) => $get('option') === 'classroom'),
+
+                                                Forms\Components\Select::make('asset_id')
+                                                    ->relationship('asset', 'name')
+                                                    ->required(fn($get) => $get('option') === 'asset')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->visible(fn($get) => $get('option') === 'asset'),
+
                                                 Forms\Components\Select::make('section_id')
                                                     ->relationship('section', 'name')
                                                     ->required()
                                                     ->searchable()
                                                     ->preload()
-                                                    ->optionsLimit(5),
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                        $set('subject_id', null);
+                                                        }
+                                                        }),
+
                                                 Forms\Components\Select::make('subject_id')
-                                                    ->relationship('subject', 'name')
-                                                    ->required()
+                                                    ->options(Subject::all()->pluck('name', 'id'))
+                                                    ->required(fn($get) => $get('option') === 'classroom')
                                                     ->searchable()
                                                     ->preload()
                                                     ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') === 'classroom'),
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                            $set('subject_id', null);
+                                                        }
+                                                    }),
                                                 Forms\Components\TextArea::make('description')
                                                     ->required()
                                                     ->columnSpanFull(),
@@ -140,7 +161,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             ->required()
                                             ->options(User::all()->pluck('name', 'id'))
                                             ->searchable()
-                                            ->visible(fn () => auth()->user()->role !== 'professor'),
+                                            ->visible(fn() => auth()->user()->role !== 'professor'),
                                         Forms\Components\Select::make('priority')
                                             ->required()
                                             ->default('low')
@@ -149,14 +170,19 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                 'medium' => 'Medium',
                                                 'high' => 'High',
                                             ]),
-                                    //    Forms\Components\DateTimePicker::make('starts_at'),
-                                    //    Forms\Components\DateTimePicker::make('ends_at'),
+                                        Forms\Components\FileUpload::make('attachments')
+                                            ->multiple()
+                                            ->openable()
+                                            ->image()
+                                            ->downloadable(),
+                                        //    Forms\Components\DateTimePicker::make('starts_at'),
+                                        //    Forms\Components\DateTimePicker::make('ends_at'),
                                     ]),
                             ])->columnSpan(1), // Ensures the Wizard takes one column
                         ]),
 
                 ])
-                    ->columnSpanFull(),// Full width grid with two equal columns
+                    ->columnSpanFull(), // Full width grid with two equal columns
             ]);
     }
 
@@ -194,35 +220,12 @@ class TicketResource extends Resource implements HasShieldPermissions
                         'medium' => 'warning',
                         'high' => 'danger',
                     }),
-                Tables\Columns\SelectColumn::make('status')
-                    ->options([
-                        'in progress' => 'In progress',
-                        'open' => 'Open',
-                        'closed' => 'Closed',
-                        'resolved' => 'Resolved',
-                    ])
-                    ->beforeStateUpdated(function ($record, $state) {
-                        // Runs before the state is saved to the database.
-                    })
-                    ->afterStateUpdated(function ($record, $state) {
-                        // Runs after the state is saved to the database.
-                    }),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\ImageColumn::make('attachment')
-                    ->width(50)
-                    ->height(50)
-                    ->getStateUsing(function (Model $record): string {
-                     $ticket = Ticket::query()->where('id', $record->id)->first();
-        
-                    if ($ticket === null || $ticket->image === null || $ticket->image === "" || empty($product->image)) {
-                     return "https://rd.com.pk/Resource/images/noimage.png";
-                    } else {
-                    return asset('storage/' . $ticket->image);
-                    }
-                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -251,7 +254,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive Ticket'),
+                        ->modalHeading('Archive Building'),
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\RestoreAction::make()
                         ->color('secondary'),
@@ -280,5 +283,3 @@ class TicketResource extends Resource implements HasShieldPermissions
         ];
     }
 }
-
-

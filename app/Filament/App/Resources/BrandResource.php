@@ -32,8 +32,11 @@ class BrandResource extends Resource implements HasShieldPermissions
     protected static ?string $model = Brand::class;
 
     protected static ?string $navigationGroup = 'Assets';
-    protected static ?string $navigationLabel = 'Brand';
+
+    protected static ?string $navigationParentItem = 'Asset';
+    protected static ?string $navigationLabel = 'Asset Brand';
     protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
     public static function getNavigationBadge(): ?string

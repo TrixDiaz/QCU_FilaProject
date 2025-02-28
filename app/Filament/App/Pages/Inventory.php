@@ -11,6 +11,9 @@ class Inventory extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
+    protected static ?string $navigationGroup = 'Assets';
+
+    protected static ?int $navigationSort = 8;
     protected static string $view = 'filament.app.pages.inventory';
 
 

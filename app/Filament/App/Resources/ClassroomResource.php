@@ -34,6 +34,9 @@ class ClassroomResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-building-library';
 
+    protected static ?string $navigationGroup = 'School';
+
+    protected static ?string $navigationParentItem = 'Buildings';
 
     public static function getNavigationBadge(): ?string
     {

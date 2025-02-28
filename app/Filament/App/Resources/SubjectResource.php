@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\SubjectResource\Pages;
 use App\Filament\App\Resources\SubjectResource\RelationManagers;
 use App\Models\Subject;
+use App\Models\Section;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -33,6 +34,10 @@ class SubjectResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
+    protected static ?string $navigationGroup = 'School';
+
+    protected static ?string $navigationParentItem = 'Buildings';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('status', 'active')->count();
@@ -56,6 +61,12 @@ class SubjectResource extends Resource implements HasShieldPermissions
                         ->minValue(1)
                         ->maxValue(10)
                         ->step(1),
+                    Forms\Components\Select::make('section_id')
+                        ->relationship('section', 'name')
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->optionsLimit(5),
                     Forms\Components\TimePicker::make('lab_time')
                         ->required()
                         ->native(false),
@@ -76,6 +87,9 @@ class SubjectResource extends Resource implements HasShieldPermissions
                     ->searchable(),
                 Tables\Columns\TextColumn::make('subject_units')
                     ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('section.name')
+                    ->label('section')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('lab_time')
                     ->searchable(),

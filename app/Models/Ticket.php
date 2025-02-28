@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ticket extends Model
 {
@@ -13,16 +12,35 @@ class Ticket extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ticket_number', 'asset_id', 'created_by', 'assigned_to', 'section_id',
-        'title', 'description', 'ticket_type', 'option', 'priority', 'starts_at',
-        'ends_at', 'attachment', 'status', 'created_at', 'updated_at', 'subject'
+        'ticket_number',
+        'asset_id',
+        'created_by',
+        'assigned_to',
+        'section_id',
+        'title',
+        'description',
+        'ticket_type',
+        'option',
+        'priority',
+        'due_date',
+        'date_finished',
+        'attachments',
+        'status',
+        'created_at',
+        'updated_at',
+        'subject_id',
+        'starts_at',
+        'ends_at',
+
+
+
     ];
 
 
-    protected $cast = [
-          'attachment' => 'array',
-          'starts_at' => 'datetime',
-          'ends_at' => 'datetime',
+    protected $casts = [
+        'attachments' => 'array',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime'
     ];
 
     protected static function booted()
@@ -30,25 +48,27 @@ class Ticket extends Model
         static::created(function ($ticket) {
             if ($ticket->ticket_type === 'request') {
                 Approval::create([
+                    'ticket_id' => $ticket->id,
                     'asset_id' => $ticket->asset_id,
                     'professor_id' => $ticket->assigned_to,
                     'section_id' => $ticket->section_id,
                     'subject_id' => null,
                     'title' => $ticket->title,
                     'color' => 'blue',
-                    'starts_at' => now(),
-                    'ends_at' => $ticket->due_date ?? now()->addDays(7),
+                    'starts_at' => $ticket->starts_at,
+                    'ends_at' => $ticket->ends_at,
                 ]);
             }
         });
     }
+    
 
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }
 
-     public function creator(): BelongsTo
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -59,20 +79,18 @@ class Ticket extends Model
     }
 
 
-    public function section() : BelongsTo
+    public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class, 'section_id');
     }
 
-    public function subject() : BelongsTo
+    public function setAttachmentsAttribute($value)
     {
-        return $this->belongsTo(Subject::class, 'subject_id');
+        $this->attributes['attachments'] = is_array($value) ? json_encode($value) : $value;
     }
 
-    public function setAttachmentAttribute($value)
+    public function getAttachmentsAttribute($value)
     {
-        $this->attributes['attachment'] = is_array($value) ? json_encode($value) : $value;
+        return json_decode($value, true);
     }
-
 }
-

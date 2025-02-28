@@ -22,7 +22,9 @@ class Section extends Model
         'classroom_id',
         'name',
         'slug',
-        'is_active'
+        'is_active',
+        'created_at',
+        'updated_at',
     ];
 
     public function classroom(): BelongsTo
@@ -33,6 +35,11 @@ class Section extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'section_id');
+    }
+
+    public function subject(): HasMany
+    {
+        return $this->hasMany(subject::class, 'section_id');
     }
 
 }

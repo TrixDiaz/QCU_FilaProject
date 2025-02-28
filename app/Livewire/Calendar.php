@@ -9,6 +9,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\Building;
 use App\Models\Classroom;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +48,15 @@ class Calendar extends FullCalendarWidget
     protected function headerActions(): array
     {
         return [
+            \Filament\Actions\Action::make('Download Template')
+                ->label('Download Template')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->action(function () {
+                    return response()->download(
+                        public_path('excel-templates/Schedule-Template.xlsx'),
+                        'Schedule-Template.xlsx'
+                    );
+                }),
             \Filament\Actions\Action::make('import')
                 ->label('Import Excel')
                 ->color('secondary')
@@ -59,7 +69,7 @@ class Calendar extends FullCalendarWidget
                             'text/csv', // CSV
                         ])
                         ->required()
-                        ->helperText('Excel file should contain: Title, Professor, Section, Subject, Color, Start Date/Time, End Date/Time and should be .xls, .xlsx, or .csv'),
+                        ->helperText('Excel file should contain: Title, Professor, Section, Subject, Start Date/Time, End Date/Time and should be .xls, .xlsx, or .csv'),
                 ])
                 ->action(function (array $data): void {
                     $file = storage_path('app/public/' . $data['excel_file']);
@@ -81,13 +91,20 @@ class Calendar extends FullCalendarWidget
                             'professor' => array_search('professor', $headers),
                             'section' => array_search('section', $headers),
                             'subject' => array_search('subject', $headers),
-                            'color' => array_search('color', $headers),
-                            'starts_at' => array_search('starts_at', $headers),
-                            'ends_at' => array_search('ends_at', $headers),
+                            'starts_at' => array_search('starts at', $headers) !== false ? array_search('starts at', $headers) : array_search('starts_at', $headers),
+                            'ends_at' => array_search('ends at', $headers) !== false ? array_search('ends at', $headers) : array_search('ends_at', $headers),
                         ];
 
-                        if (in_array(false, $columnIndexes, true)) {
-                            throw new \Exception('One or more required columns are missing in the uploaded file.');
+                        // Check if required columns are present
+                        $missingColumns = [];
+                        foreach ($columnIndexes as $key => $index) {
+                            if ($index === false) {
+                                $missingColumns[] = $key;
+                            }
+                        }
+
+                        if (!empty($missingColumns)) {
+                            throw new \Exception('Required columns are missing in the uploaded file: ' . implode(', ', $missingColumns));
                         }
 
                         // Remove header row
@@ -103,7 +120,6 @@ class Calendar extends FullCalendarWidget
                                 $professorName = trim($row[$columnIndexes['professor']]);
                                 $sectionName = trim($row[$columnIndexes['section']]);
                                 $subjectName = trim($row[$columnIndexes['subject']]);
-                                $color = trim($row[$columnIndexes['color']]);
                                 $startsAt = trim($row[$columnIndexes['starts_at']]);
                                 $endsAt = trim($row[$columnIndexes['ends_at']]);
 
@@ -171,8 +187,8 @@ class Calendar extends FullCalendarWidget
 
                                 // Parse dates with error handling
                                 try {
-                                    $parsedStartsAt = Carbon::createFromFormat('d/m/Y H:i', $startsAt);
-                                    $parsedEndsAt = Carbon::createFromFormat('d/m/Y H:i', $endsAt);
+                                    $parsedStartsAt = Carbon::createFromFormat('m/d/Y H:i', $startsAt);
+                                    $parsedEndsAt = Carbon::createFromFormat('m/d/Y H:i', $endsAt);
                                 } catch (\Exception $e) {
                                     throw new \Exception("Invalid date format. Expected dd/mm/yyyy HH:mm for dates in row " . ($index + 2));
                                 }
@@ -182,12 +198,15 @@ class Calendar extends FullCalendarWidget
                                     throw new \Exception("End date must be after start date in row " . ($index + 2));
                                 }
 
+                                // Generate a random color since the color column was deleted
+                                $randomColor = '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+
                                 Event::create([
                                     'title' => $title,
                                     'professor_id' => $professor->id,
                                     'section_id' => $section->id,
                                     'subject_id' => $subject->id,
-                                    'color' => $color,
+                                    'color' => $randomColor,
                                     'starts_at' => $parsedStartsAt,
                                     'ends_at' => $parsedEndsAt,
                                 ]);

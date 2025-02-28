@@ -13,8 +13,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Actions\Imports\ImportAction;
-use App\Filament\Imports\AssetImporter;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+
+
 
 class AssetResource extends Resource implements HasShieldPermissions
 {
@@ -34,10 +36,11 @@ class AssetResource extends Resource implements HasShieldPermissions
     protected static ?string $model = Asset::class;
 
     protected static ?string $navigationGroup = 'Assets';
-
     protected static ?string $navigationLabel = 'Asset';
 
+    protected static ?string $modelLabel = 'Asset';
     protected static ?int $navigationSort = 4;
+
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
     public static function getNavigationBadge(): ?string
@@ -286,7 +289,23 @@ class AssetResource extends Resource implements HasShieldPermissions
                         ->label('Assign Asset Selected')
                         ->color('danger')
                         ->icon('heroicon-m-square-2-stack'),
-                ]),
+                        ExportBulkAction::make()->exports([
+                            ExcelExport::make()->fromTable()->except([
+                                "id",'slug','category_id','brand_id',
+                                ]),
+                                ExcelExport::make()->fromTable()->only([
+                                    'name',
+                                    'brand.name',
+                                    'serial_number',
+                                    'assetTags.name',
+                                    'expiry_date',
+                                    'status',
+                                    'created_at',
+                                    'updated_at',
+                            ])
+
+                            ]),
+                ])
             ])->poll('30s');
     }
 

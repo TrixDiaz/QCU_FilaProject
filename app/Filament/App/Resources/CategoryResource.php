@@ -32,8 +32,11 @@ class CategoryResource extends Resource implements HasShieldPermissions
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationGroup = 'Assets';
-    protected static ?string $navigationLabel = 'Category';
+
+    protected static ?string $navigationParentItem = 'Asset';
+    protected static ?string $navigationLabel = 'Asset Category';
     protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationIcon = 'heroicon-o-square-3-stack-3d';
 
     public static function getNavigationBadge(): ?string

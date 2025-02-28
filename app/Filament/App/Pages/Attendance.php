@@ -13,6 +13,13 @@ use Filament\Tables\Table;
 class Attendance extends Page implements HasForms, HasTable
 {
     use HasPageShield;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return \App\Models\Attendance::count();
+    }
+
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.app.pages.attendance';

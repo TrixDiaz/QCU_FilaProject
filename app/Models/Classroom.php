@@ -36,5 +36,10 @@ class Classroom extends Model
         return $this->HasMany(Section::class);
     }
 
+    public function asset(): HasMany
+    {
+        return $this->HasMany(Asset::class);
+    }
+
 
 }

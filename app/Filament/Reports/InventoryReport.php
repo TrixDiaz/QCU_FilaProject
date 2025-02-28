@@ -2,6 +2,7 @@
 
 namespace App\Filament\Reports;
 
+use App\Models\Asset;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -9,6 +10,7 @@ use EightyNine\Reports\Components\Header;
 use EightyNine\Reports\Components\Text;
 use Filament\Forms\Form;
 use Illuminate\Support\Collection;
+use Carbon\Carbon; 
 
 class InventoryReport extends Report
 {
@@ -41,7 +43,11 @@ class InventoryReport extends Report
     {
         return $body
             ->schema([
-                // ...
+                Body\Layout\BodyColumn::make()
+                    ->schema([
+                        Body\Table::make()
+                            ->data(fn(?array $filters) => $this->inventorySummary($filters)),
+                    ]),
             ]);
     }
 
@@ -108,5 +114,67 @@ class InventoryReport extends Report
                         })
                 ]),
             ]);
+    }
+    public function inventorySummary(?array $filters = []): Collection
+    {
+        $query = Asset::query()
+            ->with(['brand', 'category', 'classroom'])
+            ->select([
+                'assets.*',
+            ]);
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('assets.name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('assets.serial_number', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('assets.asset_code', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        if (!empty($filters['asset_status']) && $filters['asset_status'] !== 'all') {
+            $query->where('assets.status', $filters['asset_status']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('assets.created_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('assets.created_at', '<=', $filters['date_to']);
+        }
+
+        $assets = $query->latest('assets.created_at')->get();
+
+        return collect([
+            [
+                'column1' => 'Name',
+                'column2' => 'Category',
+                'column3' => 'Brand',
+                'column4' => 'Serial Number',
+                'column5' => 'Asset Code',
+                'column6' => 'Expiry Date',
+                'column7' => 'Status',
+                'column8' => 'Classroom',
+                'column9' => 'Created At',
+                'column10' => 'Updated At',
+            ]
+        ])->concat($assets->map(function ($asset) {
+            return [
+                'column1' => $asset->name,
+                'column2' => $asset->category->name ?? 'Unknown',
+                'column3' => $asset->brand->name ?? 'Unknown',
+                'column4' => $asset->serial_number,
+                'column5' => $asset->asset_code,
+                'column6' => $this->formatDate($asset->expiry_date),
+                'column7' => ucfirst($asset->status),
+                'column8' => optional($asset->classroom)->name ?? 'Unassigned',
+                'column9' => $this->formatDate($asset->created_at),
+                'column10' => $this->formatDate($asset->updated_at),
+            ];
+        }));
+    }
+
+    private function formatDate($date): string
+    {
+        return $date ? Carbon::parse($date)->format('F d, Y') : 'N/A';
     }
 }

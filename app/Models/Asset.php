@@ -55,5 +55,10 @@ class Asset extends Model
         return $this->hasMany(Ticket::class, 'asset_id');
     }
 
+    public function classroom(): BelongsTo
+    {
+        return $this->belongsTo(Classroom::class);
+    }
+
 
 }

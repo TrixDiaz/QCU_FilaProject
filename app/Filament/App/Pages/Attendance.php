@@ -19,7 +19,6 @@ class Attendance extends Page implements HasForms, HasTable
         return \App\Models\Attendance::count();
     }
 
-
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.app.pages.attendance';
@@ -37,7 +36,12 @@ class Attendance extends Page implements HasForms, HasTable
         return $table
             ->query(\App\Models\Attendance::query())
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('section_id'),
+                \Filament\Tables\Columns\TextColumn::make('student_full_name'),
+                \Filament\Tables\Columns\TextColumn::make('student_email'),
+                \Filament\Tables\Columns\TextColumn::make('student_number'),
+                \Filament\Tables\Columns\TextColumn::make('year_section'),
+                \Filament\Tables\Columns\TextColumn::make('section.name'),
+                \Filament\Tables\Columns\TextColumn::make('terminal_code'),
             ])->emptyStateHeading('No Attendance yet');
     }
 }

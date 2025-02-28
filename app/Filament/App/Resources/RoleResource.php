@@ -122,19 +122,21 @@ class RoleResource extends Resource implements HasShieldPermissions
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
                 ExportBulkAction::make()->exports([
-                    ExcelExport::make()->withFilename(date('Y-m-d') . ' - Role'),
-                    ExcelExport::make()->fromTable()->except([
-                        'team.name',"id",'permissions_count',
-                        ]),
-                        ExcelExport::make()->fromTable()->only([
+                    ExcelExport::make()
+                        ->fromTable()
+                        ->except(["id", "team.name", "permissions_count"])
+                        ->withFilename(date('Y-m-d') . '-Roles.xlsx'),
+            
+                    ExcelExport::make()
+                        ->fromTable()
+                        ->only([
                             'name', 
                             'guard_name',
                             'created_at', 
                             'updated_at',
-                    ])
-                    ]),
-                    
-                        
+                        ])
+                        ->withFilename(date('Y-m-d') . '-Filtered-Roles.xlsx'),
+                ]),
             ]);
     }
 

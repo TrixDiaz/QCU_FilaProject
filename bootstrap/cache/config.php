@@ -374,7 +374,7 @@
     'navigation_sort' => NULL,
     'resources' => 
     array (
-      'enabled' => false,
+      'enabled' => true,
       'log_name' => 'Resource',
       'logger' => 'Z3d0X\\FilamentLogger\\Loggers\\ResourceLogger',
       'color' => 'success',
@@ -386,7 +386,7 @@
     ),
     'access' => 
     array (
-      'enabled' => false,
+      'enabled' => true,
       'logger' => 'Z3d0X\\FilamentLogger\\Loggers\\AccessLogger',
       'color' => 'danger',
       'log_name' => 'Access',

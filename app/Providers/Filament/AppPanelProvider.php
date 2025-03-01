@@ -21,6 +21,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Z3d0X\FilamentLogger\Resources\ActivityResource;
 
 
 class AppPanelProvider extends PanelProvider
@@ -68,6 +69,12 @@ class AppPanelProvider extends PanelProvider
                     ->url(fn (): string => UsersReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
+                    ->sort(1)
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                NavigationItem::make('Activity Log')
+                    ->url(fn (): string => ActivityResource::getUrl())
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('System Settings')
                     ->sort(1)
                     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
             ])

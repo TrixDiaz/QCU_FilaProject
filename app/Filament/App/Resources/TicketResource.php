@@ -243,11 +243,12 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('is_active')
-                    ->label('Status')
+                Tables\Filters\SelectFilter::make('priority')
+                    ->label('Priority')
                     ->options([
-                        true => 'Active',
-                        false => 'Inactive'
+                        'low' => 'Low',
+                        'medium' => 'Medium',
+                        'high' => 'High',
                     ])
                     ->native(false)
             ])

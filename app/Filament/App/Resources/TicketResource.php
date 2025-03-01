@@ -191,6 +191,12 @@ class TicketResource extends Resource implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
+            ->query(
+                \App\Models\Ticket::query()->where(function ($query) {
+                    $query->where('created_by', auth()->id())
+                        ->orWhere('assigned_to', auth()->id());
+                })
+            )
             ->columns([
                 Tables\Columns\TextColumn::make('Ticket Information')
                     ->searchable()

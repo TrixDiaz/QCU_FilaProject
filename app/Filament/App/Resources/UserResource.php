@@ -85,10 +85,6 @@ class UserResource extends Resource implements HasShieldPermissions
                             ->multiple()
                             ->preload()
                             ->searchable(),
-                        Forms\Components\Select::make('permissions')
-                            ->multiple()
-                            ->relationship('permissions', 'name')
-                            ->preload(),
                     ])->columns(2),
             ]);
     }
@@ -159,14 +155,14 @@ class UserResource extends Resource implements HasShieldPermissions
                             ->fromTable()
                             ->except(["id", "password"])
                             ->withFilename(date('Y-m-d') . '- Users.xlsx'),
-                            
+
                             ExcelExport::make()
                             ->fromTable()
                             ->only([
-                                'name', 
+                                'name',
                                 'email',
-                                'email_Verified_at', 
-                                
+                                'email_Verified_at',
+
                             ])
                             ->withFilename(date('Y-m-d') . '-Filtered-Users.xlsx'),
                             ])

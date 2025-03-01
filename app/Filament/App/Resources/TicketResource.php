@@ -65,7 +65,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                 ->schema([
                                     Forms\Components\Placeholder::make('status')
                                         ->label('Ticket Current Status')
-                                        ->content(fn($record): string => $record->status)
+                                        ->content(fn($record): string => $record->status ?? 'New')
                                         ->extraAttributes(['class' => 'capitalize']),
                                 ]),
                         ])->columnSpan(1),

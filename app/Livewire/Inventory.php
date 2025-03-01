@@ -214,13 +214,13 @@ class Inventory extends Component implements HasTable, HasForms
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(4)
             ->actions([
-                \Filament\Tables\Actions\ActionGroup::make([
-                    \Filament\Tables\Actions\ViewAction::make(),
-                ])
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->label('')
-                ->tooltip('Actions')
-                ->size('sm')
+//                \Filament\Tables\Actions\ActionGroup::make([
+//                    \Filament\Tables\Actions\ViewAction::make(),
+//                ])
+//                ->icon('heroicon-m-ellipsis-vertical')
+//                ->label('')
+//                ->tooltip('Actions')
+//                ->size('sm')
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([

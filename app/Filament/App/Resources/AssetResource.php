@@ -270,7 +270,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive Building'),
+                        ->modalHeading('Archive Asset'),
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\RestoreAction::make()
                         ->color('secondary'),

@@ -59,10 +59,16 @@ class TicketResource extends Resource implements HasShieldPermissions
             ->schema([
                 Forms\Components\Grid::make(2) // Creating a 2-column grid
                 ->schema([
-                    Forms\Components\Grid::make() // Right column for Placeholder
-                    ->schema([
-                        //.....
-                    ])->columnSpan(1),
+                    Forms\Components\Grid::make()
+                        ->schema([
+                            Forms\Components\Section::make()
+                                ->schema([
+                                    Forms\Components\Placeholder::make('status')
+                                        ->label('Ticket Current Status')
+                                        ->content(fn($record): string => $record->status)
+                                        ->extraAttributes(['class' => 'capitalize']),
+                                ]),
+                        ])->columnSpan(1),
                     Forms\Components\Section::make() // Right column for Placeholder
                     ->schema([
                         Forms\Components\Placeholder::make('ticket')
@@ -273,7 +279,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                         ->tooltip('View'),
                     Tables\Actions\EditAction::make()
                         ->tooltip('Edit')
-                        ->color('warning'),
+                        ->color('warning')
+                        ->disabled(fn($record) => $record->status === 'closed'),
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')

@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\TicketResource\Pages;
 
 use App\Filament\App\Resources\TicketResource;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Actions\Action;
 
@@ -11,6 +12,21 @@ class EditTicket extends EditRecord
 {
     protected static string $resource = TicketResource::class;
 
+    public function mount($record): void
+    {
+        parent::mount($record);
+
+        // Prevent editing if the ticket is closed
+        if ($this->record->status === 'closed') {
+            Notification::make()
+                ->title('Ticket is closed')
+                ->danger()
+                ->body('This ticket is closed and cannot be Edit.')
+                ->send();
+
+            $this->redirect(TicketResource::getUrl('index')); // Redirect to ticket list
+        }
+    }
     protected function getHeaderActions(): array
     {
         $actions = [];

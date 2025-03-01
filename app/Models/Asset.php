@@ -30,6 +30,8 @@ class Asset extends Model
         'asset_code',
         'expiry_date',
         'status',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [

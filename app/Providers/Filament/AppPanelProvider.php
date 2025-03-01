@@ -2,6 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Reports\AssetReport;
+use App\Filament\Reports\InventoryReport;
+use App\Filament\Reports\MaintenanceReport;
+use App\Filament\Reports\UsersReport;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -43,25 +47,25 @@ class AppPanelProvider extends PanelProvider
             ])
             ->navigationItems([
                 NavigationItem::make('Asset Report')
-                    ->url('app/reports/asset-report')
+                    ->url(fn (): string => AssetReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
                     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
                 NavigationItem::make('Inventory Report')
-                    ->url('app/reports/inventory-report')
+                    ->url(fn (): string => InventoryReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
                     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
                 NavigationItem::make('Maintenance Report')
-                    ->url('app/reports/maintenance-report')
+                    ->url(fn (): string => MaintenanceReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
                     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
                 NavigationItem::make('Users Report')
-                    ->url('app/reports/users-report')
+                    ->url(fn (): string => UsersReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)

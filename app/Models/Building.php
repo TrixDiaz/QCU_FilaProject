@@ -17,12 +17,13 @@ class Building extends Model
     {
         return 'slug';
     }
-   
+
     protected $fillable = [
-        
         'name',
         'slug',
-        'is_active'
+        'is_active',
+        'created_at',
+        'updated_at',
     ];
     protected $dates = ['created_at', 'updated_at', 'deleted_at']; // Ensure timestamps are treated as dates
 

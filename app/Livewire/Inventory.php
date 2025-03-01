@@ -216,13 +216,6 @@ class Inventory extends Component implements HasTable, HasForms
             ->actions([
                 \Filament\Tables\Actions\ActionGroup::make([
                     \Filament\Tables\Actions\ViewAction::make(),
-                    \Filament\Tables\Actions\EditAction::make(),
-                    \Filament\Tables\Actions\Action::make('archive')
-                        ->label('Archive')
-                        ->icon('heroicon-o-archive-box')
-                        ->color('danger')
-                        ->action(fn (\App\Models\Asset $record) => $record->update(['status' => 'archived']))
-                        ->requiresConfirmation(),
                 ])
                 ->icon('heroicon-m-ellipsis-vertical')
                 ->label('')
@@ -249,7 +242,7 @@ class Inventory extends Component implements HasTable, HasForms
                                 'updated_at',
                             ])
                             ->withFilename(date('Y-m-d') . '-Filtered-Inventory.xlsx'),
-                                    
+
                       ]),
                 ]),
             ]);

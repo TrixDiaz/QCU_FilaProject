@@ -18,7 +18,9 @@ class Tag extends Model
         'name',
         'slug',
         'is_active',
-        'deleted_at'
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
     public function assets(): BelongsToMany

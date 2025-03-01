@@ -18,7 +18,9 @@ class AssetGroup extends Model
         'name',
         'slug',
         'code',
-        'status'
+        'status',
+        'created_at',
+        'updated_at',
     ];
 
     public function classroom(): BelongsTo

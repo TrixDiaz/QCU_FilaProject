@@ -180,6 +180,8 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                                 'name' => $record->title,
                                 'code' => $record->asset->asset_code ?? \App\Filament\App\Resources\AssetResource::generateUniqueCode(),
                                 'status' => 'active',
+                                'created_at' => now(),
+                                'updated_at' => now(),
                             ]);
 
                             // Update asset status to 'deploy'
@@ -207,6 +209,8 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                                 'color' => $record->color ?? '#ffffff',
                                 'starts_at' => $startsAt,
                                 'ends_at' => $endsAt,
+                                'created_at' => now(),
+                                'updated_at' => now(),
                             ]);
                         }
 

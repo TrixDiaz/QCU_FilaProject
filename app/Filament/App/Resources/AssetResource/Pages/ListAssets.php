@@ -37,7 +37,9 @@ class ListAssets extends ListRecords
                                     'classroom_id' => $data['classroom'], // Assuming classroom is the asset_tag_id
                                     'name' => $data['name'],
                                     'code' => $data['code'],
-                                    'status' => 'active'
+                                    'status' => 'active',
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
                                 ]);
 
                                 // Update the status of the asset to 'deployed'

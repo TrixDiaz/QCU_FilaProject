@@ -247,6 +247,8 @@ class AssetResource extends Resource implements HasShieldPermissions
                             'name' => $data['name'],
                             'code' => $data['code'],
                             'status' => 'active',
+                            'created' => now(),
+                            'updated' => now(),
                         ]);
 
                         // Update the status of the asset to 'deploy'
@@ -289,8 +291,8 @@ class AssetResource extends Resource implements HasShieldPermissions
                         ExcelExport::make()
                             ->fromTable()
                             ->except(["id", "slug", "brand_id"])
-                            ->withFilename(date('Y-m-d') . '-Assets.xlsx'), 
-            
+                            ->withFilename(date('Y-m-d') . '-Assets.xlsx'),
+
                         ExcelExport::make()
                             ->fromTable()
                             ->only([
@@ -302,7 +304,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                                 'created_at',
                                 'updated_at',
                             ])
-                            ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'), 
+                            ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'),
                             ])
 
                             ]),

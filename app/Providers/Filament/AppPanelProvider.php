@@ -51,25 +51,25 @@ class AppPanelProvider extends PanelProvider
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
                 NavigationItem::make('Inventory Report')
                     ->url(fn (): string => InventoryReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
                 NavigationItem::make('Maintenance Report')
                     ->url(fn (): string => MaintenanceReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
                 NavigationItem::make('Users Report')
                     ->url(fn (): string => UsersReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','professor','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
             ])
             ->navigationGroups([
                 'Assets',

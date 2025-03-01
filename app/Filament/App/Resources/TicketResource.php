@@ -194,7 +194,7 @@ class TicketResource extends Resource implements HasShieldPermissions
         return $table
             ->query(
                 \App\Models\Ticket::query()
-                    ->when(!auth()->user()->hasRole(['super_admin', 'admin','technician']), function ($query) {
+                    ->when(!auth()->user()->hasRole(['super_admin', 'admin', 'technician']), function ($query) {
                         $query->where(function ($query) {
                             $query->where('created_by', auth()->id())
                                 ->orWhere('assigned_to', auth()->id());
@@ -233,6 +233,17 @@ class TicketResource extends Resource implements HasShieldPermissions
                     }),
                 Tables\Columns\TextColumn::make('status')
                     ->badge(),
+                Tables\Columns\TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('assignedUser.name')
+                    ->label('Assigned To')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable()

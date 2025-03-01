@@ -52,7 +52,10 @@ class EditTicket extends EditRecord
             ->icon('heroicon-o-check')
             ->requiresConfirmation()
             ->action(function () {
-                $this->record->update(['status' => 'resolved']);
+                $this->record->update([
+                    'status' => 'in_progress',
+                    'assigned_to' => auth()->id(), // Assign to the logged-in user
+                ]);
 
                 $this->notify('success', 'Ticket marked as Resolved.');
             })

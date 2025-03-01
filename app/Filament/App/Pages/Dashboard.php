@@ -2,7 +2,6 @@
 
 namespace App\Filament\App\Pages;
 
-use Filament\Pages\Page;
 
 class Dashboard extends \Filament\Pages\Dashboard
 {

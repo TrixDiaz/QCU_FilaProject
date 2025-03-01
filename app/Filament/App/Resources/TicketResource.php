@@ -39,7 +39,7 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = Ticket::class;
 
-        protected static ?string $navigationGroup = 'Tickets';
+    protected static ?string $navigationGroup = 'Tickets';
     protected static ?string $modelLabel = 'Tickets';
     protected static ?string $navigationLabel = 'Tickets';
 
@@ -93,6 +93,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         'asset' => 'Asset',
                                                         'classroom' => 'Classroom',
                                                     ])
+                                                    ->required()
                                                     ->visible(fn($get) => $get('ticket_type') === 'request')
                                                     ->live()
                                                     ->afterStateUpdated(function ($state, callable $set) {
@@ -125,9 +126,9 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->visible(fn($get) => $get('option') !== 'classroom')
                                                     ->afterStateUpdated(function ($state, callable $set) {
                                                         if ($state === 'asset') {
-                                                        $set('subject_id', null);
+                                                            $set('subject_id', null);
                                                         }
-                                                        }),
+                                                    }),
 
                                                 Forms\Components\Select::make('subject_id')
                                                     ->options(Subject::all()->pluck('name', 'id'))
@@ -192,10 +193,13 @@ class TicketResource extends Resource implements HasShieldPermissions
     {
         return $table
             ->query(
-                \App\Models\Ticket::query()->where(function ($query) {
-                    $query->where('created_by', auth()->id())
-                        ->orWhere('assigned_to', auth()->id());
-                })
+                \App\Models\Ticket::query()
+                    ->when(!auth()->user()->hasRole(['super_admin', 'admin','technician']), function ($query) {
+                        $query->where(function ($query) {
+                            $query->where('created_by', auth()->id())
+                                ->orWhere('assigned_to', auth()->id());
+                        });
+                    })
             )
             ->columns([
                 Tables\Columns\TextColumn::make('Ticket Information')

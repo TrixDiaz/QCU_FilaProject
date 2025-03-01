@@ -12,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Forms\Components\Textarea;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -140,7 +141,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                             $set('subject_id', null);
                                                         }
                                                     }),
-                                                Forms\Components\Textarea::make('description')
+                                                Textarea::make('description')
                                                     ->required()
                                                     ->columnSpanFull(),
                                             ]),

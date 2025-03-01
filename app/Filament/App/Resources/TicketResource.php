@@ -140,7 +140,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                             $set('subject_id', null);
                                                         }
                                                     }),
-                                                Forms\Components\TextArea::make('description')
+                                                Forms\Components\Textarea::make('description')
                                                     ->required()
                                                     ->columnSpanFull(),
                                             ]),

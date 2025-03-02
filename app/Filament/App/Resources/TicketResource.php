@@ -12,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Carbon\Carbon;
 use Filament\Forms\Components\Textarea;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -63,10 +64,130 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->schema([
                                 Forms\Components\Section::make()
                                     ->schema([
-                                        Forms\Components\Placeholder::make('status')
-                                            ->label('Ticket Current Status')
-                                            ->content(fn($record): string => $record->status ?? 'New')
-                                            ->extraAttributes(['class' => 'capitalize']),
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('title')
+                                                    ->required(),
+                                                Forms\Components\Select::make('ticket_type')
+                                                    ->options([
+                                                        'request' => 'Request',
+                                                        'incident' => 'Incident',
+                                                    ])
+                                                    ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
+                                                    ->required()
+                                                    ->reactive()
+                                                    ->live(onBlur: true)
+                                                    ->native(false),
+                                                Forms\Components\Select::make('option')
+                                                    ->options([
+                                                        'asset' => 'Asset',
+                                                        'classroom' => 'Classroom',
+                                                    ])
+                                                    ->required()
+                                                    ->visible(fn($get) => $get('ticket_type') === 'request')
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'classroom') {
+                                                            $set('asset_id', null);
+                                                        }
+                                                    }),
+
+                                                Forms\Components\DateTimePicker::make('starts_at')
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->rules(['required_if:option,classroom'])
+                                                    ->seconds(false)
+                                                    ->minutesStep(15)
+                                                    ->default(now()->startOfHour())
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
+                                                        if (!$state) return;
+                                                        
+                                                        // Get the current selected end time duration
+                                                        $currentEndHour = $get('end_hour');
+                                                        
+                                                        // If no end hour selected yet, default to starts_at + 1 hour
+                                                        if (!$currentEndHour) {
+                                                            $startHour = (int) Carbon::parse($state)->format('H');
+                                                            $defaultEndHour = ($startHour + 1) % 24;
+                                                            $set('end_hour', sprintf('%02d:00', $defaultEndHour));
+                                                        }
+                                                        // If end hour is already selected, check if it's still valid
+                                                        else {
+                                                            $startHour = (int) Carbon::parse($state)->format('H');
+                                                            $endHour = (int) explode(':', $currentEndHour)[0];
+                                                            
+                                                            // If end hour is not at least 1 hour after start hour
+                                                            if ($endHour <= $startHour) {
+                                                                $newEndHour = ($startHour + 1) % 24;
+                                                                $set('end_hour', sprintf('%02d:00', $newEndHour));
+                                                            }
+                                                        }
+                                                    }),
+
+                                                Forms\Components\Select::make('ends_at')
+                                                    ->required()
+                                                    ->options(function (Forms\Get $get) {
+                                                    $startsAt = $get('starts_at');
+                                                    if (!$startsAt) {
+                                                    return [];
+                                                    }
+                                
+                                                    $startHour = (int) Carbon::parse($startsAt)->format('H');
+                                                    $options = [];
+                                
+                                                    // Generate options for the next 12 hours after start hour
+                                                    for ($i = 1; $i <= 8; $i++) {
+                                                    $hour = ($startHour + $i) % 24;
+                                                    $time = sprintf('%02d:00', $hour);
+                                                    $formattedTime = Carbon::createFromFormat('H:i', $time)->format('g:i A');
+                                                    $options[$time] = $formattedTime;
+                                                    }
+                                
+                                                    return $options;
+                                                    })
+                                                    ->live()
+                                                    ->required()
+                                                    ->disabled(fn (Forms\Get $get) => !$get('starts_at'))
+                                                    ->visible(fn($get) => $get('option') === 'classroom'),
+
+                                                Forms\Components\Select::make('asset_id')
+                                                    ->relationship('asset', 'name')
+                                                    ->required(fn($get) => $get('option') === 'asset')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->visible(fn($get) => $get('option') === 'asset'),
+
+                                                Forms\Components\Select::make('section_id')
+                                                    ->relationship('section', 'name')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                            $set('subject_id', null);
+                                                        }
+                                                    }),
+
+                                                Forms\Components\Select::make('subject_id')
+                                                    ->options(Subject::all()->pluck('name', 'id'))
+                                                    ->required(fn($get) => $get('option') === 'classroom')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                            $set('subject_id', null);
+                                                        }
+                                                    }),
+                                                Textarea::make('description')
+                                                    ->required()
+                                                    ->columnSpanFull(),
+                                            ]),
                                     ]),
                             ])->columnSpan(1),
                         Forms\Components\Section::make() // Right column for Placeholder

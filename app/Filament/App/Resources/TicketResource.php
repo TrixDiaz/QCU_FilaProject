@@ -178,7 +178,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         ->preload()
                                                         ->optionsLimit(5)
                                                         ->visible(fn($get) => $get('option') !== 'classroom')
-                                                        ->visible(fn($get) => $get('option') === 'asset'),
+                                                        ->visible(fn($get) => $get('option') === 'asset')
+                                                        ->visible(fn($get) => $get('ticket_type') === 'incident'),
 
                                                     Forms\Components\Select::make('section_id')
                                                         ->relationship('section', 'name')

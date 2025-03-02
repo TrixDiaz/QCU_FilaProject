@@ -16,7 +16,6 @@ class AssetGroup extends Model
         'asset_id',
         'classroom_id',
         'name',
-        'slug',
         'code',
         'status',
         'created_at',

@@ -21,7 +21,6 @@ class Asset extends Model
         'category_id',
         'brand_id',
         'name',
-        'slug',
         'serial_number',
         'asset_code',
         'expiry_date',
@@ -31,7 +30,7 @@ class Asset extends Model
     ];
 
     protected $casts = [
-//        'status' => AssetStatus::class,
+        //        'status' => AssetStatus::class,
     ];
 
     public function brand(): BelongsTo
@@ -64,7 +63,8 @@ class Asset extends Model
         return $this->hasOne(\App\Models\AssetGroup::class, 'asset_id');
     }
 
-
-
-
+    public function assets(): HasMany
+    {
+        return $this->hasMany(\App\Models\Asset::class);
+    }
 }

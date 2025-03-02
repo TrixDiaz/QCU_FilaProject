@@ -15,7 +15,7 @@ final class DeployComputer
                         // Computer Case
                         \Filament\Forms\Components\Select::make('computer_case')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'computer-case')
+                                $query->where('name', 'computer-case')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -26,7 +26,7 @@ final class DeployComputer
                         // Power Supply
                         \Filament\Forms\Components\Select::make('power_supply')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'power-supply')
+                                $query->where('name', 'power-supply')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -37,7 +37,7 @@ final class DeployComputer
                         // Motherboard
                         \Filament\Forms\Components\Select::make('motherboard')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'motherboard')
+                                $query->where('name', 'motherboard')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -48,7 +48,7 @@ final class DeployComputer
                         // Processor
                         \Filament\Forms\Components\Select::make('processor')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'processor')
+                                $query->where('name', 'processor')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -59,7 +59,7 @@ final class DeployComputer
                         // Drive's
                         \Filament\Forms\Components\Select::make('drive')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'drive')
+                                $query->where('name', 'drive')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -71,7 +71,7 @@ final class DeployComputer
                         // Ram's
                         \Filament\Forms\Components\Select::make('ram')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'ram')
+                                $query->where('name', 'ram')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -83,7 +83,7 @@ final class DeployComputer
                         // Graphic's Card
                         \Filament\Forms\Components\Select::make('graphics_card')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'graphics-card')
+                                $query->where('name', 'graphics-card')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -96,7 +96,7 @@ final class DeployComputer
                         // Monitor
                         \Filament\Forms\Components\Select::make('monitor')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'monitor')
+                                $query->where('name', 'monitor')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -107,7 +107,7 @@ final class DeployComputer
                         // Keyboard
                         \Filament\Forms\Components\Select::make('keyboard')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'keyboard')
+                                $query->where('name', 'keyboard')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -118,7 +118,7 @@ final class DeployComputer
                         // Mouse
                         \Filament\Forms\Components\Select::make('mouse')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'mouse')
+                                $query->where('name', 'mouse')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -129,7 +129,7 @@ final class DeployComputer
                         // Headphone
                         \Filament\Forms\Components\Select::make('headphone')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'headphone')
+                                $query->where('name', 'headphone')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -140,7 +140,7 @@ final class DeployComputer
                         // Speaker
                         \Filament\Forms\Components\Select::make('speaker')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
-                                $query->where('slug', 'speaker')
+                                $query->where('name', 'speaker')
                                     ->where('is_active', true); // Ensure the tag is active
                             })
                                 ->where('status', 'active') // Ensure the asset status is active
@@ -168,17 +168,17 @@ final class DeployComputer
                                         $classroom = \App\Models\Classroom::find($state);
                                         if ($classroom) {
                                             $building = $classroom->building;
-                                            $slug = \Illuminate\Support\Str::slug($classroom->name);
-                                            $enteredSlug = $get('name'); // Assuming 'name' is the field where the new entered slug is stored
+                                            $name = \Illuminate\Support\Str::name($classroom->name);
+                                            $enteredname = $get('name'); // Assuming 'name' is the field where the new entered name is stored
 
-                                            $buildingSlugFirstLetter = substr($building->slug, 0, 1);
-                                            $buildingSlugLastLetter = substr($building->slug, -1);
-                                            $classroomSlugFirstLetter = substr($slug, 0, 1);
-                                            $classroomSlugLastLetter = substr($slug, -1);
-                                            $enteredSlugFirstLetter = substr($enteredSlug, 0, 1);
-                                            $enteredSlugLastLetter = substr($enteredSlug, -1);
+                                            $buildingnameFirstLetter = substr($building->name, 0, 1);
+                                            $buildingnameLastLetter = substr($building->name, -1);
+                                            $classroomnameFirstLetter = substr($name, 0, 1);
+                                            $classroomnameLastLetter = substr($name, -1);
+                                            $enterednameFirstLetter = substr($enteredname, 0, 1);
+                                            $enterednameLastLetter = substr($enteredname, -1);
 
-                                            $set('code', strtoupper("{$buildingSlugFirstLetter}{$buildingSlugLastLetter}-{$classroomSlugFirstLetter}{$classroomSlugLastLetter}-{$enteredSlugFirstLetter}{$enteredSlugLastLetter}"));
+                                            $set('code', strtoupper("{$buildingnameFirstLetter}{$buildingnameLastLetter}-{$classroomnameFirstLetter}{$classroomnameLastLetter}-{$enterednameFirstLetter}{$enterednameLastLetter}"));
                                         }
                                     }),
                             ]),

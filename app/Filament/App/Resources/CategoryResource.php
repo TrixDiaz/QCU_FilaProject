@@ -177,9 +177,6 @@ class CategoryResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Publish')
                     ->onIcon('heroicon-m-bolt')

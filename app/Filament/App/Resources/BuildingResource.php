@@ -179,9 +179,6 @@ class BuildingResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Publish')
                     ->getStateUsing(fn($record) => $record->is_active ? 'Yes' : 'No')
@@ -234,8 +231,8 @@ class BuildingResource extends Resource implements HasShieldPermissions
                         ExcelExport::make()
                             ->fromTable()
                             ->except(["id", "slug",])
-                            ->withFilename(date('Y-m-d') . '-Buildings.xlsx'), 
-                            ExcelExport::make()
+                            ->withFilename(date('Y-m-d') . '-Buildings.xlsx'),
+                        ExcelExport::make()
                             ->fromTable()
                             ->only([
                                 'name',
@@ -246,11 +243,11 @@ class BuildingResource extends Resource implements HasShieldPermissions
                                 'created_at',
                                 'updated_at',
                             ])
-                            ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'), 
-                         ])
+                            ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'),
+                    ])
 
-                        ]),
-                ])->poll('30s');
+                ]),
+            ])->poll('30s');
     }
 
     public static function getRelations(): array

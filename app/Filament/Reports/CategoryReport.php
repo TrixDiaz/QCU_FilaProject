@@ -3,12 +3,15 @@
 namespace App\Filament\Reports;
 
 use App\Models\Asset;
+use App\Models\Category;
+use App\Models\Brand;
+use App\Models\Tag;
+use Filament\Forms\Form;
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
 use EightyNine\Reports\Components\Header;
 use EightyNine\Reports\Components\Text;
-use Filament\Forms\Form;
 use Illuminate\Support\Collection;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Actions;
@@ -16,28 +19,30 @@ use Filament\Forms\Components\Actions\Action;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+// Rename the class and properties to reflect the new purpose
 class CategoryReport extends Report
 {
     protected static bool $shouldRegisterNavigation = false;
-    public ?string $heading = "Category Report";
-
+    public ?string $heading = "Asset Count Report";
     public ?string $icon = 'heroicon-o-clipboard-document-list';
 
+    // Update header text
     public function header(Header $header): Header
     {
         return $header
-            ->schema([Header\Layout\HeaderRow::make()
             ->schema([
-                Header\Layout\HeaderColumn::make()
+                Header\Layout\HeaderRow::make()
                     ->schema([
-                        Text::make('Category Report')->title(),
-                        Text::make('This report shows all asset counts in the system')->subtitle(),
-                    ]),
-                Header\Layout\HeaderColumn::make()
-                    ->schema([
-                        Text::make(now()->format('F, d Y'))->subtitle(),
-                    ])->alignRight(),
-            ])
+                        Header\Layout\HeaderColumn::make()
+                            ->schema([
+                                Text::make('Asset Count Report')->title(),
+                                Text::make('This report shows asset counts by brand and tag')->subtitle(),
+                            ]),
+                        Header\Layout\HeaderColumn::make()
+                            ->schema([
+                                Text::make(now()->format('F, d Y'))->subtitle(),
+                            ])->alignRight(),
+                    ])
             ]);
     }
 
@@ -57,138 +62,120 @@ class CategoryReport extends Report
     public function footer(Footer $footer): Footer
     {
         return $footer
-            ->schema([Footer\Layout\FooterRow::make()
             ->schema([
-                Footer\Layout\FooterColumn::make()
+                Footer\Layout\FooterRow::make()
                     ->schema([
-                        Text::make(config('app.name', 'Laravel'))->title()->primary(),
-                        Text::make("All Rights Reserved")->subtitle(),
+                        Footer\Layout\FooterColumn::make()
+                            ->schema([
+                                Text::make(config('app.name', 'Laravel'))->title()->primary(),
+                                Text::make("All Rights Reserved")->subtitle(),
+                            ]),
+                        Footer\Layout\FooterColumn::make()
+                            ->schema([
+                                Text::make("Generated on: " . now()->format('F d, Y')),
+                            ])
+                            ->alignRight(),
                     ]),
-                Footer\Layout\FooterColumn::make()
-                    ->schema([
-                        Text::make("Generated on: " . now()->format('F d, Y')),
-                    ])
-                    ->alignRight(),
-            ]),
             ]);
     }
 
+    // Update filter form
     public function filterForm(Form $form): Form
     {
         return $form
             ->schema([
-                Select::make('name')
-                ->label('Name')
-                ->multiple()
-                ->searchable()
-                ->preload()
-                ->options([
-                    'asset_1' => 'Asset 1',
-                    'asset_2' => 'Asset 2',
-                    'asset_3' => 'Asset 3',
-                ]),
+                Select::make('brand')
+                    ->label('Brand')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->options(\App\Models\Brand::pluck('name', 'id')),
 
-            Select::make('category')
-                ->label('Category')
-                ->multiple()
-                ->searchable()
-                ->preload()
-                ->options([
-                    'hardware' => 'Hardware',
-                    'software' => 'Software',
-                    'license' => 'License',
-                    'components' => 'Components',
-                ]),
+                Select::make('tags')
+                    ->label('Tags')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->options(\App\Models\Tag::pluck('name', 'id')),
 
-            Select::make('brand')
-                ->label('Brand')
-                ->multiple()
-                ->searchable()
-                ->preload()
-                ->options([
-                    'apple' => 'Apple',
-                    'dell' => 'Dell',
-                    'asus' => 'Asus',
-                    'lenovo' => 'Lenovo',
+                Actions::make([
+                    Action::make('reset')
+                        ->label('Reset Filters')
+                        ->color('danger')
+                        ->action(function (Form $form) {
+                            $form->fill([
+                                'brand' => null,
+                                'tags' => null,
+                            ]);
+                        }),
                 ]),
-
-            Actions::make([
-                Action::make('reset')
-                    ->label('Reset Filters')
-                    ->color('danger')
-                    ->action(function (Form $form) {
-                        $form->fill([
-                            'name' => null,
-                            'category' => null,
-                            'brand' => null,
-                        ]);
-                    }),
-            ]),
             ]);
     }
 
+    // Update report method
     public function categoryReport(?array $filters = []): Collection
-{
-    $query = Asset::query()->with(['brand', 'category']);
+    {
+        // Count by Brand
+        $brandQuery = Asset::query()
+            ->with(['brand'])
+            ->select('brand_id', DB::raw('COUNT(*) as total_count'))
+            ->groupBy('brand_id');
 
-    $filtersApplied = false;
+        if (!empty($filters['brand'])) {
+            $brandQuery->whereIn('brand_id', $filters['brand']);
+        }
 
-    // Filter by name (if multiple names are selected)
-    if (!empty($filters['name'])) {
-        $query->whereIn('id', $filters['name']);
-        $filtersApplied = true;
-    }
+        $brandCounts = $brandQuery->get();
 
-    // Filter by category (if multiple categories are selected)
-    if (!empty($filters['category'])) {
-        $query->whereIn('category_id', $filters['category']);
-        $filtersApplied = true;
-    }
+        // Count by Tag - Updated table name from 'asset_tag' to 'asset_tags'
+        $tagQuery = Asset::query()
+            ->join('asset_tags', 'assets.id', '=', 'asset_tags.asset_id')
+            ->join('tags', 'asset_tags.asset_tag_id', '=', 'tags.id') // Updated column name
+            ->select('tags.id', 'tags.name', DB::raw('COUNT(*) as total_count'))
+            ->groupBy('tags.id', 'tags.name');
 
-    // Filter by brand (if multiple brands are selected)
-    if (!empty($filters['brand'])) {
-        $query->whereIn('brand_id', $filters['brand']);
-        $filtersApplied = true;
-    }
+        if (!empty($filters['tags'])) {
+            $tagQuery->whereIn('tags.id', $filters['tags']);
+        }
 
-    // Fetch grouped results with total count per category
-    $assets = $query->select([
-            'name',
-            'brand_id',
-            'category_id',
-            DB::raw('COUNT(*) as total_count')
-        ])
-        ->groupBy('name', 'brand_id', 'category_id')
-        ->get();
+        $tagCounts = $tagQuery->get();
 
-    // If no matching records are found, return a "Nothing to show" message
-    if ($assets->isEmpty()) {
-        return collect([
+        if ($brandCounts->isEmpty() && $tagCounts->isEmpty()) {
+            return collect([
+                [
+                    'column1' => 'No assets found',
+                    'column2' => '',
+                    'column3' => '',
+                ]
+            ]);
+        }
+
+        $result = collect([
             [
-                'column1' => 'Nothing to show',
-                'column2' => '',
-                'column3' => '',
-                'column4' => '',
+                'column1' => 'Type',
+                'column2' => 'Name',
+                'column3' => 'Total Count',
             ]
         ]);
+
+        // Add brand counts
+        foreach ($brandCounts as $brand) {
+            $result->push([
+                'column1' => 'Brand',
+                'column2' => $brand->brand->name ?? 'Unbranded',
+                'column3' => $brand->total_count,
+            ]);
+        }
+
+        // Add tag counts
+        foreach ($tagCounts as $tag) {
+            $result->push([
+                'column1' => 'Tag',
+                'column2' => $tag->name,
+                'column3' => $tag->total_count,
+            ]);
+        }
+
+        return $result;
     }
-
-    // Return formatted collection for the report
-    return collect([
-        [
-            'column1' => 'Name',
-            'column2' => 'Brand',
-            'column3' => 'Category',
-            'column4' => 'Total Count',
-        ]
-    ])->concat($assets->map(function ($asset) {
-        return [
-            'column1' => $asset->name,
-            'column2' => $asset->brand->name ?? 'N/A',
-            'column3' => $asset->category->name ?? 'N/A',
-            'column4' => $asset->total_count,
-        ];
-    }));
-}
-
 }

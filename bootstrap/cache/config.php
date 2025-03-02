@@ -16,7 +16,7 @@
     'fallback_locale' => 'en',
     'faker_locale' => 'en_US',
     'cipher' => 'AES-256-CBC',
-    'key' => 'base64:kVYRF7EKwnV5nOT8bbHz5M1e8DuWmU+yat3o32vqzRw=',
+    'key' => 'base64:MvQAj3y4/EUufc+Zj0BFkooWgfiLhALdS9YmlRQV5LA=',
     'previous_keys' => 
     array (
     ),
@@ -163,8 +163,8 @@
       'file' => 
       array (
         'driver' => 'file',
-        'path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\framework/cache/data',
-        'lock_path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\framework/cache/data',
+        'path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/cache/data',
+        'lock_path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/cache/data',
       ),
       'memcached' => 
       array (
@@ -246,7 +246,7 @@
       array (
         'driver' => 'sqlite',
         'url' => NULL,
-        'database' => 'laravelqcu',
+        'database' => 'qcusystem',
         'prefix' => '',
         'foreign_key_constraints' => true,
         'busy_timeout' => NULL,
@@ -259,7 +259,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'laravelqcu',
+        'database' => 'qcusystem',
         'username' => 'root',
         'password' => '',
         'unix_socket' => '',
@@ -279,7 +279,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'laravelqcu',
+        'database' => 'qcusystem',
         'username' => 'root',
         'password' => '',
         'unix_socket' => '',
@@ -299,7 +299,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'laravelqcu',
+        'database' => 'qcusystem',
         'username' => 'root',
         'password' => '',
         'charset' => 'utf8',
@@ -314,7 +314,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'laravelqcu',
+        'database' => 'qcusystem',
         'username' => 'root',
         'password' => '',
         'charset' => 'utf8',
@@ -362,7 +362,7 @@
     ),
     'default_filesystem_disk' => 'public',
     'assets_path' => NULL,
-    'cache_path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\bootstrap/cache/filament',
+    'cache_path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\bootstrap/cache/filament',
     'livewire_loading_delay' => 'default',
   ),
   'filament-logger' => 
@@ -414,7 +414,7 @@
   ),
   'filament-reports' => 
   array (
-    'reports_directory' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\app\\Filament/Reports',
+    'reports_directory' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/Reports',
     'reports_namespace' => 'App\\Filament\\Reports',
     'reports_custom_menu_page' => true,
   ),
@@ -517,7 +517,7 @@
       'local' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\app/private',
+        'root' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/private',
         'serve' => true,
         'throw' => false,
         'report' => false,
@@ -525,7 +525,7 @@
       'public' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\app/public',
+        'root' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/public',
         'url' => 'http://localhost:8000/storage',
         'visibility' => 'public',
         'throw' => false,
@@ -547,19 +547,19 @@
       'filament-excel' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\app/filament-excel',
+        'root' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/filament-excel',
         'url' => 'http://localhost:8000/filament-excel',
       ),
     ),
     'links' => 
     array (
-      'C:\\Users\\Trix\\Desktop\\qcu.test\\public\\storage' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\app/public',
+      'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\public\\storage' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\app/public',
     ),
   ),
   'livewire' => 
   array (
     'class_namespace' => 'App\\Livewire',
-    'view_path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\resources\\views/livewire',
+    'view_path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\resources\\views/livewire',
     'layout' => 'components.layouts.app',
     'lazy_placeholder' => NULL,
     'temporary_file_upload' => 
@@ -623,14 +623,14 @@
       'single' => 
       array (
         'driver' => 'single',
-        'path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\logs/laravel.log',
         'level' => 'debug',
         'replace_placeholders' => true,
       ),
       'daily' => 
       array (
         'driver' => 'daily',
-        'path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\logs/laravel.log',
         'level' => 'debug',
         'days' => 14,
         'replace_placeholders' => true,
@@ -695,7 +695,7 @@
       ),
       'emergency' => 
       array (
-        'path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\logs/laravel.log',
       ),
     ),
   ),
@@ -771,7 +771,7 @@
       'theme' => 'default',
       'paths' => 
       array (
-        0 => 'C:\\Users\\Trix\\Desktop\\qcu.test\\resources\\views/vendor/mail',
+        0 => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\resources\\views/vendor/mail',
       ),
     ),
   ),
@@ -819,7 +819,7 @@
   ),
   'queue' => 
   array (
-    'default' => 'sync',
+    'default' => 'database',
     'connections' => 
     array (
       'sync' => 
@@ -932,7 +932,7 @@
     'lifetime' => 120,
     'expire_on_close' => false,
     'encrypt' => false,
-    'files' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\framework/sessions',
+    'files' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/sessions',
     'connection' => NULL,
     'table' => 'sessions',
     'store' => NULL,
@@ -1030,9 +1030,9 @@
   array (
     'paths' => 
     array (
-      0 => 'C:\\Users\\Trix\\Desktop\\qcu.test\\resources\\views',
+      0 => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\resources\\views',
     ),
-    'compiled' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\framework\\views',
+    'compiled' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework\\views',
   ),
   'blade-heroicons' => 
   array (
@@ -1203,7 +1203,7 @@
     ),
     'temporary_files' => 
     array (
-      'local_path' => 'C:\\Users\\Trix\\Desktop\\qcu.test\\storage\\framework/cache/laravel-excel',
+      'local_path' => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\storage\\framework/cache/laravel-excel',
       'local_permissions' => 
       array (
       ),

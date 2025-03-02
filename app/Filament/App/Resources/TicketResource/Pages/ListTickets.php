@@ -22,13 +22,15 @@ class ListTickets extends ListRecords
         return [
             'all' => Tab::make('All Tickets'),
             'open' => Tab::make('Open Tickets')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'open')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'open')),
             'in_progress' => Tab::make('In Progress Tickets')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'in_progress')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'in_progress')),
+            'pending' => Tab::make('In Progress Tickets')
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'pending')),
             'resolved' => Tab::make('Resolved Tickets')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'resolved')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'resolved')),
             'closed' => Tab::make('Closed Tickets')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'closed')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'closed')),
         ];
     }
 

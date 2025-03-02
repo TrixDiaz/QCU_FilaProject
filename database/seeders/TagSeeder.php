@@ -14,18 +14,18 @@ class TagSeeder extends Seeder
     public function run(): void
     {
         $tags = [
-            ['name' => 'computer-case', 'slug' => 'computer-case', 'is_active' => true],
-            ['name' => 'power-supply', 'slug' => 'power-supply', 'is_active' => true],
-            ['name' => 'motherboard', 'slug' => 'motherboard', 'is_active' => true],
-            ['name' => 'processor', 'slug' => 'processor', 'is_active' => true],
-            ['name' => 'drive', 'slug' => 'drive', 'is_active' => true],
-            ['name' => 'ram', 'slug' => 'ram', 'is_active' => true],
-            ['name' => 'graphics-card', 'slug' => 'graphics-card', 'is_active' => true],
-            ['name' => 'monitor', 'slug' => 'monitor', 'is_active' => true],
-            ['name' => 'keyboard', 'slug' => 'keyboard', 'is_active' => true],
-            ['name' => 'mouse', 'slug' => 'mouse', 'is_active' => true],
-            ['name' => 'headphone', 'slug' => 'headphone', 'is_active' => true],
-            ['name' => 'speaker', 'slug' => 'speaker', 'is_active' => true],
+            ['name' => 'computer-case', 'is_active' => true],
+            ['name' => 'power-supply', 'is_active' => true],
+            ['name' => 'motherboard', 'is_active' => true],
+            ['name' => 'processor', 'is_active' => true],
+            ['name' => 'drive', 'is_active' => true],
+            ['name' => 'ram', 'is_active' => true],
+            ['name' => 'graphics-card', 'is_active' => true],
+            ['name' => 'monitor', 'is_active' => true],
+            ['name' => 'keyboard', 'is_active' => true],
+            ['name' => 'mouse', 'is_active' => true],
+            ['name' => 'headphone', 'is_active' => true],
+            ['name' => 'speaker', 'is_active' => true],
         ];
 
         DB::table('tags')->insert($tags);

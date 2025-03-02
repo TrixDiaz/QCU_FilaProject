@@ -15,10 +15,6 @@ class Asset extends Model
 {
     use HasFactory;
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
 
     public $table = 'assets';
     protected $fillable = [

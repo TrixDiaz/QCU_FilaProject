@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('building_id')->constrained('buildings')->onDelete('cascade');
             $table->string('name');
-            $table->string('slug')->unique();
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
             $table->timestamps();

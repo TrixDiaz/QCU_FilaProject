@@ -20,7 +20,6 @@ class ClassroomFactory extends Factory
         return [
             'building_id' => \App\Models\Building::factory(),
             'name'=> fake()->text(50),
-            'slug'=> fake()->slug(),
             'is_active'=> fake()->boolean(),
         ];
     }

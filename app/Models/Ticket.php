@@ -40,24 +40,6 @@ class Ticket extends Model
         'ends_at' => 'datetime'
     ];
 
-    protected static function booted()
-    {
-        static::created(function ($ticket) {
-            if ($ticket->ticket_type === 'request') {
-                Approval::create([
-                    'ticket_id' => $ticket->id,
-                    'asset_id' => $ticket->asset_id,
-                    'professor_id' => $ticket->assigned_to,
-                    'section_id' => $ticket->section_id,
-                    'subject_id' => null,
-                    'title' => $ticket->title,
-                    'color' => 'blue',
-                    'starts_at' => $ticket->starts_at,
-                    'ends_at' => $ticket->ends_at,
-                ]);
-            }
-        });
-    }
 
 
     public function asset(): BelongsTo

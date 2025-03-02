@@ -18,7 +18,7 @@ class UsersReport extends Report
     protected static bool $shouldRegisterNavigation = false;
     public ?string $heading = "Users Report";
 
-     public ?string $subHeading = "A great report";
+    public ?string $subHeading = "A great report";
 
     public ?string $icon = 'heroicon-o-user-group';
 
@@ -140,8 +140,7 @@ class UsersReport extends Report
 
         if (isset($filters['search']) && !empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('first_name', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
                     ->orWhere('email', 'like', '%' . $filters['search'] . '%');
             });
             $filtersApplied = true;

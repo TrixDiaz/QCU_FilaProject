@@ -58,148 +58,32 @@ class TicketResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Forms\Components\Grid::make(2) // Creating a 2-column grid
+                Forms\Components\Grid::make()
                     ->schema([
-                        Forms\Components\Grid::make()
+                        Forms\Components\Section::make()
                             ->schema([
-                                Forms\Components\Section::make()
-                                    ->schema([
-                                        Forms\Components\Grid::make(2)
-                                            ->schema([
-                                                Forms\Components\TextInput::make('title')
-                                                    ->required(),
-                                                Forms\Components\Select::make('ticket_type')
-                                                    ->options([
-                                                        'request' => 'Request',
-                                                        'incident' => 'Incident',
-                                                    ])
-                                                    ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
-                                                    ->required()
-                                                    ->reactive()
-                                                    ->live(onBlur: true)
-                                                    ->native(false),
-                                                Forms\Components\Select::make('option')
-                                                    ->options([
-                                                        'asset' => 'Asset',
-                                                        'classroom' => 'Classroom',
-                                                    ])
-                                                    ->required()
-                                                    ->visible(fn($get) => $get('ticket_type') === 'request')
-                                                    ->live()
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state === 'classroom') {
-                                                            $set('asset_id', null);
-                                                        }
-                                                    }),
+                                Forms\Components\Placeholder::make('status')
+                                    ->label('Ticket Current Status')
+                                    ->content(fn($record): string => $record->status ?? 'New')
+                                    ->extraAttributes(['class' => 'capitalize']),
+                            ])
+                            ->columnSpan(1),
 
-                                                Forms\Components\DateTimePicker::make('starts_at')
-                                                    ->visible(fn($get) => $get('option') === 'classroom')
-                                                    ->rules(['required_if:option,classroom'])
-                                                    ->seconds(false)
-                                                    ->minutesStep(15)
-                                                    ->default(now()->startOfHour())
-                                                    ->live()
-                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
-                                                        if (!$state) return;
-                                                        
-                                                        // Get the current selected end time duration
-                                                        $currentEndHour = $get('end_hour');
-                                                        
-                                                        // If no end hour selected yet, default to starts_at + 1 hour
-                                                        if (!$currentEndHour) {
-                                                            $startHour = (int) Carbon::parse($state)->format('H');
-                                                            $defaultEndHour = ($startHour + 1) % 24;
-                                                            $set('end_hour', sprintf('%02d:00', $defaultEndHour));
-                                                        }
-                                                        // If end hour is already selected, check if it's still valid
-                                                        else {
-                                                            $startHour = (int) Carbon::parse($state)->format('H');
-                                                            $endHour = (int) explode(':', $currentEndHour)[0];
-                                                            
-                                                            // If end hour is not at least 1 hour after start hour
-                                                            if ($endHour <= $startHour) {
-                                                                $newEndHour = ($startHour + 1) % 24;
-                                                                $set('end_hour', sprintf('%02d:00', $newEndHour));
-                                                            }
-                                                        }
-                                                    }),
-
-                                                Forms\Components\Select::make('ends_at')
-                                                    ->required()
-                                                    ->options(function (Forms\Get $get) {
-                                                    $startsAt = $get('starts_at');
-                                                    if (!$startsAt) {
-                                                    return [];
-                                                    }
-                                
-                                                    $startHour = (int) Carbon::parse($startsAt)->format('H');
-                                                    $options = [];
-                                
-                                                    // Generate options for the next 12 hours after start hour
-                                                    for ($i = 1; $i <= 8; $i++) {
-                                                    $hour = ($startHour + $i) % 24;
-                                                    $time = sprintf('%02d:00', $hour);
-                                                    $formattedTime = Carbon::createFromFormat('H:i', $time)->format('g:i A');
-                                                    $options[$time] = $formattedTime;
-                                                    }
-                                
-                                                    return $options;
-                                                    })
-                                                    ->live()
-                                                    ->required()
-                                                    ->disabled(fn (Forms\Get $get) => !$get('starts_at'))
-                                                    ->visible(fn($get) => $get('option') === 'classroom'),
-
-                                                Forms\Components\Select::make('asset_id')
-                                                    ->relationship('asset', 'name')
-                                                    ->required(fn($get) => $get('option') === 'asset')
-                                                    ->searchable()
-                                                    ->preload()
-                                                    ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') !== 'classroom')
-                                                    ->visible(fn($get) => $get('option') === 'asset'),
-
-                                                Forms\Components\Select::make('section_id')
-                                                    ->relationship('section', 'name')
-                                                    ->required()
-                                                    ->searchable()
-                                                    ->preload()
-                                                    ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') !== 'classroom')
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state === 'asset') {
-                                                            $set('subject_id', null);
-                                                        }
-                                                    }),
-
-                                                Forms\Components\Select::make('subject_id')
-                                                    ->options(Subject::all()->pluck('name', 'id'))
-                                                    ->required(fn($get) => $get('option') === 'classroom')
-                                                    ->searchable()
-                                                    ->preload()
-                                                    ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') === 'classroom')
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state === 'asset') {
-                                                            $set('subject_id', null);
-                                                        }
-                                                    }),
-                                                Textarea::make('description')
-                                                    ->required()
-                                                    ->columnSpanFull(),
-                                            ]),
-                                    ]),
-                            ])->columnSpan(1),
-                        Forms\Components\Section::make() // Right column for Placeholder
+                        Forms\Components\Section::make()
                             ->schema([
                                 Forms\Components\Placeholder::make('ticket')
                                     ->label('Ticket Number')
                                     ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
-                            ])->columnSpan(1),
-                        Forms\Components\Section::make()
-                            ->schema([
-                                Wizard::make([
-                                    Wizard\Step::make('Ticket Information')
+                            ])
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2),
+                Forms\Components\Section::make()    
+                    ->schema([
+                        Wizard::make([
+                            Wizard\Step::make('Ticket Information')
+                                ->schema([
+                                    Forms\Components\Section::make()
                                         ->schema([
                                             Forms\Components\Grid::make(2)
                                                 ->schema([
@@ -220,7 +104,6 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                             'asset' => 'Asset',
                                                             'classroom' => 'Classroom',
                                                         ])
-                                                        ->native(false)
                                                         ->required()
                                                         ->visible(fn($get) => $get('ticket_type') === 'request')
                                                         ->live()
@@ -232,11 +115,61 @@ class TicketResource extends Resource implements HasShieldPermissions
 
                                                     Forms\Components\DateTimePicker::make('starts_at')
                                                         ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->rules(['required_if:option,classroom']),
+                                                        ->rules(['required_if:option,classroom'])
+                                                        ->seconds(false)
+                                                        ->minutesStep(15)
+                                                        ->default(now()->startOfHour())
+                                                        ->live()
+                                                        ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
+                                                            if (!$state) return;
 
-                                                    Forms\Components\DateTimePicker::make('ends_at')
-                                                        ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->rules(['required_if:option,classroom', 'after_or_equal:starts_at']),
+                                                            // Get the current selected end time duration
+                                                            $currentEndHour = $get('end_hour');
+
+                                                            // If no end hour selected yet, default to starts_at + 1 hour
+                                                            if (!$currentEndHour) {
+                                                                $startHour = (int) Carbon::parse($state)->format('H');
+                                                                $defaultEndHour = ($startHour + 1) % 24;
+                                                                $set('end_hour', sprintf('%02d:00', $defaultEndHour));
+                                                            }
+                                                            // If end hour is already selected, check if it's still valid
+                                                            else {
+                                                                $startHour = (int) Carbon::parse($state)->format('H');
+                                                                $endHour = (int) explode(':', $currentEndHour)[0];
+
+                                                                // If end hour is not at least 1 hour after start hour
+                                                                if ($endHour <= $startHour) {
+                                                                    $newEndHour = ($startHour + 1) % 24;
+                                                                    $set('end_hour', sprintf('%02d:00', $newEndHour));
+                                                                }
+                                                            }
+                                                        }),
+
+                                                    Forms\Components\Select::make('ends_at')
+                                                        ->required()
+                                                        ->options(function (Forms\Get $get) {
+                                                            $startsAt = $get('starts_at');
+                                                            if (!$startsAt) {
+                                                                return [];
+                                                            }
+
+                                                            $startHour = (int) Carbon::parse($startsAt)->format('H');
+                                                            $options = [];
+
+                                                            // Generate options for the next 12 hours after start hour
+                                                            for ($i = 1; $i <= 8; $i++) {
+                                                                $hour = ($startHour + $i) % 24;
+                                                                $time = sprintf('%02d:00', $hour);
+                                                                $formattedTime = Carbon::createFromFormat('H:i', $time)->format('g:i A');
+                                                                $options[$time] = $formattedTime;
+                                                            }
+
+                                                            return $options;
+                                                        })
+                                                        ->live()
+                                                        ->required()
+                                                        ->disabled(fn(Forms\Get $get) => !$get('starts_at'))
+                                                        ->visible(fn($get) => $get('option') === 'classroom'),
 
                                                     Forms\Components\Select::make('asset_id')
                                                         ->relationship('asset', 'name')
@@ -277,46 +210,44 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         ->columnSpanFull(),
                                                 ]),
                                         ]),
-                                    Wizard\Step::make('Other Information')
-                                        ->schema([
-                                            Forms\Components\TextInput::make('ticket_number')
-                                                ->disabled()
-                                                ->dehydrated()
-                                                ->required()
-                                                ->maxLength(255)
-                                                ->unique('tickets', ignoreRecord: true),
-                                            Forms\Components\TextInput::make('created_by')
-                                                ->required()
-                                                ->default(fn() => auth()->user()->name)
-                                                ->dehydrateStateUsing(fn() => auth()->id()),
-                                            Forms\Components\Select::make('assigned_to')
-                                                ->required()
-                                                ->options(User::all()->pluck('name', 'id'))
-                                                ->searchable()
-                                                ->visible(fn() => auth()->user()->role !== 'professor'),
-                                            Forms\Components\Hidden::make('status')
-                                                ->default('open')
-                                                ->dehydrated()
-                                                ->required(),
-                                            Forms\Components\Select::make('priority')
-                                                ->required()
-                                                ->default('low')
-                                                ->options([
-                                                    'low' => 'Low',
-                                                    'medium' => 'Medium',
-                                                    'high' => 'High',
-                                                ]),
-                                            Forms\Components\FileUpload::make('attachments')
-                                                ->multiple()
-                                                ->openable()
-                                                ->image()
-                                                ->downloadable(),
+                                ]),
+                            Wizard\Step::make('Other Information')
+                                ->schema([
+                                    Forms\Components\TextInput::make('ticket_number')
+                                        ->disabled()
+                                        ->dehydrated()
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->unique('tickets', ignoreRecord: true),
+                                    Forms\Components\TextInput::make('created_by')
+                                        ->required()
+                                        ->default(fn() => auth()->user()->name)
+                                        ->dehydrateStateUsing(fn() => auth()->id()),
+                                    Forms\Components\Select::make('assigned_to')
+                                        ->required()
+                                        ->options(User::all()->pluck('name', 'id'))
+                                        ->searchable()
+                                        ->visible(fn() => auth()->user()->role !== 'professor'),
+                                    Forms\Components\Hidden::make('status')
+                                        ->default('open')
+                                        ->dehydrated()
+                                        ->required(),
+                                    Forms\Components\Select::make('priority')
+                                        ->required()
+                                        ->default('low')
+                                        ->options([
+                                            'low' => 'Low',
+                                            'medium' => 'Medium',
+                                            'high' => 'High',
                                         ]),
-                                ])->columnSpan(1), // Ensures the Wizard takes one column
-                            ]),
-
-                    ])
-                    ->columnSpanFull(), // Full width grid with two equal columns
+                                    Forms\Components\FileUpload::make('attachments')
+                                        ->multiple()
+                                        ->openable()
+                                        ->image()
+                                        ->downloadable(),
+                                ]),
+                        ])->columnSpan(1), // Ensures the Wizard takes one column
+                    ]),
             ]);
     }
 

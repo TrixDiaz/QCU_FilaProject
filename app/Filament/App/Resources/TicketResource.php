@@ -173,8 +173,10 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                 ->options(User::all()->pluck('name', 'id'))
                                                 ->searchable()
                                                 ->visible(fn() => auth()->user()->role !== 'professor'),
-                                            Forms\Components\TextInput::make('status')
-                                                ->default('open'),
+                                            Forms\Components\Hidden::make('status')
+                                                ->default('open')
+                                                ->dehydrated()
+                                                ->required(),
                                             Forms\Components\Select::make('priority')
                                                 ->required()
                                                 ->default('low')

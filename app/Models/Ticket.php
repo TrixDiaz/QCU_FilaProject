@@ -40,6 +40,15 @@ class Ticket extends Model
         'ends_at' => 'datetime'
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($ticket) {
+            $ticket->status = 'open';
+        });
+    }
+
 
 
     public function asset(): BelongsTo

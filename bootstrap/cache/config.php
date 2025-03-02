@@ -508,7 +508,6 @@
     array (
       'enabled' => true,
     ),
-    'nav.group' => 'System Settings',
   ),
   'filesystems' => 
   array (

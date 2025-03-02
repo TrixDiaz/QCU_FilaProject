@@ -30,7 +30,7 @@ class TicketFactory extends Factory
 //            'due_date' => $this->faker->optional()->dateTimeBetween('now', '+1 month'),
 //            'date_finished' => $this->faker->optional()->dateTimeBetween('now', '+2 months'),
             // 'attachment' => $this->faker->optional()->imageUrl(),
-            'status' => $this->faker->randomElement(['in-progress', 'completed', 'pending']),
+            'status' => $this->faker->randomElement(['open','in-progress', 'completed', 'pending']),
         ];
     }
 }

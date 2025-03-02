@@ -31,9 +31,6 @@ class Ticket extends Model
         'subject_id',
         'starts_at',
         'ends_at',
-
-
-
     ];
 
 
@@ -61,7 +58,7 @@ class Ticket extends Model
             }
         });
     }
-    
+
 
     public function asset(): BelongsTo
     {

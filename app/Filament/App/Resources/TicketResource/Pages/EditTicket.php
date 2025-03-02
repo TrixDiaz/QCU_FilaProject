@@ -12,6 +12,11 @@ class EditTicket extends EditRecord
 {
     protected static string $resource = TicketResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     public function mount($record): void
     {
         parent::mount($record);

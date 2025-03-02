@@ -109,10 +109,12 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     }),
 
                                                 Forms\Components\DateTimePicker::make('starts_at')
-                                                    ->visible(fn($get) => $get('option') === 'classroom'),
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->rules(['required_if:option,classroom']),
 
                                                 Forms\Components\DateTimePicker::make('ends_at')
-                                                    ->visible(fn($get) => $get('option') === 'classroom'),
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->rules(['required_if:option,classroom', 'after_or_equal:starts_at']),
 
                                                 Forms\Components\Select::make('asset_id')
                                                     ->relationship('asset', 'name')
@@ -170,6 +172,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             ->options(User::all()->pluck('name', 'id'))
                                             ->searchable()
                                             ->visible(fn() => auth()->user()->role !== 'professor'),
+                                        Forms\Components\TextInput::make('status')
+                                            ->default('open'),
                                         Forms\Components\Select::make('priority')
                                             ->required()
                                             ->default('low')
@@ -183,8 +187,6 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             ->openable()
                                             ->image()
                                             ->downloadable(),
-                                        //    Forms\Components\DateTimePicker::make('starts_at'),
-                                        //    Forms\Components\DateTimePicker::make('ends_at'),
                                     ]),
                             ])->columnSpan(1), // Ensures the Wizard takes one column
                         ]),
@@ -211,7 +213,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('Ticket Information')
                     ->searchable()
                     ->default(fn($record): string => $record->ticket_number)
-                    ->description(fn($record): string => $record->creator?->name),
+                    ->description(fn($record): string => 'Created By ' . $record->creator?->name),
                 Tables\Columns\TextColumn::make('asset.name')
                     ->label('Asset')
                     ->description(fn($record): string => $record->ticket_type)
@@ -236,14 +238,22 @@ class TicketResource extends Resource implements HasShieldPermissions
                         'low' => 'gray',
                         'medium' => 'warning',
                         'high' => 'danger',
-                    }),
+                    })->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')
-                    ->badge(),
+                    ->badge()
+                    ->description(fn($record) => null) // Hide the default description
+                    ->formatStateUsing(fn($record) => strtoupper($record->status . ' - Priority ' . $record->priority))
+                    ->color(fn($record) => match (strtolower($record->priority)) {
+                        'high' => 'danger',
+                        'medium' => 'warning',
+                        'low' => 'success',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('creator.name')
                     ->label('Created By')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('assignedUser.name')
                     ->label('Assigned To')
@@ -257,7 +267,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -296,7 +306,9 @@ class TicketResource extends Resource implements HasShieldPermissions
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->poll('30s')
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

@@ -23,8 +23,8 @@ return new class extends Migration
             $table->string('description');
             $table->enum('ticket_type', ['request', 'incident']);
             $table->enum('option', ['asset', 'classroom'])->nullable();
-            $table->string('priority')->default('Low');
-            $table->string('status')->default('Open');
+            $table->string('priority')->default('low');
+            $table->string('status')->default('open');
             $table->json('attachments')->nullable();
             $table->dateTime('starts_at')->nullable();
             $table->dateTime('ends_at')->nullable();

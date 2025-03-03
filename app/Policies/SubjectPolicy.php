@@ -55,7 +55,7 @@ class SubjectPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('{{ DeleteAny }}');
+        return $user->can('delete_any_subject');
     }
 
     /**
@@ -63,7 +63,7 @@ class SubjectPolicy
      */
     public function forceDelete(User $user, Subject $subject): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_subject');
     }
 
     /**
@@ -71,7 +71,7 @@ class SubjectPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_subject');
     }
 
     /**

@@ -27,6 +27,9 @@ class UserResource extends Resource implements HasShieldPermissions
             'create',
             'update',
             'delete',
+            'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }
@@ -156,7 +159,7 @@ class UserResource extends Resource implements HasShieldPermissions
                             ->except(["id", "password"])
                             ->withFilename(date('Y-m-d') . '- Users.xlsx'),
 
-                            ExcelExport::make()
+                        ExcelExport::make()
                             ->fromTable()
                             ->only([
                                 'name',
@@ -165,9 +168,9 @@ class UserResource extends Resource implements HasShieldPermissions
 
                             ])
                             ->withFilename(date('Y-m-d') . '-Filtered-Users.xlsx'),
-                            ])
+                    ])
 
-                        ]),
+                ]),
             ])->poll('30s');
     }
 

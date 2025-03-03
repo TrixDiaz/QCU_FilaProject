@@ -25,6 +25,8 @@ class CategoryResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }
@@ -45,6 +47,7 @@ class CategoryResource extends Resource implements HasShieldPermissions
     }
 
     protected static ?string $navigationBadgeTooltip = 'The number of active category';
+
 
     public static function form(Form $form): Form
     {
@@ -205,21 +208,22 @@ class CategoryResource extends Resource implements HasShieldPermissions
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()
-                        ->tooltip('View')
-                        ->hidden(fn($record) => $record->trashed()),
+                        ->tooltip('View'),
                     Tables\Actions\EditAction::make()
                         ->tooltip('Edit')
-                        ->color('warning')
-                        ->hidden(fn($record) => $record->trashed()),
+                        ->color('warning'),
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive Category')
-                        ->hidden(fn($record) => $record->trashed()),
+                        ->modalHeading('Archive Category'),
                     Tables\Actions\ForceDeleteAction::make()
-                        ->visible(fn($record) => $record->trashed()),
+                        ->tooltip('Force Delete')
+                        ->modalHeading('Force Delete Category')
+                        ->color('danger')
+                        ->requiresConfirmation(),
                     Tables\Actions\RestoreAction::make()
-                        ->color('secondary')
+                        ->tooltip('Restore')
+                        ->color('success')
                         ->visible(fn($record) => $record->trashed()),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -227,10 +231,15 @@ class CategoryResource extends Resource implements HasShieldPermissions
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->hidden(fn() => auth()->user()->hasRole('professor')),
+                    Tables\Actions\ForceDeleteBulkAction::make()
+                        ->hidden(fn() => !auth()->user()->hasRole(['super_admin', 'admin'])),
+                    Tables\Actions\RestoreBulkAction::make()
+                        ->hidden(fn() => !auth()->user()->hasRole(['super_admin', 'admin'])),
                 ]),
-            ])->poll('30s');
+            ])
+            ->poll('30s');
     }
 
     public static function getRelations(): array

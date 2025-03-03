@@ -26,6 +26,9 @@ class SubjectResource extends Resource implements HasShieldPermissions
             'create',
             'update',
             'delete',
+            'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }
@@ -49,31 +52,31 @@ class SubjectResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-              Forms\Components\Section::make()
-                ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required(),
-                    Forms\Components\TextInput::make('subject_code')
-                        ->required(),
-                    Forms\Components\TextInput::make('subject_units')
-                        ->required()
-                        ->numeric()
-                        ->minValue(1)
-                        ->maxValue(10)
-                        ->step(1),
-                    Forms\Components\Select::make('section_id')
-                        ->relationship('section', 'name')
-                        ->required()
-                        ->searchable()
-                        ->preload()
-                        ->optionsLimit(5),
-                    Forms\Components\TimePicker::make('lab_time')
-                        ->required()
-                        ->native(false),
-                    Forms\Components\TimePicker::make('lecture_time')
-                        ->required()
-                        ->native(false),
-                ])->columns(2),
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required(),
+                        Forms\Components\TextInput::make('subject_code')
+                            ->required(),
+                        Forms\Components\TextInput::make('subject_units')
+                            ->required()
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(10)
+                            ->step(1),
+                        Forms\Components\Select::make('section_id')
+                            ->relationship('section', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->optionsLimit(5),
+                        Forms\Components\TimePicker::make('lab_time')
+                            ->required()
+                            ->native(false),
+                        Forms\Components\TimePicker::make('lecture_time')
+                            ->required()
+                            ->native(false),
+                    ])->columns(2),
             ]);
     }
 
@@ -106,15 +109,15 @@ class SubjectResource extends Resource implements HasShieldPermissions
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make()
-                ->native(false),
-            Tables\Filters\SelectFilter::make('is_active')
-                ->label('Status')
-                ->label('Status')
-                ->options([
-                    true => 'Active',
-                    false => 'Inactive'
-                ])
-                ->native(false)
+                    ->native(false),
+                Tables\Filters\SelectFilter::make('is_active')
+                    ->label('Status')
+                    ->label('Status')
+                    ->options([
+                        true => 'Active',
+                        false => 'Inactive'
+                    ])
+                    ->native(false)
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

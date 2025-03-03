@@ -36,6 +36,8 @@ class ApprovalResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }
@@ -101,15 +103,15 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                                 ->columnSpan(2),
                             Tables\Columns\TextColumn::make('status')
                                 ->badge()
-                                ->color(fn (string $state): string => match ($state) {
+                                ->color(fn(string $state): string => match ($state) {
                                     'approved' => 'success',
                                     'declined' => 'danger',
                                     'pending' => 'warning',
                                 })
                                 ->alignEnd(),
-                                Tables\Columns\TextColumn::make('ticket.option')
+                            Tables\Columns\TextColumn::make('ticket.option')
                                 ->badge()
-                                ->getStateUsing(fn ($record) => $record->ticket->option ?? '')
+                                ->getStateUsing(fn($record) => $record->ticket->option ?? '')
                                 ->extraAttributes([
                                     'class' => 'capitalize'
                                 ]),
@@ -172,8 +174,7 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                             $record->ticket->update(['status' => 'resolved']);
                         }
 
-                        if($option === 'asset')
-                        {
+                        if ($option === 'asset') {
                             \App\Models\AssetGroup::create([
                                 'asset_id' => $record->asset_id,
                                 'classroom_id' => $record->section->classroom_id ?? null,
@@ -224,7 +225,7 @@ class ApprovalResource extends Resource implements HasShieldPermissions
 
                         $record->delete();
                     })
-//                    ->visible(fn (Approval $record) => $record->status === 'pending')
+                //                    ->visible(fn (Approval $record) => $record->status === 'pending')
                 ,
 
                 Tables\Actions\Action::make('decline')
@@ -258,12 +259,11 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                             ->success()
                             ->send();
                     })
-//                    ->visible(fn (Approval $record) => $record->status === 'pending')
+                    //                    ->visible(fn (Approval $record) => $record->status === 'pending')
                     ->modalWidth('md'),
             ])
             ->defaultSort('created_at', 'desc')
             ->poll('30s');
-
     }
 
     public static function getRelations(): array
@@ -278,8 +278,8 @@ class ApprovalResource extends Resource implements HasShieldPermissions
         return [
             'index' => Pages\ListApprovals::route('/'),
 
-//            'create' => Pages\CreateApproval::route('/create'),
-//            'edit' => Pages\EditApproval::route('/{record}/edit'),
+            //            'create' => Pages\CreateApproval::route('/create'),
+            //            'edit' => Pages\EditApproval::route('/{record}/edit'),
         ];
     }
 }

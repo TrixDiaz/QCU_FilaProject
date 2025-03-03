@@ -63,7 +63,7 @@ class BrandPolicy
      */
     public function forceDelete(User $user, Brand $brand): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_brand');
     }
 
     /**
@@ -71,7 +71,7 @@ class BrandPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_brand');
     }
 
     /**

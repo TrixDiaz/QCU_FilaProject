@@ -63,7 +63,7 @@ class ApprovalPolicy
      */
     public function forceDelete(User $user, Approval $approval): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_approval');
     }
 
     /**
@@ -71,7 +71,7 @@ class ApprovalPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_approval');
     }
 
     /**

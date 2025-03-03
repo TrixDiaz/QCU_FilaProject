@@ -63,7 +63,7 @@ class ClassroomPolicy
      */
     public function forceDelete(User $user, Classroom $classroom): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_classroom');
     }
 
     /**
@@ -71,7 +71,7 @@ class ClassroomPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_classroom');
     }
 
     /**

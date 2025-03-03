@@ -63,7 +63,7 @@ class CategoryPolicy
      */
     public function forceDelete(User $user, Category $category): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_category');
     }
 
     /**
@@ -71,7 +71,7 @@ class CategoryPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_category');
     }
 
     /**

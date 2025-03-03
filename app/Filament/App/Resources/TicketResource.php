@@ -34,6 +34,8 @@ class TicketResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }
@@ -57,7 +59,7 @@ class TicketResource extends Resource implements HasShieldPermissions
     public static function form(Form $form): Form
     {
         $isProfessor = auth()->user()->hasRole('professor');
-        
+
         return $form
             ->schema([
                 Forms\Components\Grid::make()
@@ -80,7 +82,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->columnSpan(1),
                     ])
                     ->columns(2),
-                Forms\Components\Section::make()    
+                Forms\Components\Section::make()
                     ->schema([
                         Wizard::make([
                             Wizard\Step::make('Ticket Information')
@@ -180,9 +182,10 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         ->preload()
                                                         ->optionsLimit(5)
                                                         ->visible(fn($get) => $get('option') !== 'classroom')
-                                                        ->visible(fn($get) => 
-                                                        $get('ticket_type') === 'incident' || 
-                                                        ($get('ticket_type') === 'request' && $get('option') === 'asset')
+                                                        ->visible(
+                                                            fn($get) =>
+                                                            $get('ticket_type') === 'incident' ||
+                                                                ($get('ticket_type') === 'request' && $get('option') === 'asset')
                                                         ),
 
                                                     Forms\Components\Select::make('section_id')

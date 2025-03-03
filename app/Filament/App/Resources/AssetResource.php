@@ -29,6 +29,8 @@ class AssetResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }
@@ -50,9 +52,6 @@ class AssetResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationBadgeTooltip = 'The number of active Asset';
 
-    //    public function randomUniqueCode() {
-    //        return substr(str_shuffle(str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)), 0, 10);
-    //    }
 
     public static function generateUniqueCode()
     {
@@ -75,17 +74,14 @@ class AssetResource extends Resource implements HasShieldPermissions
                                 name: 'category',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    // Get the current category_id if we're in edit mode
                                     $currentCategoryId = $get ? $get('category_id') : null;
 
                                     return $query->where(function ($query) use ($currentCategoryId) {
-                                        $query->where('is_active', true);
-
-                                        // Only include the current category if it exists
-                                        if ($currentCategoryId) {
-                                            $query->orWhere('id', $currentCategoryId);
-                                        }
-                                    });
+                                        $query->where('is_active', true)
+                                            ->when($currentCategoryId, function ($query) use ($currentCategoryId) {
+                                                $query->orWhere('id', $currentCategoryId);
+                                            });
+                                    })->withTrashed(); // Add this to include soft deleted records
                                 }
                             )
                             ->required()
@@ -93,21 +89,23 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->preload()
                             ->native(false)
                             ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Category::class))
-                            ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Category::class)),
+                            ->editOptionForm(function ($record) {
+                                // Always return the form schema, even for inactive/deleted records
+                                return \App\Services\DynamicForm::schema(\App\Models\Category::class);
+                            }),
                         Forms\Components\Select::make('brand_id')
                             ->relationship(
                                 name: 'brand',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    // Get the current brand_id if we're in edit mode
                                     $currentBrandId = $get ? $get('brand_id') : null;
 
                                     return $query->where(function ($query) use ($currentBrandId) {
-                                        $query->where('is_active', true);
-                                        if ($currentBrandId) {
-                                            $query->orWhere('id', $currentBrandId);
-                                        }
-                                    });
+                                        $query->where('is_active', true)
+                                            ->when($currentBrandId, function ($query) use ($currentBrandId) {
+                                                $query->orWhere('id', $currentBrandId);
+                                            });
+                                    })->withTrashed(); // Add this to include soft deleted records
                                 }
                             )
                             ->required()
@@ -122,30 +120,32 @@ class AssetResource extends Resource implements HasShieldPermissions
                                     ->label('Active')
                                     ->default(true),
                             ])
-                            ->editOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255),
-                                Forms\Components\Toggle::make('is_active')
-                                    ->label('Active'),
-                            ]),
+                            ->editOptionForm(function ($record) {
+                                // Always return the form schema, even for inactive/deleted records
+                                return [
+                                    Forms\Components\TextInput::make('name')
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Active'),
+                                ];
+                            }),
                         Forms\Components\Select::make('asset_tag_id')
                             ->relationship(
                                 name: 'assetTags',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    // Get the current tag_id if we're in edit mode
                                     $currentTagIds = $get ? $get('asset_tag_id') : [];
-
-                                    // Ensure $currentTagIds is an array
                                     if (!is_array($currentTagIds)) {
                                         $currentTagIds = [];
                                     }
 
                                     return $query->where(function ($query) use ($currentTagIds) {
                                         $query->where('tags.is_active', true)
-                                            ->orWhereIn('tags.id', $currentTagIds);
-                                    });
+                                            ->when(!empty($currentTagIds), function ($query) use ($currentTagIds) {
+                                                $query->orWhereIn('tags.id', $currentTagIds);
+                                            });
+                                    })->withTrashed(); // Add this to include soft deleted records
                                 }
                             )
                             ->required()
@@ -154,7 +154,10 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->multiple()
                             ->native(false)
                             ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\AssetTag::class))
-                            ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\AssetTag::class)),
+                            ->editOptionForm(function ($record) {
+                                // Always return the form schema, even for inactive/deleted records
+                                return \App\Services\DynamicForm::schema(\App\Models\AssetTag::class);
+                            }),
                         Forms\Components\Toggle::make('show_expiry_date')
                             ->label('Add Expiry Date')
                             ->reactive(),

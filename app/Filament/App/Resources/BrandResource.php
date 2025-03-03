@@ -25,6 +25,8 @@ class BrandResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }

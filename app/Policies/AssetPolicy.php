@@ -63,7 +63,7 @@ class AssetPolicy
      */
     public function forceDelete(User $user, Asset $asset): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_asset');
     }
 
     /**
@@ -71,7 +71,7 @@ class AssetPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_asset');
     }
 
     /**

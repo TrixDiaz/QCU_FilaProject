@@ -24,6 +24,9 @@ class SectionResource extends Resource implements HasShieldPermissions
             'create',
             'update',
             'delete',
+            'delete_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }

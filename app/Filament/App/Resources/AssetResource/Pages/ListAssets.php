@@ -62,7 +62,6 @@ class ListAssets extends ListRecords
                         ->success()
                         ->icon('heroicon-m-computer-desktop')
                         ->send();
-
                 }),
             Actions\CreateAction::make(),
         ];
@@ -73,14 +72,18 @@ class ListAssets extends ListRecords
         return [
             'all' => Tab::make(),
             'active' => Tab::make()
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'active'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'active'))
                 ->badge(Asset::query()->where('status', 'active')->count())
                 ->badgeColor('primary'),
+            'deploy' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'deploy'))
+                ->badge(Asset::query()->where('status', 'deploy')->count())
+                ->badgeColor('secondary'),
             'inactive' => Tab::make()
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'inactive'))
-                ->badge(Asset::query()->where('status', 'active')->count())
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'inactive'))
+                ->badge(Asset::query()->where('status', 'inactive')->count())
                 ->badgeColor('danger'),
+
         ];
     }
-
 }

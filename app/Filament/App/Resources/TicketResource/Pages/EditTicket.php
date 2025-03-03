@@ -74,12 +74,20 @@ class EditTicket extends EditRecord
             ->requiresConfirmation()
             ->action(function () {
                 $this->record->update([
-                    'status' => 'in_progress',
-                    'assigned_to' => auth()->id(), // Assign to the logged-in user
+                    'status' => 'resolved',  // Changed from 'in_progress' to 'resolved'
+                    'resolved_at' => now(),  // Add resolved timestamp
+                    'resolved_by' => auth()->id(),  // Add who resolved it
                 ]);
 
-                $this->notify('success', 'Ticket marked as Resolved.');
+                Notification::make()
+                    ->title('Ticket Resolved')
+                    ->success()
+                    ->body('The ticket has been marked as resolved.')
+                    ->send();
+
+                $this->redirect($this->getResource()::getUrl('index'));
             })
-            ->color('success');
+            ->color('success')
+            ->visible(fn() => !auth()->user()->hasRole('professor')); // Hide for professors
     }
 }

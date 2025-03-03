@@ -56,6 +56,8 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     public static function form(Form $form): Form
     {
+        $isProfessor = auth()->user()->hasRole('professor');
+        
         return $form
             ->schema([
                 Forms\Components\Grid::make()
@@ -251,7 +253,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                 ]),
                         ])->columnSpan(1), // Ensures the Wizard takes one column
                     ]),
-            ]);
+            ])
+            ->disabled($isProfessor); // This will disable all form fields for professors
     }
 
 
@@ -348,14 +351,18 @@ class TicketResource extends Resource implements HasShieldPermissions
                     Tables\Actions\EditAction::make()
                         ->tooltip('Edit')
                         ->color('warning')
-                        ->disabled(fn($record) => $record->status === 'closed'),
+                        ->disabled(fn($record) => $record->status === 'closed')
+                        ->visible(fn() => !auth()->user()->hasRole('professor')),
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive Ticket'),
-                    Tables\Actions\ForceDeleteAction::make(),
+                        ->modalHeading('Archive Ticket')
+                        ->visible(fn() => !auth()->user()->hasRole('professor')),
+                    Tables\Actions\ForceDeleteAction::make()
+                        ->visible(fn() => !auth()->user()->hasRole('professor')),
                     Tables\Actions\RestoreAction::make()
-                        ->color('secondary'),
+                        ->color('secondary')
+                        ->visible(fn() => !auth()->user()->hasRole('professor')),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->tooltip('Actions')

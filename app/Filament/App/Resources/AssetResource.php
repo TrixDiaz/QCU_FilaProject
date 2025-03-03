@@ -157,16 +157,16 @@ class AssetResource extends Resource implements HasShieldPermissions
                                     return;
                                 }*/
 
-                                $set('asset_code', \Illuminate\Support\Str::slug($state) . '-' . self::generateUniqueCode());
-                                $set('slug', \Illuminate\Support\Str::slug($state));
+                                $set('asset_code', \Illuminate\Support\Str::name($state) . '-' . self::generateUniqueCode());
+                                $set('name', \Illuminate\Support\Str::name($state));
                             })
                             ->required(),
-                        Forms\Components\TextInput::make('slug')
+                        Forms\Components\TextInput::make('name')
                             ->disabled()
                             ->dehydrated()
                             ->required()
                             ->maxLength(255)
-                            ->unique(\App\Models\Asset::class, 'slug', ignoreRecord: true),
+                            ->unique(\App\Models\Asset::class, 'name', ignoreRecord: true),
                         Forms\Components\TextInput::make('asset_code')
                             ->required()
                             ->disabled()
@@ -280,9 +280,9 @@ class AssetResource extends Resource implements HasShieldPermissions
             ])
             ->headerActions([
                 \Filament\Tables\Actions\ImportAction::make()
-                ->importer(\App\Filament\Imports\AssetImporter::class)
-                ->label('Import Excel') // Custom label for button
-                ->color('primary'),
+                    ->importer(\App\Filament\Imports\AssetImporter::class)
+                    ->label('Import Excel') // Custom label for button
+                    ->color('primary'),
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
@@ -290,7 +290,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ExportBulkAction::make()->exports([
                         ExcelExport::make()
                             ->fromTable()
-                            ->except(["id", "slug", "brand_id"])
+                            ->except(["id", "name", "brand_id"])
                             ->withFilename(date('Y-m-d') . '-Assets.xlsx'),
 
                         ExcelExport::make()
@@ -305,10 +305,10 @@ class AssetResource extends Resource implements HasShieldPermissions
                                 'updated_at',
                             ])
                             ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'),
-                            ])
+                    ])
 
-                            ]),
-                ])
+                ]),
+            ])
             ->poll('30s');
     }
 
@@ -327,5 +327,4 @@ class AssetResource extends Resource implements HasShieldPermissions
             'edit' => Pages\EditAsset::route('/{record}/edit'),
         ];
     }
-
 }

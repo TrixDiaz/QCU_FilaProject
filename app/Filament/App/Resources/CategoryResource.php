@@ -205,17 +205,22 @@ class CategoryResource extends Resource implements HasShieldPermissions
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()
-                        ->tooltip('View'),
+                        ->tooltip('View')
+                        ->hidden(fn($record) => $record->trashed()),
                     Tables\Actions\EditAction::make()
                         ->tooltip('Edit')
-                        ->color('warning'),
+                        ->color('warning')
+                        ->hidden(fn($record) => $record->trashed()),
                     Tables\Actions\DeleteAction::make()
                         ->label('Archive')
                         ->tooltip('Archive')
-                        ->modalHeading('Archive Category'),
-                    Tables\Actions\ForceDeleteAction::make(),
+                        ->modalHeading('Archive Category')
+                        ->hidden(fn($record) => $record->trashed()),
+                    Tables\Actions\ForceDeleteAction::make()
+                        ->visible(fn($record) => $record->trashed()),
                     Tables\Actions\RestoreAction::make()
-                        ->color('secondary'),
+                        ->color('secondary')
+                        ->visible(fn($record) => $record->trashed()),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->tooltip('Actions')
@@ -223,6 +228,7 @@ class CategoryResource extends Resource implements HasShieldPermissions
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
             ])->poll('30s');
     }

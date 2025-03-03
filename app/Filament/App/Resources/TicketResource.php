@@ -10,6 +10,7 @@ use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Carbon\Carbon;
@@ -236,7 +237,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                         ->required()
                                         ->options(User::all()->pluck('name', 'id'))
                                         ->searchable()
-                                        ->visible(fn() => auth()->user()->role !== 'professor'),
+                                        ->hidden(fn () => Auth::user()->hasRole('professor')),
                                     Forms\Components\Hidden::make('status')
                                         ->default('open')
                                         ->dehydrated()

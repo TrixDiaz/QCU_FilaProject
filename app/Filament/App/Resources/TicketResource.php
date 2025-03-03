@@ -59,6 +59,7 @@ class TicketResource extends Resource implements HasShieldPermissions
     public static function form(Form $form): Form
     {
         $isProfessor = auth()->user()->hasRole('professor');
+        $isEditMode = $form->getOperation() === 'edit';
 
         return $form
             ->schema([
@@ -257,7 +258,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                         ])->columnSpan(1), // Ensures the Wizard takes one column
                     ]),
             ])
-            ->disabled($isProfessor); // This will disable all form fields for professors
+            ->disabled($isProfessor && $isEditMode); // Only disable form if professor AND in edit mode
     }
 
 

@@ -16,10 +16,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('computer_case')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'computer-case')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -27,10 +27,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('power_supply')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'power-supply')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -38,10 +38,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('motherboard')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'motherboard')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -49,10 +49,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('processor')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'processor')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -60,10 +60,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('drive')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'drive')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->multiple()
@@ -72,10 +72,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('ram')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'ram')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->multiple()
@@ -84,10 +84,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('graphics_card')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'graphics-card')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload(),
                     ])->columns(2),
@@ -97,10 +97,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('monitor')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'monitor')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -108,10 +108,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('keyboard')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'keyboard')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -119,10 +119,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('mouse')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'mouse')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -130,10 +130,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('headphone')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'headphone')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -141,10 +141,10 @@ final class DeployComputer
                         \Filament\Forms\Components\Select::make('speaker')
                             ->options(\App\Models\Asset::whereHas('assetTags', function ($query) {
                                 $query->where('name', 'speaker')
-                                    ->where('is_active', true); // Ensure the tag is active
+                                    ->where('is_active', true);
                             })
-                                ->where('status', 'active') // Ensure the asset status is active
-                                ->pluck('name', 'id')) // Adjust this if you need a different field for the select
+                                ->where('status', 'active')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required(),

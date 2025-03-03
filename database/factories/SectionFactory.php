@@ -20,7 +20,6 @@ class SectionFactory extends Factory
         return [
             'classroom_id' => \App\Models\Classroom::factory(),
             'name'=> fake()->text(20),
-            'slug'=> fake()->slug(),
             'is_active'=> fake()->boolean(),
         ];
     }

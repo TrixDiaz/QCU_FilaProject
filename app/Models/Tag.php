@@ -16,8 +16,8 @@ class Tag extends Model
     public $table = 'tags';
     protected $fillable = [
         'name',
-        'slug',
         'is_active',
+        'slug',
         'created_at',
         'updated_at',
         'deleted_at',

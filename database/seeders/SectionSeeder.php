@@ -12,11 +12,11 @@ class SectionSeeder extends Seeder
     public function run(): void
     {
         $sections = [
-            ['classroom_id' => 1, 'name' => 'section 1', 'slug' => 'section-1', 'is_active' => true],
-            ['classroom_id' => 1, 'name' => 'section 2', 'slug' => 'section-2', 'is_active' => true],
-            ['classroom_id' => 2, 'name' => 'section 3', 'slug' => 'section-3', 'is_active' => true],
-            ['classroom_id' => 2, 'name' => 'section 4', 'slug' => 'section-4', 'is_active' => true],
-            ['classroom_id' => 3, 'name' => 'section 5', 'slug' => 'section-5', 'is_active' => true],
+            ['classroom_id' => 1, 'name' => 'section 1', 'is_active' => true],
+            ['classroom_id' => 1, 'name' => 'section 2', 'is_active' => true],
+            ['classroom_id' => 2, 'name' => 'section 3', 'is_active' => true],
+            ['classroom_id' => 2, 'name' => 'section 4', 'is_active' => true],
+            ['classroom_id' => 3, 'name' => 'section 5', 'is_active' => true],
         ];
 
         \Illuminate\Support\Facades\DB::table('sections')->insert($sections);

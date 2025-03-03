@@ -23,11 +23,6 @@ class Section extends Model
         'updated_at',
     ];
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
-
     public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class, 'classroom_id')->with('building');

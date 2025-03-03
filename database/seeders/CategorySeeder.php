@@ -13,10 +13,10 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['name' => 'hardware', 'slug' => 'hardware', 'is_active' => true],
-            ['name' => 'software', 'slug' => 'software', 'is_active' => true],
-            ['name' => 'license', 'slug' => 'license', 'is_active' => true],
-            ['name' => 'components', 'slug' => 'components', 'is_active' => true],
+            ['name' => 'hardware', 'is_active' => true],
+            ['name' => 'software', 'is_active' => true],
+            ['name' => 'license', 'is_active' => true],
+            ['name' => 'components', 'is_active' => true],
 
         ];
 

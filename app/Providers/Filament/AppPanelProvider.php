@@ -6,6 +6,7 @@ use App\Filament\Reports\AssetReport;
 use App\Filament\Reports\InventoryReport;
 use App\Filament\Reports\MaintenanceReport;
 use App\Filament\Reports\UsersReport;
+use App\Filament\Reports\CategoryReport;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -75,6 +76,12 @@ class AppPanelProvider extends PanelProvider
                     ->url(fn (): string => ActivityResource::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('System Settings')
+                    ->sort(1)
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                    NavigationItem::make('Category Report')
+                    ->url(fn (): string => CategoryReport::getUrl())
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('Reports')
                     ->sort(1)
                     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
             ])

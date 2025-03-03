@@ -18,7 +18,6 @@ class BrandFactory extends Factory
     {
         return [
             'name'=> fake()->text(20),
-            'slug'=> fake()->slug(),
             'is_active'=> fake()->boolean(),
         ];
     }

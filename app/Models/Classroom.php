@@ -24,11 +24,6 @@ class Classroom extends Model
         'updated_at',
     ];
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
-
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);

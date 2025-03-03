@@ -21,7 +21,6 @@ class AssetFactory extends Factory
             'category_id' => \App\Models\Category::factory(),
             'brand_id' => \App\Models\Brand::factory(),
             'name' => fake()->text(20),
-            'slug' => fake()->slug(),
             'serial_number' => fake()->uuid(),
             'asset_code' => fake()->text(6),
             'expiry_date' => now(),

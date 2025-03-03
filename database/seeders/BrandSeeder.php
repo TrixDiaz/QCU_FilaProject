@@ -13,10 +13,10 @@ class BrandSeeder extends Seeder
     public function run(): void
     {
         $brands = [
-            ['name' => 'asus', 'slug' => 'asus', 'is_active' => true],
-            ['name' => 'dell', 'slug' => 'dell', 'is_active' => true],
-            ['name' => 'lenovo', 'slug' => 'lenovo', 'is_active' => true],
-            ['name' => 'apple', 'slug' => 'apple', 'is_active' => true],
+            ['name' => 'asus', 'is_active' => true],
+            ['name' => 'dell', 'is_active' => true],
+            ['name' => 'lenovo', 'is_active' => true],
+            ['name' => 'apple', 'is_active' => true],
 
         ];
 

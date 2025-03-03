@@ -13,15 +13,11 @@ class Building extends Model
     use HasFactory;
     use SoftDeletes;
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
 
     protected $fillable = [
         'name',
-        'slug',
         'is_active',
+        'slug',
         'created_at',
         'updated_at',
     ];

@@ -188,7 +188,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('brand.name')
                     ->label('Brand & Category')
-                    ->description(fn($record): string => $record->category?->name)
+                    ->description(fn($record): string => $record->category?->name ?? 'No Category') // Add null coalescing operator
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('serial_number')
                     ->searchable()

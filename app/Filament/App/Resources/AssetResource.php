@@ -153,20 +153,9 @@ class AssetResource extends Resource implements HasShieldPermissions
                         Forms\Components\TextInput::make('name')
                             ->live(onBlur: true)
                             ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
-                                /*if ($operation !== 'create') {
-                                    return;
-                                }*/
-
-                                $set('asset_code', \Illuminate\Support\Str::name($state) . '-' . self::generateUniqueCode());
-                                $set('name', \Illuminate\Support\Str::name($state));
+                                $set('asset_code', \Illuminate\Support\Str::slug($state) . '-' . self::generateUniqueCode());;
                             })
                             ->required(),
-                        Forms\Components\TextInput::make('name')
-                            ->disabled()
-                            ->dehydrated()
-                            ->required()
-                            ->maxLength(255)
-                            ->unique(\App\Models\Asset::class, 'name', ignoreRecord: true),
                         Forms\Components\TextInput::make('asset_code')
                             ->required()
                             ->disabled()

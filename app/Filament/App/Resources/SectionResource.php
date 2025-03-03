@@ -144,8 +144,7 @@ class SectionResource extends Resource implements HasShieldPermissions
                     ->description(fn($record) => $record->classroom?->building?->name ?? 'No Building')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(['name'])
-                    ->description(fn(\App\Models\Section $record): string => $record->slug),
+                    ->searchable(['name']),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Publish')
                     ->onIcon('heroicon-m-bolt')

@@ -203,8 +203,7 @@ class ClassroomResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('building.name')
                     ->label('Building Name'),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable('name')
-                    ->description(fn(\App\Models\Classroom $record): string => $record->slug),
+                    ->searchable('name'),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Publish')
                     ->onIcon('heroicon-m-bolt')

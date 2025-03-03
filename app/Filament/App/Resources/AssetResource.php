@@ -104,8 +104,6 @@ class AssetResource extends Resource implements HasShieldPermissions
 
                                     return $query->where(function ($query) use ($currentBrandId) {
                                         $query->where('is_active', true);
-
-                                        // Only include the current category if it exists
                                         if ($currentBrandId) {
                                             $query->orWhere('id', $currentBrandId);
                                         }
@@ -116,8 +114,21 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->searchable()
                             ->preload()
                             ->native(false)
-                            ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Brand::class))
-                            ->editOptionForm(\App\Services\DynamicForm::schema(\App\Models\Brand::class)),
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Active')
+                                    ->default(true),
+                            ])
+                            ->editOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Active'),
+                            ]),
                         Forms\Components\Select::make('asset_tag_id')
                             ->relationship(
                                 name: 'assetTags',
@@ -188,7 +199,12 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('brand.name')
                     ->label('Brand & Category')
-                    ->description(fn($record): string => $record->category?->name ?? 'No Category') // Add null coalescing operator
+                    ->description(function ($record): string {
+                        if (!$record->category) {
+                            return 'No Category';
+                        }
+                        return $record->category->name;
+                    })
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('serial_number')
                     ->searchable()

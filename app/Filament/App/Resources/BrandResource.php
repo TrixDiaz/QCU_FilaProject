@@ -59,13 +59,6 @@ class BrandResource extends Resource implements HasShieldPermissions
 
                 Forms\Components\Grid::make(1)->schema([
                     Forms\Components\Section::make()->schema([
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Publish')
-                            ->onIcon('heroicon-s-eye')
-                            ->offIcon('heroicon-s-eye-slash')
-                            ->default(true),
-                    ])->hiddenOn(['create']),
-                    Forms\Components\Section::make()->schema([
                         Forms\Components\Placeholder::make('created_at')
                             ->label('Created at')
                             ->hiddenOn('create')
@@ -179,10 +172,6 @@ class BrandResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('Publish')
-                    ->onIcon('heroicon-m-bolt')
-                    ->offIcon('heroicon-m-bolt-slash'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -192,18 +181,7 @@ class BrandResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                Tables\Filters\TrashedFilter::make()
-                    ->native(false),
-                Tables\Filters\SelectFilter::make('is_active')
-                    ->label('Status')
-                    ->label('Status')
-                    ->options([
-                        true => 'Active',
-                        false => 'Inactive'
-                    ])
-                    ->native(false)
-            ])
+            
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()

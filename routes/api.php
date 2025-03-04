@@ -12,3 +12,5 @@ Route::get('/subjects', [\App\Http\Controllers\SectionController::class, 'showSu
 Route::get('/subject/{id}', [\App\Http\Controllers\SectionController::class, 'showClassroomBuildingById']);
 
 Route::post('/store/attendance', [\App\Http\Controllers\SectionController::class, 'storeAttendance']);
+
+Route::get('/subject/{id}/assetgroups', [\App\Http\Controllers\SectionController::class, 'getAssetGroupsBySubject']);

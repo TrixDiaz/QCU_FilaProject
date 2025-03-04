@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
-            $table->foreignId('terminal_id')->constrained('assets_group')->onDelete('cascade');
+            $table->string('terminal_number');
+            // $table->foreignId('terminal_id')->constrained('assets_group')->onDelete('cascade');
             $table->string('student_full_name');
             $table->integer('student_number');
             $table->string('student_email')->nullable();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Section;
 use App\Models\Subject;
+use App\Models\AssetGroup;
 use Illuminate\Http\Request;
 
 class SectionController extends Controller
@@ -44,7 +45,9 @@ class SectionController extends Controller
             // Validate the request
             $validated = $request->validate([
                 'subject_id' => 'required|integer|exists:subjects,id',
-                'terminal_id' => 'required|integer|exists:asset_groups,id',
+
+                'terminal_number' => 'required|string|max:255',
+                // 'terminal_id' => 'required|integer|exists:asset_groups,id',
                 'student_full_name' => 'required|string|max:255',
                 'student_email' => 'nullable|email|max:255',
                 'student_number' => 'required|string|max:20',
@@ -66,6 +69,46 @@ class SectionController extends Controller
                 'message' => 'Failed to record attendance',
                 'error' => $e->getMessage()
             ], 400);
+        }
+    }
+
+    public function getAssetGroupsBySubject($id)
+    {
+        try {
+            // Find the subject
+            $subject = Subject::with('classroom')->findOrFail($id);
+
+            if (!$subject || !$subject->classroom) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Subject or classroom not found'
+                ], 404);
+            }
+
+            // Get asset groups for the classroom
+            $assetGroups = AssetGroup::where('classroom_id', $subject->classroom->id)
+                ->with(['assets'])  // Include related assets
+                ->get();
+
+            // Debug information
+            \Log::info('Subject ID: ' . $id);
+            \Log::info('Classroom ID: ' . $subject->classroom->id);
+            \Log::info('Asset Groups Count: ' . $assetGroups->count());
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $assetGroups,
+                'debug' => [
+                    'subject_id' => $id,
+                    'classroom_id' => $subject->classroom->id,
+                    'count' => $assetGroups->count()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 

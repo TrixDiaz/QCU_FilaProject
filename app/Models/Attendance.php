@@ -13,7 +13,8 @@ class Attendance extends Model
 
     protected $fillable = [
         'subject_id',
-        'terminal_id',
+        'terminal_number',
+        // 'terminal_id',
         'student_full_name',
         'student_email',
         'student_number',

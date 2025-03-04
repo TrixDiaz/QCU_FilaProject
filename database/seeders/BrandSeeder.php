@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BrandSeeder extends Seeder
 {
@@ -12,15 +13,15 @@ class BrandSeeder extends Seeder
      */
     public function run(): void
     {
-        $brands = [
-            ['name' => 'asus', 'is_active' => true],
-            ['name' => 'dell', 'is_active' => true],
-            ['name' => 'lenovo', 'is_active' => true],
-            ['name' => 'apple', 'is_active' => true],
+        $timestamp = Carbon::now();
 
+        $brands = [
+            ['name' => 'asus', 'slug' => 'asus', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'dell', 'slug' => 'dell', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'lenovo', 'slug' => 'lenovo', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'apple', 'slug' => 'apple', 'created_at' => $timestamp, 'updated_at' => $timestamp],
         ];
 
         DB::table('brands')->insert($brands);
-      //  \App\Models\Brand::factory(10)->create();
     }
 }

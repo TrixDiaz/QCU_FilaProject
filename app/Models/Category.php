@@ -10,7 +10,15 @@ class Category extends Model
 {
     /** @use HasFactory<\Database\Factories\CategoryFactory> */
     use HasFactory;
-    protected $guarded = [];
+
+    public $table = 'categories';
+
+    protected $fillable = [
+        'name',
+        'slug',
+        'created_at',
+        'updated_at',
+    ];
 
     public function assets(): HasMany
     {

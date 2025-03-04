@@ -12,25 +12,18 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'professor_id',
-        'section_id',
-        'terminal_code',
+        'subject_id',
+        'terminal_id',
         'student_full_name',
         'student_email',
         'student_number',
-        'year_section',
         'remarks'
     ];
 
     // Relationships
-    public function professor(): BelongsTo
+    public function subject(): BelongsTo
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function section(): BelongsTo
-    {
-        return $this->belongsTo(Section::class);
+        return $this->belongsTo(Subject::class);
     }
 
     public function terminal(): BelongsTo

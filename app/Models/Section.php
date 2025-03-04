@@ -25,7 +25,7 @@ class Section extends Model
 
     public function classroom(): BelongsTo
     {
-        return $this->belongsTo(Classroom::class, 'classroom_id')->with('building');
+        return $this->belongsTo(Classroom::class);
     }
 
     public function tickets(): HasMany
@@ -35,7 +35,6 @@ class Section extends Model
 
     public function subject(): HasMany
     {
-        return $this->hasMany(subject::class, 'section_id');
+        return $this->hasMany(Subject::class);
     }
-
 }

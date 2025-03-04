@@ -52,31 +52,75 @@ class SubjectResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Forms\Components\Section::make()
+                // Subject Information
+                Forms\Components\Section::make('Subject Information')
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label('Subject Name')
                             ->required(),
                         Forms\Components\TextInput::make('subject_code')
-                            ->required(),
+                            ->required()
+                            ->extraAlpineAttributes([
+                                'style' => 'text-transform: uppercase;',
+                                'class' => 'uppercase',
+                                'x-model' => 'subject_code',
+                                '@input' => "subject_code = subject_code.toUpperCase()"
+                            ]),
                         Forms\Components\TextInput::make('subject_units')
                             ->required()
                             ->numeric()
                             ->minValue(1)
                             ->maxValue(10)
                             ->step(1),
+                    ])->columns(3),
+
+                // Date and Time
+                Forms\Components\Section::make('Date and Time')
+                    ->schema([
+                        Forms\Components\Select::make('day')
+                            ->options([
+                                'Monday' => 'Monday',
+                                'Tuesday' => 'Tuesday',
+                                'Wednesday' => 'Wednesday',
+                                'Thursday' => 'Thursday',
+                                'Friday' => 'Friday',
+                                'Saturday' => 'Saturday',
+                                'Sunday' => 'Sunday',
+                            ])
+                            ->label('Day')
+                            ->required()
+                            ->native(false),
+                        Forms\Components\TimePicker::make('lab_time')
+                            ->required()
+                            ->seconds(false)
+                            ->native(false),
+                        Forms\Components\TimePicker::make('lecture_time')
+                            ->required()
+                            ->seconds(false)
+                            ->native(false),
+                    ])->columns(3),
+
+                // Section and Professor 
+                Forms\Components\Section::make('Section and Professor')
+                    ->schema([
                         Forms\Components\Select::make('section_id')
                             ->relationship('section', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
                             ->optionsLimit(5),
-                        Forms\Components\TimePicker::make('lab_time')
+                        Forms\Components\Select::make('professor_id')
+                            ->relationship(
+                                'professor',
+                                'name',
+                                fn($query) => $query->whereHas('roles', fn($q) => $q->where('name', 'Professor'))
+                            )
                             ->required()
-                            ->native(false),
-                        Forms\Components\TimePicker::make('lecture_time')
-                            ->required()
-                            ->native(false),
+                            ->searchable()
+                            ->preload()
+                            ->optionsLimit(5),
                     ])->columns(2),
+
             ]);
     }
 
@@ -85,6 +129,7 @@ class SubjectResource extends Resource implements HasShieldPermissions
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Subject Name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('subject_code')
                     ->searchable(),

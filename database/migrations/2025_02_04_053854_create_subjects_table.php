@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('subjects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
+            $table->foreignId('professor_id')->constrained('users')->onDelete('cascade');
             $table->string('name');
             $table->string('subject_code');
             $table->integer('subject_units');
+            $table->string('day');
             $table->time('lab_time');
             $table->time('lecture_time');
             $table->string('status')->default('active');

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Filament\Forms\Components\TextInput;
 
 
 
@@ -119,7 +120,17 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->unique(\App\Models\Asset::class, 'asset_code', ignoreRecord: true),
 
                         Forms\Components\TextInput::make('serial_number')
-                            ->required(),
+                            ->required()
+                            ->minLength(8)
+                            ->maxLength(20)
+                            ->telRegex('/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\.\/0-9]*$/')
+                            ->extraAlpineAttributes([
+                                'style' => 'text-transform: uppercase;',
+                                'class' => 'uppercase',
+                                'x-model' => 'serial_number',
+                                '@input' => "serial_number = serial_number.toUpperCase()"
+                            ]),   
+
                         Forms\Components\DatePicker::make('expiry_date')
                             ->native(false)
                             ->visible(fn(Forms\Get $get) => $get('show_expiry_date')),

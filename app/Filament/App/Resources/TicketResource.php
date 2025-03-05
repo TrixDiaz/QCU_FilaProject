@@ -225,12 +225,14 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                                         ->label('Message')
                                                                         ->placeholder('Type your message...')
                                                                         ->rows(3)
-                                                                        ->required(),
+                                                                        ->required()
+                                                                        ->live(onBlur: true),
                                                                     Forms\Components\TextInput::make('sender_role')
                                                                         ->label('Sender')
                                                                         ->default(fn () => auth()->user()->name)
                                                                         ->readOnly()
-                                                                        ->required(),
+                                                                        ->required()
+                                                                        ->live(onBlur: true),
                                                                 ])
                                                         ])
                                                         ->collapsible()
@@ -258,20 +260,21 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             $technician = User::whereHas('roles', function($query) {
                                                 $query->where('name', 'technician');
                                             })->first();
-                    
+                                    
                                             // If no technician found, find the first user
                                             if (!$technician) {
                                                 $technician = User::first();
                                             }
-                    
-                                            // Log an error and throw exception if no users exist
+                                    
+                                            // Throw an exception if no users exist
                                             if (!$technician) {
-                                                Log::error('No users available for ticket assignment');
                                                 throw new \Exception('No users available for ticket assignment');
                                             }
-                    
+                                    
                                             return $technician->id;
                                         })
+                                        ->disabled(fn() => auth()->user()->hasRole('professor'))
+                                        ->dehydrated()
                                         ->options(User::all()->pluck('name', 'id')),
                                     Forms\Components\Hidden::make('status')
                                         ->default('open')

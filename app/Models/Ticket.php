@@ -37,7 +37,8 @@ class Ticket extends Model
     protected $casts = [
         'attachments' => 'array',
         'starts_at' => 'datetime',
-        'ends_at' => 'datetime'
+        'ends_at' => 'datetime',
+        'description' => 'array'
     ];
 
     protected static function boot()

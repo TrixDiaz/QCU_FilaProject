@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('subject_id')->nullable()->constrained('subjects')->onDelete('cascade');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('title');
-            $table->string('description');
+            $table->json('description')->nullable();
             $table->enum('ticket_type', ['request', 'incident']);
             $table->enum('option', ['asset', 'classroom'])->nullable();
             $table->string('priority')->default('low');

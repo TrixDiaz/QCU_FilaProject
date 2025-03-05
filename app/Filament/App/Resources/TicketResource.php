@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Filament\Forms\Components\Textarea;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\Wizard;
@@ -93,8 +94,6 @@ class TicketResource extends Resource implements HasShieldPermissions
                                         ->schema([
                                             Forms\Components\Grid::make(2)
                                                 ->schema([
-                                                    Forms\Components\TextInput::make('title')
-                                                        ->required(),
                                                     Forms\Components\Select::make('ticket_type')
                                                         ->options([
                                                             'request' => 'Request',
@@ -105,6 +104,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         ->reactive()
                                                         ->live(onBlur: true)
                                                         ->native(false),
+                                                    Forms\Components\TextInput::make('title')
+                                                        ->required(),
                                                     Forms\Components\Select::make('option')
                                                         ->options([
                                                             'asset' => 'Asset',
@@ -215,8 +216,24 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                                 $set('subject_id', null);
                                                             }
                                                         }),
-                                                    Textarea::make('description')
-                                                        ->required()
+                                                        Forms\Components\Builder::make('description')
+                                                        ->label('Remarks')
+                                                        ->blocks([
+                                                            Builder\Block::make('message')
+                                                                ->schema([
+                                                                    Textarea::make('message')
+                                                                        ->label('Message')
+                                                                        ->placeholder('Type your message...')
+                                                                        ->rows(3)
+                                                                        ->required(),
+                                                                    Forms\Components\TextInput::make('sender_role')
+                                                                        ->label('Sender')
+                                                                        ->default(fn () => auth()->user()->name)
+                                                                        ->readOnly()
+                                                                        ->required(),
+                                                                ])
+                                                        ])
+                                                        ->collapsible()
                                                         ->columnSpanFull(),
                                                 ]),
                                         ]),
@@ -235,9 +252,27 @@ class TicketResource extends Resource implements HasShieldPermissions
                                         ->dehydrateStateUsing(fn() => auth()->id()),
                                     Forms\Components\Select::make('assigned_to')
                                         ->required()
-                                        ->options(User::all()->pluck('name', 'id'))
                                         ->searchable()
-                                        ->hidden(fn () => Auth::user()->hasRole('professor')),
+                                        ->default(function () {
+                                            // Find the first technician user
+                                            $technician = User::whereHas('roles', function($query) {
+                                                $query->where('name', 'technician');
+                                            })->first();
+                    
+                                            // If no technician found, find the first user
+                                            if (!$technician) {
+                                                $technician = User::first();
+                                            }
+                    
+                                            // Log an error and throw exception if no users exist
+                                            if (!$technician) {
+                                                Log::error('No users available for ticket assignment');
+                                                throw new \Exception('No users available for ticket assignment');
+                                            }
+                    
+                                            return $technician->id;
+                                        })
+                                        ->options(User::all()->pluck('name', 'id')),
                                     Forms\Components\Hidden::make('status')
                                         ->default('open')
                                         ->dehydrated()
@@ -259,6 +294,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                         ])->columnSpan(1), // Ensures the Wizard takes one column
                     ]),
             ])
+
+            
             ->disabled($isProfessor && $isEditMode); // Only disable form if professor AND in edit mode
     }
 
@@ -385,6 +422,17 @@ class TicketResource extends Resource implements HasShieldPermissions
     {
         return [];
     }
+
+     // Method to get default technician
+     public static function getDefaultTechnician(): ?int
+     {
+         $technician = User::whereHas('roles', function($query) {
+             $query->where('name', 'technician');
+         })->first();
+ 
+         return $technician ? $technician->id : null;
+     }
+
 
     public static function getPages(): array
     {

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class CategorySeeder extends Seeder
 {
@@ -12,15 +13,17 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        $categories = [
-            ['name' => 'hardware', 'is_active' => true],
-            ['name' => 'software', 'is_active' => true],
-            ['name' => 'license', 'is_active' => true],
-            ['name' => 'components', 'is_active' => true],
+        $timestamp = Carbon::now();
 
+        $categories = [
+            ['name' => 'hardware', 'slug' => 'hardware', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'software', 'slug' => 'software', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'license', 'slug' => 'license', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'components', 'slug' => 'components', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'accessories', 'slug' => 'accessories', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'others', 'slug' => 'others', 'created_at' => $timestamp, 'updated_at' => $timestamp],
         ];
 
         DB::table('categories')->insert($categories);
-       // \App\Models\Category::factory(10)->create();
     }
 }

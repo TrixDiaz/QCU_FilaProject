@@ -22,10 +22,11 @@ class StatsOverview extends BaseWidget
 
         //  Assets Stats
         $totalAssets = Asset::count();
-        $availableAssets = Asset::where('status', 'Available')->count();
-        $deploy = AssetGroup::where('status', 'Deployed')->count();
+        $activeAssets = Asset::where('status', 'Active')->count();
+        $inactiveAssets =Asset::where('status','Inactive')->count();
+        $deploy = Asset::where('status', 'Deploy')->count();
         $maintenanceAssets = AssetGroup::where('status', 'Maintenance')->count();
-        $unserviceableAssets = AssetGroup::where('status', 'Unserviceable')->count();
+        
 
         //  Tickets Stats
         $totalTickets = Ticket::count();
@@ -46,10 +47,11 @@ class StatsOverview extends BaseWidget
 
             Stat::make('Total Assets', $totalAssets)
                 ->description(
-                    " Available: $availableAssets" .
-                    " Deployed:  $deploy " .
-                    " Maintenance:  $maintenanceAssets" .
-                    " Unserviceable:  $unserviceableAssets"
+                    " Active: $activeAssets" .
+                    " Inactive: $inactiveAssets",
+                    " Deploy:  $deploy " .
+                    " Maintenance:  $maintenanceAssets" 
+                    
                 )
                 ->icon('heroicon-o-computer-desktop')
                 ->color('primary'),

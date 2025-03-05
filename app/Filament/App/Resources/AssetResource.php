@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Filament\Forms\Components\TextInput;
 
 
 
@@ -40,8 +41,7 @@ class AssetResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationGroup = 'Assets';
     protected static ?string $navigationLabel = 'Asset';
 
-    protected static ?string $modelLabel = 'Asset';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
@@ -56,8 +56,8 @@ class AssetResource extends Resource implements HasShieldPermissions
     public static function generateUniqueCode()
     {
         do {
-            $code = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(10)); // Generate a 10-character uppercase alphanumeric string
-        } while (\Illuminate\Support\Facades\DB::table('assets')->where('asset_code', $code)->exists()); // Ensure uniqueness
+            $code = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(10));
+        } while (\Illuminate\Support\Facades\DB::table('assets')->where('asset_code', $code)->exists());
 
         return $code;
     }
@@ -70,84 +70,27 @@ class AssetResource extends Resource implements HasShieldPermissions
                 Forms\Components\Section::make()
                     ->schema([
                         Forms\Components\Select::make('category_id')
-                            ->relationship(
-                                name: 'category',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    $currentCategoryId = $get ? $get('category_id') : null;
-
-                                    return $query->where(function ($query) use ($currentCategoryId) {
-                                        $query->where('is_active', true)
-                                            ->when($currentCategoryId, function ($query) use ($currentCategoryId) {
-                                                $query->orWhere('id', $currentCategoryId);
-                                            });
-                                    })->withTrashed(); // Add this to include soft deleted records
-                                }
-                            )
+                            ->relationship('category', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
                             ->native(false)
                             ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Category::class))
                             ->editOptionForm(function ($record) {
-                                // Always return the form schema, even for inactive/deleted records
                                 return \App\Services\DynamicForm::schema(\App\Models\Category::class);
                             }),
                         Forms\Components\Select::make('brand_id')
-                            ->relationship(
-                                name: 'brand',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    $currentBrandId = $get ? $get('brand_id') : null;
-
-                                    return $query->where(function ($query) use ($currentBrandId) {
-                                        $query->where('is_active', true)
-                                            ->when($currentBrandId, function ($query) use ($currentBrandId) {
-                                                $query->orWhere('id', $currentBrandId);
-                                            });
-                                    })->withTrashed(); // Add this to include soft deleted records
-                                }
-                            )
+                            ->relationship('brand', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
                             ->native(false)
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255),
-                                Forms\Components\Toggle::make('is_active')
-                                    ->label('Active')
-                                    ->default(true),
-                            ])
+                            ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\Brand::class))
                             ->editOptionForm(function ($record) {
-                                // Always return the form schema, even for inactive/deleted records
-                                return [
-                                    Forms\Components\TextInput::make('name')
-                                        ->required()
-                                        ->maxLength(255),
-                                    Forms\Components\Toggle::make('is_active')
-                                        ->label('Active'),
-                                ];
+                                return \App\Services\DynamicForm::schema(\App\Models\Brand::class);
                             }),
                         Forms\Components\Select::make('asset_tag_id')
-                            ->relationship(
-                                name: 'assetTags',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: function (Builder $query, ?Forms\Get $get = null) {
-                                    $currentTagIds = $get ? $get('asset_tag_id') : [];
-                                    if (!is_array($currentTagIds)) {
-                                        $currentTagIds = [];
-                                    }
-
-                                    return $query->where(function ($query) use ($currentTagIds) {
-                                        $query->where('tags.is_active', true)
-                                            ->when(!empty($currentTagIds), function ($query) use ($currentTagIds) {
-                                                $query->orWhereIn('tags.id', $currentTagIds);
-                                            });
-                                    })->withTrashed(); // Add this to include soft deleted records
-                                }
-                            )
+                            ->relationship('assetTags', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
@@ -177,7 +120,17 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->unique(\App\Models\Asset::class, 'asset_code', ignoreRecord: true),
 
                         Forms\Components\TextInput::make('serial_number')
-                            ->required(),
+                            ->required()
+                            ->minLength(8)
+                            ->maxLength(20)
+                            ->telRegex('/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\.\/0-9]*$/')
+                            ->extraAlpineAttributes([
+                                'style' => 'text-transform: uppercase;',
+                                'class' => 'uppercase',
+                                'x-model' => 'serial_number',
+                                '@input' => "serial_number = serial_number.toUpperCase()"
+                            ]),   
+
                         Forms\Components\DatePicker::make('expiry_date')
                             ->native(false)
                             ->visible(fn(Forms\Get $get) => $get('show_expiry_date')),

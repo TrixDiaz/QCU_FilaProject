@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Section;
+use App\Models\Subject;
+use App\Models\AssetGroup;
 use Illuminate\Http\Request;
 
 class SectionController extends Controller
@@ -10,14 +12,20 @@ class SectionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function showSections()
+    public function showSubjects()
     {
-        return Section::with('classroom.building')->get();
+        return Subject::with([
+            'section.classroom.building',
+            'professor'
+        ])->get();
     }
 
     public function showClassroomBuildingById($id)
     {
-        return \App\Models\Section::with('classroom.building')->findOrFail($id);
+        return Subject::with([
+            'section.classroom.building',
+            'professor'
+        ])->findOrFail($id);
     }
 
     /**
@@ -33,25 +41,73 @@ class SectionController extends Controller
      */
     public function storeAttendance(Request $request)
     {
-        // Validate the request
-        $validated = $request->validate([
-            'professor_id' => 'required|integer|exists:users,id',
-            'section_id' => 'required|integer|exists:sections,id',
-            'terminal_code' => 'nullable',
-            'student_full_name' => 'required|string',
-            'student_email' => 'required|email',
-            'student_number' => 'required|integer',
-            'year_section' => 'required|string',
-            'remarks' => 'nullable|string',
-        ]);
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'subject_id' => 'required|integer|exists:subjects,id',
+                'terminal_number' => 'required|string|max:255',
+                'student_full_name' => 'required|string|max:255',
+                'student_email' => 'nullable|email|max:255',
+                'student_number' => 'required|string|max:20',
+                'remarks' => 'nullable|string|max:255',
+            ]);
 
-        // Create a new attendance record
-        $attendance = \App\Models\Attendance::create($validated);
+            // Create a new attendance record
+            $attendance = \App\Models\Attendance::create($validated);
 
-        return response()->json([
-            'message' => 'Attendance recorded successfully',
-            'data' => $attendance
-        ], 201);
+            // Load relationships for the response
+            $attendance->load(['subject', 'terminal']);
+
+            return response()->json([
+                'message' => 'Attendance recorded successfully',
+                'data' => $attendance
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to record attendance',
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function getAssetGroupsBySubject($id)
+    {
+        try {
+            // Find the subject
+            $subject = Subject::with('classroom')->findOrFail($id);
+
+            if (!$subject || !$subject->classroom) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Subject or classroom not found'
+                ], 404);
+            }
+
+            // Get asset groups for the classroom
+            $assetGroups = AssetGroup::where('classroom_id', $subject->classroom->id)
+                ->with(['assets'])  // Include related assets
+                ->get();
+
+            // Debug information
+            \Log::info('Subject ID: ' . $id);
+            \Log::info('Classroom ID: ' . $subject->classroom->id);
+            \Log::info('Asset Groups Count: ' . $assetGroups->count());
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $assetGroups,
+                'debug' => [
+                    'subject_id' => $id,
+                    'classroom_id' => $subject->classroom->id,
+                    'count' => $assetGroups->count()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

@@ -7,9 +7,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/sections', [\App\Http\Controllers\SectionController::class, 'showSections']);
+Route::get('/subjects', [\App\Http\Controllers\SectionController::class, 'showSubjects']);
 
-Route::get('/sections/{id}', [\App\Http\Controllers\SectionController::class, 'showClassroomBuildingById']);
+Route::get('/subject/{id}', [\App\Http\Controllers\SectionController::class, 'showClassroomBuildingById']);
 
 Route::post('/store/attendance', [\App\Http\Controllers\SectionController::class, 'storeAttendance']);
 
+Route::get('/subject/{id}/assetgroups', [\App\Http\Controllers\SectionController::class, 'getAssetGroupsBySubject']);

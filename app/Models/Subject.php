@@ -13,7 +13,17 @@ class Subject extends Model
     /** @use HasFactory<\Database\Factories\SubjectFactory> */
     use HasFactory;
     use SoftDeletes;
-    protected $guarded = [];
+    protected $fillable = [
+        'section_id',
+        'professor_id',
+        'name',
+        'subject_code',
+        'subject_units',
+        'day',
+        'lab_time',
+        'lecture_time',
+        'status',
+    ];
 
     public function tickets(): HasMany
     {
@@ -22,6 +32,23 @@ class Subject extends Model
 
     public function section(): BelongsTo
     {
-        return $this->belongsTo(Section::class, 'section_id');
+        return $this->belongsTo(Section::class, 'section_id')->with('classroom.building');
+    }
+
+    public function professor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'professor_id');
+    }
+
+    public function classroom()
+    {
+        return $this->hasOneThrough(
+            Classroom::class,
+            Section::class,
+            'id', // Foreign key on sections table
+            'id', // Foreign key on classrooms table
+            'section_id', // Local key on subjects table
+            'classroom_id' // Local key on sections table
+        );
     }
 }

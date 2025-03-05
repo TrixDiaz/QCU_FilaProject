@@ -11,7 +11,14 @@ class Brand extends Model
 {
     /** @use HasFactory<\Database\Factories\BrandFactory> */
     use HasFactory;
-    protected $guarded = [];
+
+    public $table = 'brands';
+    protected $fillable = [
+        'name',
+        'slug',
+        'created_at',
+        'updated_at',
+    ];
 
     public function assets(): HasMany
     {

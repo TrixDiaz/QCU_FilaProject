@@ -45,16 +45,16 @@ class StatsOverview extends BaseWidget
                 ->color('success'),
                 
 
-            Stat::make('Total Assets', $totalAssets)
+                Stat::make('Total Assets', $totalAssets)
                 ->description(
-                    " Active: $activeAssets" .
-                    " Inactive: $inactiveAssets",
-                    " Deploy:  $deploy " .
-                    " Maintenance:  $maintenanceAssets" 
-                    
+                    "Active: $activeAssets " .
+                    "Inactive: $inactiveAssets " .
+                    "Deploy: $deploy " .
+                    "Maintenance: $maintenanceAssets"
                 )
                 ->icon('heroicon-o-computer-desktop')
                 ->color('primary'),
+            
 
             Stat::make('Total Tickets', $totalTickets)
                 ->description(

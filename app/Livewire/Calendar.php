@@ -152,7 +152,6 @@ class Calendar extends FullCalendarWidget
                                         [
                                             'name' => 'Main Building',
                                             'slug' => str('Main Building')->slug(),
-                                            'is_active' => true
                                         ]
                                     );
 
@@ -163,7 +162,6 @@ class Calendar extends FullCalendarWidget
                                             'building_id' => $building->id,
                                             'name' => 'Default Classroom',
                                             'slug' => str('Default Classroom')->slug(),
-                                            'is_active' => true
                                         ]
                                     );
 
@@ -173,7 +171,6 @@ class Calendar extends FullCalendarWidget
                                         [
                                             'classroom_id' => $classroom->id,
                                             'slug' => str($sectionName)->slug(),
-                                            'is_active' => true
                                         ]
                                     );
 

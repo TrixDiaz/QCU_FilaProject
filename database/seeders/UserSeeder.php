@@ -15,21 +15,21 @@ class UserSeeder extends Seeder
     {
         \App\Models\User::create([
             'name' => 'Admin',
-            'email' => 'admin@example.com',
+            'email' => 'admin@qcu.edu.ph',
             'email_verified_at' => \Carbon\Carbon::now(),
             'password' => bcrypt('password'),
         ]);
 
         \App\Models\User::create([
             'name' => 'Technician',
-            'email' => 'technician@example.com',
+            'email' => 'technician@qcu.edu.ph',
             'email_verified_at' => \Carbon\Carbon::now(),
             'password' => bcrypt('password'),
         ]);
 
         \App\Models\User::create([
             'name' => 'Professor',
-            'email' => 'professor@example.com',
+            'email' => 'professor@qcu.edu.ph',
             'email_verified_at' => \Carbon\Carbon::now(),
             'password' => bcrypt('password'),
         ]);

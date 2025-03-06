@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
- use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
- use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -22,14 +22,14 @@ class User extends Authenticatable implements FilamentUser
 
     public function getVerifiedDateAttribute()
     {
-        return $this->email_verified_at 
-            ? $this->email_verified_at->format('M d, Y') 
+        return $this->email_verified_at
+            ? $this->email_verified_at->format('M d, Y')
             : 'Pending';
     }
-    
+
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return auth()->check() && str_ends_with(auth()->user()->email, '@qcu.edu.ph');
     }
 
     /**
@@ -67,7 +67,7 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    public function assignedTo() : HasMany
+    public function assignedTo(): HasMany
     {
         return $this->hasMany(User::class, 'assigned_to');
     }

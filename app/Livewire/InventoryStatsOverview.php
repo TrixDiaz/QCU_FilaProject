@@ -14,7 +14,8 @@ class InventoryStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         // Get categories and their asset counts
-        $categories = Category::where('is_active', true)
+        $categories = Category::query()
+            ->select('categories.*')
             ->withCount('assets')
             ->get();
 

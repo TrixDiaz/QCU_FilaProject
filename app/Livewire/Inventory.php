@@ -70,9 +70,9 @@ class Inventory extends Component implements HasTable, HasForms
             ->query(\App\Models\Asset::query())
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('name')->searchable(['name'])
-                    ->description(fn ($record): string => $record->serial_number),
+                    ->description(fn($record): string => $record->serial_number),
                 \Filament\Tables\Columns\TextColumn::make('brand.name')->searchable()->sortable()
-                    ->description(fn ($record): string => $record->category?->name),
+                    ->description(fn($record): string => $record->category?->name),
                 \Filament\Tables\Columns\TextColumn::make('asset_code')->searchable()->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('expiry_date')
                     ->date()
@@ -87,7 +87,7 @@ class Inventory extends Component implements HasTable, HasForms
             ->filters([
                 \Filament\Tables\Filters\SelectFilter::make('building_id')
                     ->label('Building')
-                    ->options(fn () => Building::pluck('name', 'id')->toArray())
+                    ->options(fn() => Building::pluck('name', 'id')->toArray())
                     ->query(function ($query, array $data) {
                         return $query->when(
                             $data['value'],
@@ -107,7 +107,7 @@ class Inventory extends Component implements HasTable, HasForms
                     }),
                 \Filament\Tables\Filters\SelectFilter::make('classroom_id')
                     ->label('Classroom')
-                    ->options(fn () => Classroom::pluck('name', 'id')->toArray())
+                    ->options(fn() => Classroom::pluck('name', 'id')->toArray())
                     ->query(function ($query, array $data) {
                         return $query->when(
                             $data['value'],
@@ -143,17 +143,17 @@ class Inventory extends Component implements HasTable, HasForms
                             ->default('all'), // Default to 'all'
                         \Filament\Forms\Components\DatePicker::make('custom_date_from')
                             ->label('From')
-                            ->visible(fn ($get) => $get('date_filter') === 'custom'),
+                            ->visible(fn($get) => $get('date_filter') === 'custom'),
                         \Filament\Forms\Components\DatePicker::make('custom_date_to')
                             ->label('To')
-                            ->visible(fn ($get) => $get('date_filter') === 'custom'),
+                            ->visible(fn($get) => $get('date_filter') === 'custom'),
                     ])
                     ->query(function ($query, array $data) {
                         $filter = $data['date_filter'] ?? 'all'; // Default to 'all' if not specified
                         $customFrom = $data['custom_date_from'] ?? null;
                         $customTo = $data['custom_date_to'] ?? null;
 
-                        return match($filter) {
+                        return match ($filter) {
                             'all' => $query, // Return unmodified query to show all assets
                             'today' => $query->whereDate('created_at', Carbon::today()),
                             'yesterday' => $query->whereDate('created_at', Carbon::yesterday()),
@@ -165,11 +165,11 @@ class Inventory extends Component implements HasTable, HasForms
                             'custom' => $query
                                 ->when(
                                     $customFrom,
-                                    fn ($query) => $query->whereDate('created_at', '>=', $customFrom)
+                                    fn($query) => $query->whereDate('created_at', '>=', $customFrom)
                                 )
                                 ->when(
                                     $customTo,
-                                    fn ($query) => $query->whereDate('created_at', '<=', $customTo)
+                                    fn($query) => $query->whereDate('created_at', '<=', $customTo)
                                 ),
                             default => $query // Default to showing all assets
                         };
@@ -213,15 +213,6 @@ class Inventory extends Component implements HasTable, HasForms
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(4)
-            ->actions([
-//                \Filament\Tables\Actions\ActionGroup::make([
-//                    \Filament\Tables\Actions\ViewAction::make(),
-//                ])
-//                ->icon('heroicon-m-ellipsis-vertical')
-//                ->label('')
-//                ->tooltip('Actions')
-//                ->size('sm')
-            ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
@@ -243,7 +234,7 @@ class Inventory extends Component implements HasTable, HasForms
                             ])
                             ->withFilename(date('Y-m-d') . '-Filtered-Inventory.xlsx'),
 
-                      ]),
+                    ]),
                 ]),
             ]);
     }

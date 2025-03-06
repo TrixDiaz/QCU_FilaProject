@@ -19,8 +19,10 @@ return new class extends Migration
             $table->string('subject_code');
             $table->integer('subject_units');
             $table->string('day');
-            $table->time('lab_time');
-            $table->time('lecture_time');
+            $table->time('lab_time_starts_at');
+            $table->time('lab_time_ends_at');
+            $table->string('semester');
+            $table->string('school_year');
             $table->string('status')->default('active');
             $table->softDeletes();
             $table->timestamps();

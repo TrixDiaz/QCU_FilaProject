@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BuildingSeeder extends Seeder
 {
@@ -12,14 +13,15 @@ class BuildingSeeder extends Seeder
      */
     public function run(): void
     {
-        $building = [
-            ['name' => 'building 1', 'is_active' => true],
-            ['name' => 'building 2', 'is_active' => true],
-            ['name' => 'building 3', 'is_active' => true],
-            ['name' => 'building 4', 'is_active' => true],
+        $now = Carbon::now();
+
+        $buildings = [
+            ['name' => 'building 1', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'building 2', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'building 3', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'building 4', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        \Illuminate\Support\Facades\DB::table('buildings')->insert($building);
-       // \App\Models\Building::factory(10)->create();
+        DB::table('buildings')->insert($buildings);
     }
 }

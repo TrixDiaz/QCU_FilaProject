@@ -90,11 +90,11 @@ class SubjectResource extends Resource implements HasShieldPermissions
                             ->label('Day')
                             ->required()
                             ->native(false),
-                        Forms\Components\TimePicker::make('lab_time')
+                        Forms\Components\TimePicker::make('lab_time_starts_at')
                             ->required()
                             ->seconds(false)
                             ->native(false),
-                        Forms\Components\TimePicker::make('lecture_time')
+                        Forms\Components\TimePicker::make('lab_time_ends_at')
                             ->required()
                             ->seconds(false)
                             ->native(false),
@@ -119,6 +119,31 @@ class SubjectResource extends Resource implements HasShieldPermissions
                             ->searchable()
                             ->preload()
                             ->optionsLimit(5),
+                        Forms\Components\Select::make('semester')
+                            ->options([
+                                '1st Semester' => '1st Semester',
+                                '2nd Semester' => '2nd Semester',
+                                'summer' => 'Summer',
+                            ])
+                            ->native(false)
+                            ->preload()
+                            ->required()
+                            ->searchable(),
+                        Forms\Components\Select::make('school_year')
+                            ->options([
+                                '2021-2022' => '2021-2022',
+                                '2022-2023' => '2022-2023',
+                                '2023-2024' => '2023-2024',
+                                '2024-2025' => '2024-2025',
+                                '2025-2026' => '2025-2026',
+                                '2026-2027' => '2026-2027',
+                                '2027-2028' => '2027-2028',
+                                '2028-2029' => '2028-2029',
+                                '2029-2030' => '2029-2030',
+                            ])
+                            ->native(false)
+                            ->preload()
+                            ->searchable()
                     ])->columns(2),
 
             ]);

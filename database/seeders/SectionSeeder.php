@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class SectionSeeder extends Seeder
 {
@@ -11,14 +13,16 @@ class SectionSeeder extends Seeder
      */
     public function run(): void
     {
+        $now = Carbon::now();
+
         $sections = [
-            ['classroom_id' => 1, 'name' => 'section 1', 'is_active' => true],
-            ['classroom_id' => 1, 'name' => 'section 2', 'is_active' => true],
-            ['classroom_id' => 2, 'name' => 'section 3', 'is_active' => true],
-            ['classroom_id' => 2, 'name' => 'section 4', 'is_active' => true],
-            ['classroom_id' => 3, 'name' => 'section 5', 'is_active' => true],
+            ['classroom_id' => 1, 'name' => 'section 1', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['classroom_id' => 1, 'name' => 'section 2', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['classroom_id' => 2, 'name' => 'section 3', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['classroom_id' => 2, 'name' => 'section 4', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['classroom_id' => 3, 'name' => 'section 5', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        \Illuminate\Support\Facades\DB::table('sections')->insert($sections);
+        DB::table('sections')->insert($sections);
     }
 }

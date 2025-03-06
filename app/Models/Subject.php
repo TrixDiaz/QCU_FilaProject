@@ -20,8 +20,8 @@ class Subject extends Model
         'subject_code',
         'subject_units',
         'day',
-        'lab_time',
-        'lecture_time',
+        'lab_time_starts_at',
+        'lab_time_ends_at',
         'status',
     ];
 

@@ -19,6 +19,19 @@ class ListTickets extends ListRecords
 
     public function getTabs(): array
     {
+        $user = auth()->user();
+
+        if (!$user->hasRole(['super-admin', 'admin', 'technician'])) {
+            return [
+                'open' => Tab::make('Open Tickets')
+                    ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'open')),
+                'in_progress' => Tab::make('In Progress Tickets')
+                    ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'in_progress')),
+                'pending' => Tab::make('Pending Tickets')
+                    ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'pending')),
+            ];
+        }
+
         return [
             'all' => Tab::make('All Tickets'),
             'open' => Tab::make('Open Tickets')

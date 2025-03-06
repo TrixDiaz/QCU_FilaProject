@@ -45,7 +45,7 @@ class SectionController extends Controller
             // Validate the request
             $validated = $request->validate([
                 'subject_id' => 'required|integer|exists:subjects,id',
-                'terminal_number' => 'required|string|max:255',
+                'terminal_number' => 'nullable|string|max:255',
                 'student_full_name' => 'required|string|max:255',
                 'student_email' => 'nullable|email|max:255',
                 'student_number' => 'required|string|max:20',

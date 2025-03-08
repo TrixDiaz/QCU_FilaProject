@@ -41,7 +41,7 @@ class InventoryStatsOverview extends BaseWidget
         })->join("\n") . "</pre>";
 
         // Build maintenance stats
-        $maintenanceCount = Ticket::where('status', 'open')
+        $maintenanceCount = Ticket::where('ticket_status', 'open')
             ->where('ticket_type', 'incident')
             ->count();
 
@@ -49,7 +49,7 @@ class InventoryStatsOverview extends BaseWidget
             $maintenanceCount = Ticket::whereHas('asset', function ($query) use ($category) {
                 $query->where('category_id', $category->id);
             })
-                ->where('status', 'open')
+                ->where('ticket_status', 'open')
                 ->where('ticket_type', 'incident')
                 ->count();
 

@@ -24,26 +24,26 @@ class ListTickets extends ListRecords
         if (!$user->hasRole(['super-admin', 'admin', 'technician'])) {
             return [
                 'open' => Tab::make('Open Tickets')
-                    ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'open')),
+                    ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'open')),
                 'in_progress' => Tab::make('In Progress Tickets')
-                    ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'in_progress')),
+                    ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'in_progress')),
                 'pending' => Tab::make('Pending Tickets')
-                    ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'pending')),
+                    ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'pending')),
             ];
         }
 
         return [
             'all' => Tab::make('All Tickets'),
             'open' => Tab::make('Open Tickets')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'open')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'open')),
             'in_progress' => Tab::make('In Progress Tickets')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'in_progress')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'in_progress')),
             'pending' => Tab::make('Pending Tickets')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'pending')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'pending')),
             'resolved' => Tab::make('Resolved Tickets')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'resolved')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'resolved')),
             'closed' => Tab::make('Closed Tickets')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'closed')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('ticket_status', 'closed')),
         ];
     }
 

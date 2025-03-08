@@ -249,6 +249,7 @@ class Calendar extends FullCalendarWidget
                         unlink($file);
                     }),
                 \Saade\FilamentFullCalendar\Actions\CreateAction::make()
+                    ->label('Create Schedule')
                     ->mountUsing(
                         function (\Filament\Forms\Form $form, array $arguments) {
                             $form->fill([

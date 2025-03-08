@@ -1,4 +1,15 @@
 <?php return array (
+  'afsakar/filament-otp-login' => 
+  array (
+    'aliases' => 
+    array (
+      'FilamentOtpLogin' => 'Afsakar\\FilamentOtpLogin\\Facades\\FilamentOtpLogin',
+    ),
+    'providers' => 
+    array (
+      0 => 'Afsakar\\FilamentOtpLogin\\FilamentOtpLoginServiceProvider',
+    ),
+  ),
   'anourvalar/eloquent-serialize' => 
   array (
     'aliases' => 

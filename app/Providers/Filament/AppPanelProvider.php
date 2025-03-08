@@ -45,45 +45,45 @@ class AppPanelProvider extends PanelProvider
                 'info' => Color::Blue
             ])
             ->userMenuItems([
-                'Profile' => MenuItem::make()->url(fn (): string => \Filament\Pages\Auth\EditProfile::getUrl())
+                'Profile' => MenuItem::make()->url(fn(): string => \Filament\Pages\Auth\EditProfile::getUrl())
             ])
             ->navigationItems([
                 NavigationItem::make('Asset Report')
-                    ->url(fn (): string => AssetReport::getUrl())
+                    ->url(fn(): string => AssetReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
                 NavigationItem::make('Inventory Report')
-                    ->url(fn (): string => InventoryReport::getUrl())
+                    ->url(fn(): string => InventoryReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
                 NavigationItem::make('Maintenance Report')
-                    ->url(fn (): string => MaintenanceReport::getUrl())
+                    ->url(fn(): string => MaintenanceReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
                 NavigationItem::make('Users Report')
-                    ->url(fn (): string => UsersReport::getUrl())
+                    ->url(fn(): string => UsersReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
                 NavigationItem::make('Activity Log')
-                    ->url(fn (): string => ActivityResource::getUrl())
+                    ->url(fn(): string => ActivityResource::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('System Settings')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
-                    NavigationItem::make('Category Report')
-                    ->url(fn (): string => CategoryReport::getUrl())
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                NavigationItem::make('Category Report')
+                    ->url(fn(): string => CategoryReport::getUrl())
                     ->icon('heroicon-o-presentation-chart-line')
                     ->group('Reports')
                     ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin','admin','technician'])),
+                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
             ])
             ->navigationGroups([
                 'Assets',
@@ -97,9 +97,7 @@ class AppPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('30s')
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
-            ->pages([
-
-            ])
+            ->pages([])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([])
             ->middleware([
@@ -119,6 +117,7 @@ class AppPanelProvider extends PanelProvider
             ->plugins([
                 \EightyNine\Reports\ReportsPlugin::make(),
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+                // \Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin::make(),    
                 \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([

@@ -22,7 +22,7 @@ class EditTicket extends EditRecord
         parent::mount($record);
 
         // Prevent editing if the ticket is closed
-        if ($this->record->status === 'closed') {
+        if ($this->record->ticket_ticket_status === 'closed') {
             Notification::make()
                 ->title('Ticket is closed')
                 ->danger()
@@ -36,13 +36,13 @@ class EditTicket extends EditRecord
     {
         $actions = [];
 
-        // Show "Mark as In Progress" only if status is "open"
-        if ($this->record->status === 'open') {
+        // Show "Mark as In Progress" only if ticket_status is "open"
+        if ($this->record->ticket_status === 'open') {
             $actions[] = $this->markAsInProgressAction();
         }
 
-        // Show "Mark as Resolved" only if status is "in_progress"
-        if ($this->record->status === 'in_progress') {
+        // Show "Mark as Resolved" only if ticket_status is "in_progress"
+        if ($this->record->ticket_status === 'in_progress') {
             $actions[] = $this->markAsResolvedAction();
         }
 
@@ -57,7 +57,7 @@ class EditTicket extends EditRecord
             ->requiresConfirmation()
             ->action(function () {
                 $this->record->update([
-                    'status' => 'in_progress',
+                    'ticket_status' => 'in_progress',
                     'assigned_to' => auth()->id(), // Assign to the logged-in user
                 ]);
 
@@ -74,7 +74,7 @@ class EditTicket extends EditRecord
             ->requiresConfirmation()
             ->action(function () {
                 $this->record->update([
-                    'status' => 'resolved',  // Changed from 'in_progress' to 'resolved'
+                    'ticket_status' => 'resolved',  // Changed from 'in_progress' to 'resolved'
                     'resolved_at' => now(),  // Add resolved timestamp
                     'resolved_by' => auth()->id(),  // Add who resolved it
                 ]);

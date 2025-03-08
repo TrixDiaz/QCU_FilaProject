@@ -23,17 +23,17 @@ class StatsOverview extends BaseWidget
         //  Assets Stats
         $totalAssets = Asset::count();
         $activeAssets = Asset::where('status', 'Active')->count();
-        $inactiveAssets =Asset::where('status','Inactive')->count();
+        $inactiveAssets = Asset::where('status', 'Inactive')->count();
         $deploy = Asset::where('status', 'Deploy')->count();
         $maintenanceAssets = AssetGroup::where('status', 'Maintenance')->count();
-        
+
 
         //  Tickets Stats
         $totalTickets = Ticket::count();
-        $openTickets = Ticket::where('status', 'open')->count();
-        $inProgressTickets = Ticket::where('status', 'in-progress')->count();
+        $openTickets = Ticket::where('ticket_status', 'open')->count();
+        $inProgressTickets = Ticket::where('ticket_status', 'in-progress')->count();
         $unassignedTickets = Ticket::whereNull('assigned_to')->count();
-        $resolvedTickets = Ticket::where('status', 'resolved')->count();
+        $resolvedTickets = Ticket::where('ticket_status', 'resolved')->count();
 
         //  Buildings Stats
         $totalBuildings = Building::count();
@@ -43,25 +43,25 @@ class StatsOverview extends BaseWidget
                 ->description("Active: $activeUsers")
                 ->icon('heroicon-o-users')
                 ->color('success'),
-                
 
-                Stat::make('Total Assets', $totalAssets)
+
+            Stat::make('Total Assets', $totalAssets)
                 ->description(
                     "Active: $activeAssets " .
-                    "Inactive: $inactiveAssets " .
-                    "Deploy: $deploy " .
-                    "Maintenance: $maintenanceAssets"
+                        "Inactive: $inactiveAssets " .
+                        "Deploy: $deploy " .
+                        "Maintenance: $maintenanceAssets"
                 )
                 ->icon('heroicon-o-computer-desktop')
                 ->color('primary'),
-            
+
 
             Stat::make('Total Tickets', $totalTickets)
                 ->description(
                     "Open: $openTickets " .
-                    "In Progress: $inProgressTickets " .
-                    "Unassigned: $unassignedTickets" .
-                    " Resolved: $resolvedTickets"
+                        "In Progress: $inProgressTickets " .
+                        "Unassigned: $unassignedTickets" .
+                        " Resolved: $resolvedTickets"
                 )
                 ->icon('heroicon-o-ticket')
                 ->color('warning'),

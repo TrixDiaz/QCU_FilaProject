@@ -69,9 +69,9 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->schema([
                         Forms\Components\Section::make()
                             ->schema([
-                                Forms\Components\Placeholder::make('status')
+                                Forms\Components\Placeholder::make('ticket_status')
                                     ->label('Ticket Current Status')
-                                    ->content(fn($record): string => $record->status ?? 'New')
+                                    ->content(fn($record): string => $record->ticket_status ?? 'New')
                                     ->extraAttributes(['class' => 'capitalize']),
                             ])
                             ->columnSpan(1),
@@ -216,7 +216,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                                 $set('subject_id', null);
                                                             }
                                                         }),
-                                                        Forms\Components\Builder::make('description')
+                                                    Forms\Components\Builder::make('description')
                                                         ->label('Remarks')
                                                         ->blocks([
                                                             Builder\Block::make('message')
@@ -229,7 +229,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                                         ->live(onBlur: true),
                                                                     Forms\Components\TextInput::make('sender_role')
                                                                         ->label('Sender')
-                                                                        ->default(fn () => auth()->user()->name)
+                                                                        ->default(fn() => auth()->user()->name)
                                                                         ->readOnly()
                                                                         ->required()
                                                                         ->live(onBlur: true),
@@ -248,38 +248,6 @@ class TicketResource extends Resource implements HasShieldPermissions
                                         ->required()
                                         ->maxLength(255)
                                         ->unique('tickets', ignoreRecord: true),
-                                    Forms\Components\TextInput::make('created_by')
-                                        ->required()
-                                        ->default(fn() => auth()->user()->name)
-                                        ->dehydrateStateUsing(fn() => auth()->id()),
-                                    Forms\Components\Select::make('assigned_to')
-                                        ->required()
-                                        ->searchable()
-                                        ->default(function () {
-                                            // Find the first technician user
-                                            $technician = User::whereHas('roles', function($query) {
-                                                $query->where('name', 'technician');
-                                            })->first();
-                                    
-                                            // If no technician found, find the first user
-                                            if (!$technician) {
-                                                $technician = User::first();
-                                            }
-                                    
-                                            // Throw an exception if no users exist
-                                            if (!$technician) {
-                                                throw new \Exception('No users available for ticket assignment');
-                                            }
-                                    
-                                            return $technician->id;
-                                        })
-                                        ->disabled(fn() => auth()->user()->hasRole('professor'))
-                                        ->dehydrated()
-                                        ->options(User::all()->pluck('name', 'id')),
-                                    Forms\Components\Hidden::make('status')
-                                        ->default('open')
-                                        ->dehydrated()
-                                        ->required(),
                                     Forms\Components\Select::make('priority')
                                         ->required()
                                         ->default('low')
@@ -288,17 +256,52 @@ class TicketResource extends Resource implements HasShieldPermissions
                                             'medium' => 'Medium',
                                             'high' => 'High',
                                         ]),
+                                    Forms\Components\TextInput::make('created_by')
+                                        ->required()
+                                        ->default(fn() => auth()->user()->name)
+                                        ->dehydrateStateUsing(fn() => auth()->id())
+                                        ->readOnly(),
+                                    Forms\Components\Select::make('assigned_to')
+                                        ->required()
+                                        ->searchable()
+                                        ->default(function () {
+                                            // Find the first technician user
+                                            $technician = User::whereHas('roles', function ($query) {
+                                                $query->where('name', 'technician');
+                                            })->first();
+
+                                            // If no technician found, find the first user
+                                            if (!$technician) {
+                                                $technician = User::first();
+                                            }
+
+                                            // Throw an exception if no users exist
+                                            if (!$technician) {
+                                                throw new \Exception('No users available for ticket assignment');
+                                            }
+
+                                            return $technician->id;
+                                        })
+                                        ->disabled(fn() => auth()->user()->hasRole('professor'))
+                                        ->dehydrated()
+                                        ->options(User::all()->pluck('name', 'id')),
+                                    Forms\Components\Hidden::make('ticket_status')
+                                        ->default('open')
+                                        ->dehydrated()
+                                        ->required(),
+
                                     Forms\Components\FileUpload::make('attachments')
                                         ->multiple()
                                         ->openable()
                                         ->image()
-                                        ->downloadable(),
-                                ]),
+                                        ->downloadable()
+                                        ->columnSpanFull(),
+                                ])->columns(2),
                         ])->columnSpan(1), // Ensures the Wizard takes one column
                     ]),
             ])
 
-            
+
             ->disabled($isProfessor && $isEditMode); // Only disable form if professor AND in edit mode
     }
 
@@ -345,10 +348,10 @@ class TicketResource extends Resource implements HasShieldPermissions
                         'medium' => 'warning',
                         'high' => 'danger',
                     })->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('ticket_status')
                     ->badge()
                     ->description(fn($record) => null) // Hide the default description
-                    ->formatStateUsing(fn($record) => strtoupper($record->status . ' - Priority ' . $record->priority))
+                    ->formatStateUsing(fn($record) => strtoupper($record->ticket_status . ' - Priority ' . $record->priority))
                     ->color(fn($record) => match (strtolower($record->priority)) {
                         'high' => 'danger',
                         'medium' => 'warning',
@@ -426,15 +429,15 @@ class TicketResource extends Resource implements HasShieldPermissions
         return [];
     }
 
-     // Method to get default technician
-     public static function getDefaultTechnician(): ?int
-     {
-         $technician = User::whereHas('roles', function($query) {
-             $query->where('name', 'technician');
-         })->first();
- 
-         return $technician ? $technician->id : null;
-     }
+    // Method to get default technician
+    public static function getDefaultTechnician(): ?int
+    {
+        $technician = User::whereHas('roles', function ($query) {
+            $query->where('name', 'technician');
+        })->first();
+
+        return $technician ? $technician->id : null;
+    }
 
 
     public static function getPages(): array

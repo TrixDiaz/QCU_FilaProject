@@ -25,7 +25,7 @@ class Ticket extends Model
         'due_date',
         'date_finished',
         'attachments',
-        'status',
+        'ticket_status',
         'created_at',
         'updated_at',
         'subject_id',
@@ -40,17 +40,6 @@ class Ticket extends Model
         'ends_at' => 'datetime',
         'description' => 'array'
     ];
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($ticket) {
-            $ticket->status = 'open';
-        });
-    }
-
-
 
     public function asset(): BelongsTo
     {

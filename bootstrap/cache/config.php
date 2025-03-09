@@ -569,7 +569,7 @@
   array (
     'class_namespace' => 'App\\Livewire',
     'view_path' => 'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\resources\\views/livewire',
-    'layout' => 'components.layouts.app',
+    'layout' => 'layouts.app',
     'lazy_placeholder' => NULL,
     'temporary_file_upload' => 
     array (

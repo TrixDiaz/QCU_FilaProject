@@ -67,23 +67,25 @@ class Inventory extends Component implements HasTable, HasForms
     public static function table(Table $table): Table
     {
         return $table
-            ->query(\App\Models\Asset::query())
+            ->query(\App\Models\AssetGroup::query())
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('name')->searchable(['name'])
-                    ->description(fn($record): string => $record->serial_number),
-                \Filament\Tables\Columns\TextColumn::make('brand.name')->searchable()->sortable()
-                    ->description(fn($record): string => $record->category?->name),
-                \Filament\Tables\Columns\TextColumn::make('asset_code')->searchable()->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('expiry_date')
-                    ->date()
-                    ->placeholder('Not Available') // Show "Not Available" for null values
+                \Filament\Tables\Columns\TextColumn::make('classroom.name')
+                    ->label('Classroom')
+                    ->default(fn($record): string => $record->classroom->name ?? 'No classroom')
+                    ->description(fn($record): string => $record->classroom->building->name ?? 'No building')
+                    ->searchable()
                     ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('code')->searchable()->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('assets.name')
+                    ->label('Asset')
+                    ->searchable()
+                    ->description(fn($record): string => $record->assets->serial_number ?? 'No serial'),
                 \Filament\Tables\Columns\TextColumn::make('status')->searchable()->badge()->extraAttributes(['class' => 'capitalize']),
                 \Filament\Tables\Columns\TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('updated_at')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('created_at', 'desc') // Sort by created_at in descending order
-            ->persistSortInSession() // Persist sorting between requests
+            ->defaultSort('created_at', 'desc')
+            ->persistSortInSession()
             ->filters([
                 \Filament\Tables\Filters\SelectFilter::make('building_id')
                     ->label('Building')
@@ -94,14 +96,8 @@ class Inventory extends Component implements HasTable, HasForms
                             function ($query, $buildingId) {
                                 // Find all classrooms in this building
                                 $classroomIds = Classroom::where('building_id', $buildingId)->pluck('id')->toArray();
-
-                                // Find all asset groups in these classrooms
-                                $assetIds = AssetGroup::whereIn('classroom_id', $classroomIds)
-                                    ->pluck('asset_id')
-                                    ->toArray();
-
-                                // Filter assets by these IDs
-                                return $query->whereIn('id', $assetIds);
+                                // Filter asset groups by these classroom IDs
+                                return $query->whereIn('classroom_id', $classroomIds);
                             }
                         );
                     }),
@@ -112,20 +108,14 @@ class Inventory extends Component implements HasTable, HasForms
                         return $query->when(
                             $data['value'],
                             function ($query, $classroomId) {
-                                // Find all asset groups in this classroom
-                                $assetIds = AssetGroup::where('classroom_id', $classroomId)
-                                    ->pluck('asset_id')
-                                    ->toArray();
-
-                                // Filter assets by these IDs
-                                return $query->whereIn('id', $assetIds);
+                                return $query->where('classroom_id', $classroomId);
                             }
                         );
                     }),
-                \Filament\Tables\Filters\SelectFilter::make('status')->options([
-                    'active' => 'Active',
-                    'inactive' => 'Inactive',
-                ]),
+                // \Filament\Tables\Filters\SelectFilter::make('status')->options([
+                //     'active' => 'Active',
+                //     'inactive' => 'Inactive',
+                // ]),
                 \Filament\Tables\Filters\Filter::make('created_at')
                     ->form([
                         \Filament\Forms\Components\Select::make('date_filter')
@@ -212,28 +202,27 @@ class Inventory extends Component implements HasTable, HasForms
                     }),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
-            ->filtersFormColumns(4)
+            ->filtersFormColumns(3)
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()->exports([
                         ExcelExport::make()
                             ->fromTable()
-                            ->except(["id", "slug", "brand_id"])
-                            ->withFilename(date('Y-m-d') . '-Inventory.xlsx'),
+                            ->withFilename(date('Y-m-d') . '-AssetGroups.xlsx'),
                         ExcelExport::make()
                             ->fromTable()
                             ->only([
+                                'code',
                                 'name',
-                                'serial_number',
-                                'assetTags.name',
-                                'expiry_date',
+                                'asset.name',
+                                'classroom.name',
+                                'classroom.building.name',
                                 'status',
                                 'created_at',
                                 'updated_at',
                             ])
-                            ->withFilename(date('Y-m-d') . '-Filtered-Inventory.xlsx'),
-
+                            ->withFilename(date('Y-m-d') . '-Filtered-AssetGroups.xlsx'),
                     ]),
                 ]),
             ]);

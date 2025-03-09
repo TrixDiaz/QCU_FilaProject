@@ -127,10 +127,9 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->extraAlpineAttributes([
                                 'style' => 'text-transform: uppercase;',
                                 'class' => 'uppercase',
-                                'x-model' => 'serial_number',
                                 '@input' => "serial_number = serial_number.toUpperCase()"
-                                
-                            ]),   
+
+                            ]),
 
                         Forms\Components\DatePicker::make('expiry_date')
                             ->native(false)

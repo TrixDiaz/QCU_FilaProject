@@ -31,4 +31,9 @@ class AssetGroup extends Model
     {
         return $this->belongsTo(Asset::class, 'asset_id', 'id');
     }
+
+    public function assets(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'asset_id', 'id');
+    }
 }

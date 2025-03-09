@@ -20,6 +20,11 @@ class ListAssets extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('deploySet')
+                ->label('Deploy Computer Set')
+                ->color('warning')
+                ->form(\App\Services\DeployComputerSet::schema()),
+            //perform here the action where in will store in assetGroup Table
             Actions\Action::make('deploy')
                 ->label('Deploy Computer')
                 ->color('secondary')

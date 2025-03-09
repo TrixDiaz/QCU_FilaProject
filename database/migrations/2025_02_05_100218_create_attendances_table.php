@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('student_full_name');
             $table->string('student_number');
             $table->string('student_email')->nullable();
+            $table->json('peripherals')->nullable();
             $table->string('remarks')->nullable();
             $table->timestamps();
         });

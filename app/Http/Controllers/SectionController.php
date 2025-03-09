@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Section;
 use App\Models\Subject;
 use App\Models\AssetGroup;
+use App\Models\StudentReport;
 use Illuminate\Http\Request;
 
 class SectionController extends Controller
@@ -43,24 +44,46 @@ class SectionController extends Controller
     {
         try {
             // Validate the request
-            $validated = $request->validate([
+            $validatedData = $request->validate([
                 'subject_id' => 'required|integer|exists:subjects,id',
                 'terminal_number' => 'nullable|string|max:255',
                 'student_full_name' => 'required|string|max:255',
                 'student_email' => 'nullable|email|max:255',
                 'student_number' => 'required|string|max:20',
+                'peripherals' => 'required|array',
                 'remarks' => 'nullable|string|max:255',
             ]);
 
+            // Check if any peripheral is marked as false
+            $hasFalsePeripheral = false;
+            foreach ($validatedData['peripherals'] as $peripheral) {
+                if ($peripheral === false) {
+                    $hasFalsePeripheral = true;
+                    break;
+                }
+            }
+
+            // Convert peripherals array to JSON string before saving
+            $validatedData['peripherals'] = json_encode($validatedData['peripherals']);
+
             // Create a new attendance record
-            $attendance = \App\Models\Attendance::create($validated);
+            $attendance = \App\Models\Attendance::create($validatedData);
+
+            // If any peripheral is marked as false, create a student report
+            if ($hasFalsePeripheral) {
+                StudentReport::create([
+                    'attendance_id' => $attendance->id,
+                    'is_reported' => false,
+                ]);
+            }
 
             // Load relationships for the response
             $attendance->load(['subject', 'terminal']);
 
             return response()->json([
                 'message' => 'Attendance recorded successfully',
-                'data' => $attendance
+                'data' => $attendance,
+                'reported' => $hasFalsePeripheral
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -87,11 +110,6 @@ class SectionController extends Controller
             $assetGroups = AssetGroup::where('classroom_id', $subject->classroom->id)
                 ->with(['assets'])  // Include related assets
                 ->get();
-
-            // Debug information
-            \Log::info('Subject ID: ' . $id);
-            \Log::info('Classroom ID: ' . $subject->classroom->id);
-            \Log::info('Asset Groups Count: ' . $assetGroups->count());
 
             return response()->json([
                 'status' => 'success',

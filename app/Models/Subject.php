@@ -19,6 +19,8 @@ class Subject extends Model
         'name',
         'subject_code',
         'subject_units',
+        'semester',
+        'school_year',
         'day',
         'lab_time_starts_at',
         'lab_time_ends_at',

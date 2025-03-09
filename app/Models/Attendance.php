@@ -18,7 +18,12 @@ class Attendance extends Model
         'student_full_name',
         'student_email',
         'student_number',
+        'peripherals',
         'remarks',
+    ];
+
+    protected $casts = [
+        'fail_peripherals' => 'array',
     ];
 
     // Relationships

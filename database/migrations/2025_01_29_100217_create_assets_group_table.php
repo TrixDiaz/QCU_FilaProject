@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('assets_group', function (Blueprint $table) {
             $table->id();
             $table->foreignId('classroom_id')->constrained('classrooms')->onDelete('cascade');
-            $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
+            $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade')->unique();
             $table->string('name');
             $table->string('code');
             $table->string('status');
             $table->timestamps();
-    });
+        });
     }
 
     /**

@@ -123,7 +123,6 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->required()
                             ->minLength(8)
                             ->maxLength(20)
-                            ->regex('/^[A-Z0-9]+$/')
                             ->extraAlpineAttributes([
                                 'style' => 'text-transform: uppercase;',
                                 'class' => 'uppercase',

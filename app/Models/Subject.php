@@ -25,6 +25,8 @@ class Subject extends Model
         'lab_time_starts_at',
         'lab_time_ends_at',
         'status',
+        'semester',
+        'school_year'
     ];
 
     public function tickets(): HasMany

@@ -128,7 +128,8 @@ class SubjectResource extends Resource implements HasShieldPermissions
                             ->native(false)
                             ->preload()
                             ->required()
-                            ->searchable(),
+                            ->searchable()
+                            ->default('1st Semester'),
                         Forms\Components\Select::make('school_year')
                             ->options([
                                 '2021-2022' => '2021-2022',

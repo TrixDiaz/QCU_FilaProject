@@ -21,6 +21,7 @@ class CategorySeeder extends Seeder
             ['name' => 'license', 'slug' => 'license', 'created_at' => $timestamp, 'updated_at' => $timestamp],
             ['name' => 'components', 'slug' => 'components', 'created_at' => $timestamp, 'updated_at' => $timestamp],
             ['name' => 'accessories', 'slug' => 'accessories', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'computer set', 'slug' => 'computer_set', 'created_at' => $timestamp, 'updated_at' => $timestamp],
             ['name' => 'others', 'slug' => 'others', 'created_at' => $timestamp, 'updated_at' => $timestamp],
         ];
 

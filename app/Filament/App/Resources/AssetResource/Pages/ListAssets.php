@@ -18,7 +18,7 @@ class ListAssets extends ListRecords
     {
         return parent::getTableQuery()->orderByDesc('id');
     }
-    
+
     protected function getHeaderActions(): array
     {
         return [
@@ -32,18 +32,23 @@ class ListAssets extends ListRecords
                                 ->label('Brand')
                                 ->options(\App\Models\Brand::pluck('name', 'id'))
                                 ->required(),
-                                
+
+                            Forms\Components\Select::make('category_id')
+                                ->label('Category')
+                                ->options(\App\Models\Category::pluck('name', 'id'))
+                                ->required(),
+
                             Forms\Components\TextInput::make('asset_code')
                                 ->label('Asset Code')
                                 ->unique(table: Asset::class)
                                 ->helperText('Must be unique'),
-                                
+
                             Forms\Components\TextInput::make('serial_number')
                                 ->label('Serial Number')
                                 ->required()
                                 ->unique(table: Asset::class)
                                 ->helperText('Must be unique'),
-                                
+
                             Forms\Components\Select::make('classroom')
                                 ->label('Classroom')
                                 ->options(\App\Models\Classroom::where('is_active', true)->pluck('name', 'id'))
@@ -51,7 +56,7 @@ class ListAssets extends ListRecords
                                 ->preload()
                                 ->helperText('If available')
                                 ->reactive(),
-                                
+
                             Forms\Components\TextInput::make('name')
                                 ->label('Terminal Number')
                                 ->required()
@@ -64,13 +69,13 @@ class ListAssets extends ListRecords
                                             if (!$classroomId) {
                                                 return;
                                             }
-                                            
+
                                             // Check if this terminal name already exists in this classroom
                                             $exists = \App\Models\AssetGroup::query()
                                                 ->where('classroom_id', $classroomId)
                                                 ->where('name', $value)
                                                 ->exists();
-                                                
+
                                             if ($exists) {
                                                 $fail("This terminal number is already used in this classroom.");
                                             }
@@ -97,12 +102,12 @@ class ListAssets extends ListRecords
                                         }
                                     }
                                 }),
-                                
+
                             Forms\Components\TextInput::make('code')
                                 ->label('Code')
                                 ->disabled()
                                 ->dehydrated()
-                                ->visible(fn (Forms\Get $get): bool => (bool) $get('classroom'))
+                                ->visible(fn(Forms\Get $get): bool => (bool) $get('classroom'))
                                 ->extraAttributes([
                                     'style' => 'text-transform:uppercase',
                                     'class' => 'uppercase'
@@ -115,13 +120,13 @@ class ListAssets extends ListRecords
                                             if (!$classroomId || !$value) {
                                                 return;
                                             }
-                                            
+
                                             // Check if this code already exists in this classroom
                                             $exists = \App\Models\AssetGroup::query()
                                                 ->where('classroom_id', $classroomId)
                                                 ->where('code', $value)
                                                 ->exists();
-                                                
+
                                             if ($exists) {
                                                 $fail("This code is already used in this classroom.");
                                             }
@@ -132,13 +137,13 @@ class ListAssets extends ListRecords
                 ])
                 ->action(function (array $data) {
                     $user = auth()->user();
-                    
+
                     // Get the category_id for "computer set"
                     $computerSetCategory = \App\Models\Category::where('slug', 'computer_set')->first();
-                    
+
                     // Set the status based on whether a classroom is assigned
                     $status = isset($data['classroom']) ? 'deploy' : 'active';
-                    
+
                     // Create a new asset for the computer set with automatically set category
                     $asset = \App\Models\Asset::create([
                         'category_id' => $computerSetCategory->id, // Automatically set category to "computer set"
@@ -148,7 +153,7 @@ class ListAssets extends ListRecords
                         'asset_code' => $data['asset_code'] ?? null,
                         'status' => $status,
                     ]);
-                    
+
                     // Create the asset group entry for this computer set if classroom is selected
                     if (isset($data['classroom'])) {
                         \App\Models\AssetGroup::create([
@@ -159,7 +164,7 @@ class ListAssets extends ListRecords
                             'status' => 'active',
                         ]);
                     }
-                    
+
                     // Send a Filament notification to the authenticated user
                     \Filament\Notifications\Notification::make()
                         ->title('Computer Set Added')
@@ -167,7 +172,7 @@ class ListAssets extends ListRecords
                         ->success()
                         ->icon('heroicon-m-computer-desktop')
                         ->sendToDatabase($user);
-                    
+
                     \Filament\Notifications\Notification::make()
                         ->title('Computer Set Added')
                         ->body('The new computer set has been successfully added' . (isset($data['classroom']) ? ' to the classroom' : '') . '.')

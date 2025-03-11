@@ -143,7 +143,17 @@ final class DeployComputer
                             ->schema([
                                 // Name
                                 \Filament\Forms\Components\TextInput::make('name')
-                                    ->required(),
+                                    ->required()
+                                    ->default(function () {
+                                        return 'T1'; // Default to T1 initially
+                                    })
+                                    ->reactive()
+                                    ->afterStateHydrated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) {
+                                        // Initially set to T1, will be updated when classroom is selected
+                                        $set('name', 'T1');
+                                    })
+                                    ->disabled()
+                                    ->dehydrated(),
                                 // Classroom
                                 \Filament\Forms\Components\Select::make('classroom')
                                     ->options(\App\Models\Classroom::where('is_active', true)->pluck('name', 'id'))
@@ -151,22 +161,34 @@ final class DeployComputer
                                     ->preload()
                                     ->required()
                                     ->reactive()
-                                    ->disabled(fn(\Filament\Forms\Get $get) => !$get('name'))
                                     ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) {
-                                        $classroom = \App\Models\Classroom::find($state);
-                                        if ($classroom) {
-                                            $building = $classroom->building;
-                                            $name = \Illuminate\Support\Str::slug($classroom->name);
-                                            $enteredname = $get('name'); // Assuming 'name' is the field where the new entered name is stored
+                                        if ($state) {
+                                            $classroom = \App\Models\Classroom::find($state);
 
-                                            $buildingnameFirstLetter = substr($building->name, 0, 1);
-                                            $buildingnameLastLetter = substr($building->name, -1);
-                                            $classroomnameFirstLetter = substr($name, 0, 1);
-                                            $classroomnameLastLetter = substr($name, -1);
-                                            $enterednameFirstLetter = substr($enteredname, 0, 1);
-                                            $enterednameLastLetter = substr($enteredname, -1);
+                                            if ($classroom) {
+                                                // Get the highest terminal number for this specific classroom
+                                                $lastTerminal = \App\Models\AssetGroup::where('classroom_id', $state)
+                                                    ->where('name', 'LIKE', 'T%')
+                                                    ->orderByRaw('CAST(SUBSTRING(name, 2) AS UNSIGNED) DESC')
+                                                    ->first();
 
-                                            $set('code', strtoupper("{$buildingnameFirstLetter}{$buildingnameLastLetter}-{$classroomnameFirstLetter}{$classroomnameLastLetter}-{$enterednameFirstLetter}{$enterednameLastLetter}"));
+                                                $terminalNumber = 1; // Default to T1
+                                                if ($lastTerminal) {
+                                                    // Extract number part, increment it
+                                                    $lastNumber = (int) substr($lastTerminal->name, 1);
+                                                    $terminalNumber = $lastNumber + 1;
+                                                }
+
+                                                $terminalName = 'T' . $terminalNumber;
+                                                $set('name', $terminalName);
+
+                                                // Update the code as well
+                                                $building = $classroom->building;
+                                                $classroomSlug = \Illuminate\Support\Str::slug($classroom->name);
+                                                $buildingPrefix = substr($building->name, 0, 3);
+
+                                                $set('code', strtoupper("{$buildingPrefix}-{$classroomSlug}-{$terminalName}"));
+                                            }
                                         }
                                     }),
                             ]),

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Builder;
@@ -59,251 +60,404 @@ class TicketResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationBadgeTooltip = 'The number of active ticket';
 
     public static function form(Form $form): Form
-    {
-        $isProfessor = auth()->user()->hasRole('professor');
-        $isEditMode = $form->getOperation() === 'edit';
+{
+    $isProfessor = auth()->user()->hasRole('professor');
+    $isEditMode = $form->getOperation() === 'edit';
 
-        return $form
-            ->schema([
-                Forms\Components\Grid::make()
-                    ->schema([
-                        Forms\Components\Section::make()
+    return $form
+        ->schema([
+            Forms\Components\Grid::make()
+                ->schema([
+                    Forms\Components\Section::make()
+                        ->schema([
+                            Forms\Components\Placeholder::make('ticket_status')
+                                ->label('Ticket Current Status')
+                                ->content(fn($record): string => $record->ticket_status ?? 'New')
+                                ->extraAttributes(['class' => 'capitalize']),
+                        ])
+                        ->columnSpan(1),
+
+                    Forms\Components\Section::make()
+                        ->schema([
+                            Forms\Components\Placeholder::make('ticket')
+                                ->label('Ticket Number')
+                                ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
+                        ])
+                        ->columnSpan(1),
+                ])
+                ->columns(2),
+            Forms\Components\Section::make()
+                ->schema([
+                    Wizard::make([
+                        Wizard\Step::make('Ticket Information')
                             ->schema([
-                                Forms\Components\Placeholder::make('ticket_status')
-                                    ->label('Ticket Current Status')
-                                    ->content(fn($record): string => $record->ticket_status ?? 'New')
-                                    ->extraAttributes(['class' => 'capitalize']),
-                            ])
-                            ->columnSpan(1),
+                                Forms\Components\Section::make()
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('ticket_type')
+                                                    ->options([
+                                                        'request' => 'Request',
+                                                        'incident' => 'Incident',
+                                                    ])
+                                                    ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
+                                                    ->required()
+                                                    ->reactive()
+                                                    ->live(onBlur: true)
+                                                    ->native(false),
+                                                Forms\Components\TextInput::make('title')
+                                                    ->required(),
+                                                Forms\Components\Select::make('option')
+                                                    ->options([
+                                                        'asset' => 'Asset',
+                                                        'classroom' => 'Classroom',
+                                                    ])
+                                                    ->required()
+                                                    ->visible(fn($get) => $get('ticket_type') === 'request')
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'classroom') {
+                                                            $set('asset_id', null);
+                                                        }
+                                                    }),
 
-                        Forms\Components\Section::make()
-                            ->schema([
-                                Forms\Components\Placeholder::make('ticket')
-                                    ->label('Ticket Number')
-                                    ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
-                            ])
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2),
-                Forms\Components\Section::make()
-                    ->schema([
-                        Wizard::make([
-                            Wizard\Step::make('Ticket Information')
-                                ->schema([
-                                    Forms\Components\Section::make()
-                                        ->schema([
-                                            Forms\Components\Grid::make(2)
-                                                ->schema([
-                                                    Forms\Components\Select::make('ticket_type')
-                                                        ->options([
-                                                            'request' => 'Request',
-                                                            'incident' => 'Incident',
-                                                        ])
-                                                        ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
-                                                        ->required()
-                                                        ->reactive()
-                                                        ->live(onBlur: true)
-                                                        ->native(false),
-                                                    Forms\Components\TextInput::make('title')
-                                                        ->required(),
-                                                    Forms\Components\Select::make('option')
-                                                        ->options([
-                                                            'asset' => 'Asset',
-                                                            'classroom' => 'Classroom',
-                                                        ])
-                                                        ->required()
-                                                        ->visible(fn($get) => $get('ticket_type') === 'request')
-                                                        ->live()
-                                                        ->afterStateUpdated(function ($state, callable $set) {
-                                                            if ($state === 'classroom') {
-                                                                $set('asset_id', null);
-                                                            }
-                                                        }),
+                                                Forms\Components\DateTimePicker::make('starts_at')
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->rules(['required_if:option,classroom'])
+                                                    ->seconds(false)
+                                                    ->minutesStep(15)
+                                                    ->default(now()->startOfHour())
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
+                                                    if (!$state) return;
 
-                                                    Forms\Components\DateTimePicker::make('starts_at')
-                                                        ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->rules(['required_if:option,classroom'])
-                                                        ->seconds(false)
-                                                        ->minutesStep(15)
-                                                        ->default(now()->startOfHour())
-                                                        ->live()
-                                                        ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
-                                                            if (!$state) return;
+                                                // Get the current selected end time duration
+                                                    $currentEndHour = $get('ends_at');
 
-                                                            // Get the current selected end time duration
-                                                            $currentEndHour = $get('end_hour');
+                                                // If no end hour selected yet, default to starts_at + 1 hour
+                                                    if (!$currentEndHour) {
+                                                    $startHour = (int) Carbon::parse($state)->format('H');
+                                                    $defaultEndHour = ($startHour + 1) % 24;
+                                                    $set('ends_at', sprintf('%02d:00', $defaultEndHour));
+                                                    }
+                                                // If end hour is already selected, check if it's still valid
+                                                    else {
+                                                    $startHour = (int) Carbon::parse($state)->format('H');
+                                                    $endHour = (int) explode(':', $currentEndHour)[0];
 
-                                                            // If no end hour selected yet, default to starts_at + 1 hour
-                                                            if (!$currentEndHour) {
-                                                                $startHour = (int) Carbon::parse($state)->format('H');
-                                                                $defaultEndHour = ($startHour + 1) % 24;
-                                                                $set('end_hour', sprintf('%02d:00', $defaultEndHour));
-                                                            }
-                                                            // If end hour is already selected, check if it's still valid
-                                                            else {
-                                                                $startHour = (int) Carbon::parse($state)->format('H');
-                                                                $endHour = (int) explode(':', $currentEndHour)[0];
+                                                // If end hour is not at least 1 hour after start hour
+                                                    if ($endHour <= $startHour) {
+                                                    $newEndHour = ($startHour + 1) % 24;
+                                                    $set('ends_at', sprintf('%02d:00', $newEndHour));
+                                                    }
+                                                }
+                
+                                                // Check for time conflicts when date changes
+                                                self::checkTimeConflict($get, $set);
+                                                }),
 
-                                                                // If end hour is not at least 1 hour after start hour
-                                                                if ($endHour <= $startHour) {
-                                                                    $newEndHour = ($startHour + 1) % 24;
-                                                                    $set('end_hour', sprintf('%02d:00', $newEndHour));
+                                                Forms\Components\Select::make('ends_at')
+                                                    ->required()
+                                                    ->options(function (Forms\Get $get) {
+                                                    $startsAt = $get('starts_at');
+                                                    if (!$startsAt) {
+                                                        return [];
+                                                    }
+
+                                                    $startHour = (int) Carbon::parse($startsAt)->format('H');
+                                                    $options = [];
+
+                                                // Generate options for the next 8 hours after start hour
+                                                    for ($i = 1; $i <= 8; $i++) {
+                                                    $hour = ($startHour + $i) % 24;
+                                                    $time = sprintf('%02d:00', $hour);
+                                                    $formattedTime = Carbon::createFromFormat('H:i', $time)->format('g:i A');
+                                                    $options[$time] = $formattedTime;
+                                                    }
+
+                                                    return $options;
+                                                    })
+                                                    ->live()
+                                                    ->required()
+                                                    ->disabled(fn(Forms\Get $get) => !$get('starts_at'))
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
+                                                // Check for time conflicts when end time changes
+                                                    self::checkTimeConflict($get, $set);
+                                                    }),
+
+                                                Forms\Components\Select::make('asset_id')
+                                                    ->relationship('asset', 'name')
+                                                    ->required(fn($get) => $get('option') === 'asset')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->visible(
+                                                        fn($get) =>
+                                                        $get('ticket_type') === 'incident' ||
+                                                            ($get('ticket_type') === 'request' && $get('option') === 'asset')
+                                                    ),
+
+                                                Forms\Components\Select::make('section_id')
+                                                    ->relationship('section', 'name')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') !== 'classroom')
+                                                    ->visible(fn($get) => $get('option') !== 'asset')
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state === 'asset') {
+                                                            $set('subject_id', null);
+                                                        }
+                                                    }),
+
+                                                Forms\Components\Select::make('subject_id')
+                                                    ->options(Subject::all()->pluck('name', 'id'))
+                                                    ->required(fn($get) => $get('option') === 'classroom')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('option') === 'classroom' || ($get('ticket_type') === 'request' && $get('option') === 'asset'))
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                                                    if ($state === 'asset') {
+                                                        $set('subject_id', null);
+                                                    }
+                                                    
+                                                    // Check for time conflicts when subject changes
+                                                    self::checkTimeConflict($get, $set);
+                                                    }),
+                                                
+                                                Forms\Components\Section::make('Time Conflict Warning')
+                                                    ->schema([
+                                                        Forms\Components\Placeholder::make('conflict_warning')
+                                                            ->content('This classroom is already reserved for the selected time period.')
+                                                            ->extraAttributes(['class' => 'text-danger-500 font-medium']),
+                                                            
+                                                            Forms\Components\Radio::make('conflict_action')
+                                                            ->label('What would you like to do?')
+                                                            ->options([
+                                                                'proceed' => 'Proceed with the conflicting time anyway',
+                                                                'change' => 'Select a different time',
+                                                            ])
+                                                            ->required()
+                                                            ->live()
+                                                            ->afterStateUpdated(function (callable $set, $state) {
+                                                                if ($state === 'proceed') {
+                                                                    // User wants to proceed despite conflict
+                                                                    $set('confirm_conflict', true);
+                                                                    $set('first_step_validation', 'valid');
+                                                                } else {
+                                                                    // User wants to change the time, reset dates
+                                                                    $set('confirm_conflict', false);
+                                                                    $set('starts_at', null);
+                                                                    $set('ends_at', null);
+                                                                    $set('has_time_conflict', false);
+                                                                    $set('first_step_validation', 'valid');
+                                                                    
+                                                                    // Use the correct Notification class
+                                                                    Notification::make()
+                                                                        ->title('Please select a new time')
+                                                                        ->success()
+                                                                        ->send();
                                                                 }
-                                                            }
-                                                        }),
+                                                            }),
+                                                        
+                                                        // Keep this hidden field for tracking conflict state
+                                                        Forms\Components\Hidden::make('confirm_conflict')
+                                                            ->default(false)
+                                                            ->dehydrated(true),
+                                                            
+                                                        Forms\Components\Hidden::make('has_time_conflict')
+                                                            ->default(false)
+                                                            ->dehydrated(true),
+                                                    ])
+                                                    ->extraAttributes(['class' => 'bg-danger-50 border border-danger-200 rounded-xl p-4'])
+                                                    ->visible(fn(Forms\Get $get) => $get('has_time_conflict') === true)
+                                                    ->columnSpanFull(),
+                                                Forms\Components\Builder::make('description')
+                                                    ->label('Remarks')
+                                                    ->blocks([
+                                                        Builder\Block::make('message')
+                                                            ->schema([
+                                                                Textarea::make('message')
+                                                                    ->label('Message')
+                                                                    ->placeholder('Type your message...')
+                                                                    ->rows(3)
+                                                                    ->required()
+                                                                    ->live(onBlur: true),
+                                                                Forms\Components\TextInput::make('sender_role')
+                                                                    ->label('Sender')
+                                                                    ->default(fn() => auth()->user()->name)
+                                                                    ->readOnly()
+                                                                    ->required()
+                                                                    ->live(onBlur: true),
+                                                            ])
+                                                    ])
+                                                    
+                                                    ->collapsible()
+                                                    ->columnSpanFull(),
+                                            ]),
+                                    ]),
+                            ]),
+                            
+                        Wizard\Step::make('Other Information')
+                            ->schema([
+                                Forms\Components\TextInput::make('ticket_number')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->unique('tickets', ignoreRecord: true),
+                                Forms\Components\Select::make('priority')
+                                    ->required()
+                                    ->default('low')
+                                    ->options([
+                                        'low' => 'Low',
+                                        'medium' => 'Medium',
+                                        'high' => 'High',
+                                    ]),
+                                Forms\Components\TextInput::make('created_by')
+                                    ->required()
+                                    ->default(fn() => auth()->user()->name)
+                                    ->dehydrateStateUsing(fn() => auth()->id())
+                                    ->readOnly(),
+                                Forms\Components\Select::make('assigned_to')
+                                    ->required()
+                                    ->searchable()
+                                    ->default(function () {
+                                    // Find the first technician user
+                                    $technician = User::whereHas('roles', function ($query) {
+                                        $query->where('name', 'technician');
+                                    })->first();
+            
+                                    // If no technician found, find the first user
+                                    if (!$technician) {
+                                        $technician = User::first();
+                                    }
+            
+                                    // Throw an exception if no users exist
+                                    if (!$technician) {
+                                        throw new \Exception('No users available for ticket assignment');
+                                    }
+            
+                                    return $technician->id;
+                                    })
+                                    ->disabled(fn() => auth()->user()->hasRole('professor'))
+                                    ->dehydrated()
+                                    ->options(function () {
+                                    try {
+                                        if (auth()->user()->hasRole('professor')) {
+                                            // Direct database query instead of Eloquent for more reliable results
+                                            $technicianIds = DB::table('model_has_roles')
+                                                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                                                ->where('roles.name', 'technician')
+                                                ->pluck('model_has_roles.model_id')
+                                                ->toArray();
+                                            
+                                            return User::whereIn('id', $technicianIds)->pluck('name', 'id')->toArray();
+                                        }
+                                        
+                                        return User::all()->pluck('name', 'id')->toArray();
+                                    } catch (\Exception $e) {
+                                        // Fallback if anything goes wrong
+                                        return User::all()->pluck('name', 'id')->toArray();
+                                    }
+                                }),
+                                Forms\Components\Hidden::make('ticket_status')
+                                    ->default('open')
+                                    ->dehydrated()
+                                    ->required(),
 
-                                                    Forms\Components\Select::make('ends_at')
-                                                        ->required()
-                                                        ->options(function (Forms\Get $get) {
-                                                            $startsAt = $get('starts_at');
-                                                            if (!$startsAt) {
-                                                                return [];
-                                                            }
-
-                                                            $startHour = (int) Carbon::parse($startsAt)->format('H');
-                                                            $options = [];
-
-                                                            // Generate options for the next 12 hours after start hour
-                                                            for ($i = 1; $i <= 8; $i++) {
-                                                                $hour = ($startHour + $i) % 24;
-                                                                $time = sprintf('%02d:00', $hour);
-                                                                $formattedTime = Carbon::createFromFormat('H:i', $time)->format('g:i A');
-                                                                $options[$time] = $formattedTime;
-                                                            }
-
-                                                            return $options;
-                                                        })
-                                                        ->live()
-                                                        ->required()
-                                                        ->disabled(fn(Forms\Get $get) => !$get('starts_at'))
-                                                        ->visible(fn($get) => $get('option') === 'classroom'),
-
-                                                    Forms\Components\Select::make('asset_id')
-                                                        ->relationship('asset', 'name')
-                                                        ->required(fn($get) => $get('option') === 'asset')
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5)
-                                                        ->visible(fn($get) => $get('option') !== 'classroom')
-                                                        ->visible(
-                                                            fn($get) =>
-                                                            $get('ticket_type') === 'incident' ||
-                                                                ($get('ticket_type') === 'request' && $get('option') === 'asset')
-                                                        ),
-
-                                                    Forms\Components\Select::make('section_id')
-                                                        ->relationship('section', 'name')
-                                                        ->required()
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5)
-                                                        ->visible(fn($get) => $get('option') !== 'classroom')
-                                                        ->afterStateUpdated(function ($state, callable $set) {
-                                                            if ($state === 'asset') {
-                                                                $set('subject_id', null);
-                                                            }
-                                                        }),
-
-                                                    Forms\Components\Select::make('subject_id')
-                                                        ->options(Subject::all()->pluck('name', 'id'))
-                                                        ->required(fn($get) => $get('option') === 'classroom')
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5)
-                                                        ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->afterStateUpdated(function ($state, callable $set) {
-                                                            if ($state === 'asset') {
-                                                                $set('subject_id', null);
-                                                            }
-                                                        }),
-                                                    Forms\Components\Builder::make('description')
-                                                        ->label('Remarks')
-                                                        ->blocks([
-                                                            Builder\Block::make('message')
-                                                                ->schema([
-                                                                    Textarea::make('message')
-                                                                        ->label('Message')
-                                                                        ->placeholder('Type your message...')
-                                                                        ->rows(3)
-                                                                        ->required()
-                                                                        ->live(onBlur: true),
-                                                                    Forms\Components\TextInput::make('sender_role')
-                                                                        ->label('Sender')
-                                                                        ->default(fn() => auth()->user()->name)
-                                                                        ->readOnly()
-                                                                        ->required()
-                                                                        ->live(onBlur: true),
-                                                                ])
-                                                        ])
-                                                        ->collapsible()
-                                                        ->columnSpanFull(),
-                                                ]),
-                                        ]),
-                                ]),
-                            Wizard\Step::make('Other Information')
-                                ->schema([
-                                    Forms\Components\TextInput::make('ticket_number')
-                                        ->disabled()
-                                        ->dehydrated()
-                                        ->required()
-                                        ->maxLength(255)
-                                        ->unique('tickets', ignoreRecord: true),
-                                    Forms\Components\Select::make('priority')
-                                        ->required()
-                                        ->default('low')
-                                        ->options([
-                                            'low' => 'Low',
-                                            'medium' => 'Medium',
-                                            'high' => 'High',
-                                        ]),
-                                    Forms\Components\TextInput::make('created_by')
-                                        ->required()
-                                        ->default(fn() => auth()->user()->name)
-                                        ->dehydrateStateUsing(fn() => auth()->id())
-                                        ->readOnly(),
-                                    Forms\Components\Select::make('assigned_to')
-                                        ->required()
-                                        ->searchable()
-                                        ->default(function () {
-                                            // Find the first technician user
-                                            $technician = User::whereHas('roles', function ($query) {
-                                                $query->where('name', 'technician');
-                                            })->first();
-
-                                            // If no technician found, find the first user
-                                            if (!$technician) {
-                                                $technician = User::first();
-                                            }
-
-                                            // Throw an exception if no users exist
-                                            if (!$technician) {
-                                                throw new \Exception('No users available for ticket assignment');
-                                            }
-
-                                            return $technician->id;
-                                        })
-                                        ->disabled(fn() => auth()->user()->hasRole('professor'))
-                                        ->dehydrated()
-                                        ->options(User::all()->pluck('name', 'id')),
-                                    Forms\Components\Hidden::make('ticket_status')
-                                        ->default('open')
-                                        ->dehydrated()
-                                        ->required(),
-
-                                    Forms\Components\FileUpload::make('attachments')
-                                        ->multiple()
-                                        ->openable()
-                                        ->image()
-                                        ->downloadable()
-                                        ->columnSpanFull(),
-                                ])->columns(2),
-                        ])->columnSpan(1), // Ensures the Wizard takes one column
-                    ]),
-            ])
+                                Forms\Components\FileUpload::make('attachments')
+                                    ->multiple()
+                                    ->openable()
+                                    ->image()
+                                    ->downloadable()
+                                    ->columnSpanFull(),
+                            ])->columns(2),
+                    ])->columnSpan(1), // Ensures the Wizard takes one column
+                ]),
+        ])
 
 
-            ->disabled($isProfessor && $isEditMode); // Only disable form if professor AND in edit mode
+        ->disabled($isProfessor && $isEditMode); // Only disable form if professor AND in edit mode
+}
+
+protected function rules()
+{
+    return [
+        'data.confirm_conflict' => [
+            function ($attribute, $value, $fail) {
+                if ($this->data['has_time_conflict'] && !$value) {
+                    $fail('You must address the time conflict before submitting.');
+                }
+            },
+        ],
+    ];
+}
+
+protected static function checkTimeConflict(Forms\Get $get, Forms\Set $set): void
+{
+    // Only check for conflicts if this is a classroom request
+    if ($get('option') !== 'classroom') {
+        $set('has_time_conflict', false);
+        return;
     }
+    
+    $subjectId = $get('subject_id');
+    $startsAt = $get('starts_at');
+    $endsAtTime = $get('ends_at');
+    
+    // If any required fields are missing, we can't check for conflicts yet
+    if (!$subjectId || !$startsAt || !$endsAtTime) {
+        return;
+    }
+    
+    // Convert times to Carbon instances for comparison
+    $startsAtDate = Carbon::parse($startsAt);
+    list($hours, $minutes) = explode(':', $endsAtTime);
+    $endsAtDate = Carbon::parse($startsAt)->setTime((int)$hours, (int)$minutes);
+    
+    // Get current record ID if we're editing
+    $currentId = null;
+    if (request()->route('record')) {
+        $currentId = request()->route('record');
+    }
+    
+    // Check for overlapping bookings
+    $conflictingBookings = Ticket::query()
+        ->where('subject_id', $subjectId)
+        ->where('option', 'classroom')
+        ->where('ticket_status', '!=', 'rejected')
+        ->where(function ($query) use ($startsAtDate, $endsAtDate) {
+            $query->where(function ($q) use ($startsAtDate, $endsAtDate) {
+                // New booking starts during an existing booking
+                $q->where('starts_at', '<=', $startsAtDate)
+                  ->where('ends_at', '>', $startsAtDate);
+            })->orWhere(function ($q) use ($startsAtDate, $endsAtDate) {
+                // New booking ends during an existing booking
+                $q->where('starts_at', '<', $endsAtDate)
+                  ->where('ends_at', '>=', $endsAtDate);
+            })->orWhere(function ($q) use ($startsAtDate, $endsAtDate) {
+                // New booking completely encapsulates an existing booking
+                $q->where('starts_at', '>=', $startsAtDate)
+                  ->where('ends_at', '<=', $endsAtDate);
+            });
+        });
+        
+    // Exclude the current ticket if we're editing
+    if ($currentId) {
+        $conflictingBookings->where('id', '!=', $currentId);
+    }
+    
+    $hasConflict = $conflictingBookings->exists();
+    
+    // Set the conflict flag to control warning display
+    $set('has_time_conflict', $hasConflict);
+}
 
 
     public static function table(Table $table): Table

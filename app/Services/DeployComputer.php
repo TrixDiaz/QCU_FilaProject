@@ -194,7 +194,7 @@ final class DeployComputer
                             ]),
                         // Terminal Code
                         \Filament\Forms\Components\TextInput::make('code')
-                            ->label('Code')
+                            ->label('Computer Name')
                             ->required()
                             ->disabled()
                             ->dehydrated()

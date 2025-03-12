@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use Filament\Forms;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class AssignAssetForm
 {
@@ -11,46 +14,151 @@ final class AssignAssetForm
         return [
             \Filament\Forms\Components\Grid::make(2)
                 ->schema([
-                    // Name
-                    \Filament\Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->default($record ? $record->name : ''),
-                    // Classroom
                     \Filament\Forms\Components\Select::make('classroom')
+                        ->label('Classroom')
                         ->options(\App\Models\Classroom::where('is_active', true)->pluck('name', 'id'))
                         ->searchable()
                         ->preload()
                         ->required()
                         ->reactive()
-                        ->disabled(fn(\Filament\Forms\Get $get) => !$get('name'))
-                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) {
-                            $classroom = \App\Models\Classroom::find($state);
-                            if ($classroom) {
-                                $building = $classroom->building;
-                                $slug = \Illuminate\Support\Str::slug($classroom->name);
-                                $enteredSlug = $get('name'); // Assuming 'name' is the field where the new entered slug is stored
+                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) {
+                            $classroomId = $state;
+                            if ($classroomId) {
+                                // Auto-generate terminal number
+                                $nextTerminal = self::getNextTerminalNumber($classroomId);
+                                $set('name', $nextTerminal);
 
-                                $buildingSlugFirstLetter = substr($building->slug, 0, 1);
-                                $buildingSlugLastLetter = substr($building->slug, -1);
-                                $classroomSlugFirstLetter = substr($slug, 0, 1);
-                                $classroomSlugLastLetter = substr($slug, -1);
-                                $enteredSlugFirstLetter = substr($enteredSlug, 0, 1);
-                                $enteredSlugLastLetter = substr($enteredSlug, -1);
-
-                                $set('code', strtoupper("{$buildingSlugFirstLetter}{$buildingSlugLastLetter}-{$classroomSlugFirstLetter}{$classroomSlugLastLetter}-{$enteredSlugFirstLetter}{$enteredSlugLastLetter}"));
+                                // Generate unique code
+                                $classroom = \App\Models\Classroom::find($classroomId);
+                                if ($classroom) {
+                                    $building = $classroom->building;
+                                    $classroomSlug = Str::slug($classroom->name);
+                                    $buildingPrefix = substr($building->name, 0, 3);
+                                    $set('code', strtoupper("{$buildingPrefix}-{$classroomSlug}-{$nextTerminal}"));
+                                }
                             }
                         }),
+
+                    \Filament\Forms\Components\TextInput::make('name')
+                        ->label('Terminal Number')
+                        ->required()
+                        ->disabled()
+                        ->dehydrated()
+                        ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('classroom')),
                 ]),
-            // Terminal Code
+
             \Filament\Forms\Components\TextInput::make('code')
                 ->label('Code')
                 ->required()
                 ->disabled()
                 ->dehydrated()
+                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('classroom'))
                 ->extraAttributes([
                     'style' => 'text-transform:uppercase',
                     'class' => 'uppercase'
                 ]),
         ];
+    }
+
+    public static function process(array $data, $assetId)
+    {
+        try {
+            return DB::transaction(function () use ($data, $assetId) {
+                Log::info("Starting asset assignment process", [
+                    'asset_id' => $assetId,
+                    'classroom_id' => $data['classroom'],
+                    'terminal_number' => $data['name']
+                ]);
+
+                $exists = \App\Models\AssetGroup::query()
+                    ->where('classroom_id', $data['classroom'])
+                    ->where('name', $data['name'])
+                    ->exists();
+
+                if ($exists) {
+                    throw new \Exception('Terminal number already exists. Please try again.');
+                }
+
+                $asset = \App\Models\Asset::find($assetId);
+                if (!$asset) {
+                    Log::error("Asset not found", ['asset_id' => $assetId]);
+                    throw new \Exception("Asset with ID {$assetId} not found.");
+                }
+
+                // ✅ Update Asset Name Before Saving to Asset Group
+                $asset->update([
+                    'name' => $data['name'],
+                    'status' => 'deploy'
+                ]);
+
+                Log::info("Asset name updated successfully", [
+                    'asset_id' => $assetId,
+                    'new_name' => $data['name']
+                ]);
+
+                // ✅ Create Asset Group with Updated Asset Name
+                $assetGroup = \App\Models\AssetGroup::create([
+                    'asset_id' => $assetId,
+                    'classroom_id' => $data['classroom'],
+                    'name' => $data['name'],
+                    'code' => $data['code'],
+                    'status' => 'active',
+                ]);
+
+                if (!$assetGroup) {
+                    Log::error("Failed to create asset group", ['asset_id' => $assetId]);
+                    throw new \Exception("Failed to create asset group for asset with ID {$assetId}.");
+                }
+
+                Log::info("Asset assigned successfully", [
+                    'asset_id' => $assetId,
+                    'asset_group_id' => $assetGroup->id
+                ]);
+
+                return true;
+            }, 5);
+        } catch (\Exception $e) {
+            Log::error("Error in asset assignment", [
+                'asset_id' => $assetId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    protected static function getNextTerminalNumber($classroomId)
+    {
+        return DB::transaction(function () use ($classroomId) {
+            $existingTerminals = \App\Models\AssetGroup::query()
+                ->where('classroom_id', $classroomId)
+                ->lockForUpdate()
+                ->pluck('name')
+                ->toArray();
+
+            $highestNumber = 0;
+            foreach ($existingTerminals as $terminal) {
+                if (preg_match('/^T(\d+)$/', $terminal, $matches)) {
+                    $highestNumber = max($highestNumber, (int)$matches[1]);
+                }
+            }
+
+            $nextNumber = $highestNumber + 1;
+            $nextTerminal = 'T' . $nextNumber;
+
+            do {
+                $exists = \App\Models\AssetGroup::query()
+                    ->where('classroom_id', $classroomId)
+                    ->where('name', $nextTerminal)
+                    ->exists();
+
+                if ($exists) {
+                    $nextNumber++;
+                    $nextTerminal = 'T' . $nextNumber;
+                }
+            } while ($exists);
+
+            return $nextTerminal;
+        }, 5);
     }
 }

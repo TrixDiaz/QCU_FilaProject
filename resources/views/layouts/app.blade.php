@@ -23,26 +23,26 @@
         }
 
         @media print {
-            body * {
-                visibility: hidden; /* Hide everything by default */
-            }
-
-            .print-only,
-            .print-only * {
-                visibility: visible; /* Show only the print-only section */
-            }
-
-            .print-only {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-            }
+        body * {
+            visibility: hidden; /* Hide everything by default */
         }
+
+        .print-only,
+        .print-only * {
+            visibility: visible; /* Show only the print-only section */
+        }
+
+        .print-only {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+    }
+}
 
         .print-only {
             display: none;
@@ -104,12 +104,21 @@
     </div>
 
     <!-- Print only QR code -->
-    <div class="print-only fixed inset-0 flex items-center justify-center">
+    <!-- <div class="print-only fixed inset-0 flex items-center justify-center">
         <div class="text-center">
             <div id="qrcode-print" class="mx-auto"></div>
             <p class="mt-4" id="print-url"></p>
         </div>
-    </div>
+    </div> -->
+
+    <!-- Print only QR code -->
+        <div class="print-only fixed inset-0 flex items-center justify-center">
+            <div class="text-center">
+                <div id="qrcode-print" class="mx-auto"></div>
+                <p class="mt-4" id="print-url"></p>
+            </div>
+        </div>
+
 
     {{ $slot }}
 
@@ -193,6 +202,14 @@
             // Trigger print
             window.print();
         });
+            window.onafterprint = function () {
+            location.reload();
+        };
+
+            document.getElementById('close-qr-modal').addEventListener('click', function () {
+            location.reload();
+});
+
     </script>
 </body>
 </html>

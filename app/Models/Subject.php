@@ -29,6 +29,11 @@ class Subject extends Model
         'school_year'
     ];
 
+    protected $casts = [
+    'lab_time_starts_at' => 'datetime',
+    'lab_time_ends_at' => 'datetime',
+    ];
+
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'subject_id');

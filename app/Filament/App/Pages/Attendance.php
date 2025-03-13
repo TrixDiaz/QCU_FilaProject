@@ -14,6 +14,8 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+
 
 class Attendance extends Page implements HasForms, HasTable
 {
@@ -102,7 +104,28 @@ class Attendance extends Page implements HasForms, HasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->headerActions([
-                ExportBulkAction::make()->label('Export'),
+                ExportBulkAction::make()->exports([
+                    ExcelExport::make()
+                        ->fromTable()
+                        ->except(["id",])
+                        ->withFilename(date('Y-m-d') . '-Buildings.xlsx'),
+                    ExcelExport::make()
+                        ->fromTable()
+                        ->only([
+                            'subject_id',
+                            'terminal_number',
+                            'student_full_name',
+                            'student_number',
+                            'student_email',
+                            'periperals',
+                            'remarks',
+                            'created_at',
+                            'updated_at',
+                        ])
+                        ->withFilename(date('Y-m-d') . '-Filtered-Assets.xlsx'),
+                ])
+
+
             ])
             ->filters([
                 SelectFilter::make('subject_id')

@@ -100,13 +100,23 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         'request' => 'Request',
                                                         'incident' => 'Incident',
                                                     ])
-                                                    ->afterStateUpdated(fn($state, $set) => $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8))))
+                                                    ->afterStateUpdated(function ($state, $set) {
+                                                        $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8)));
+                                                        
+                                                        // Reset option if changing ticket type
+                                                        $set('option', null);
+                                                        $set('asset_id', null);
+                                                        $set('section_id', null);
+                                                        $set('subject_id', null);
+                                                    })
                                                     ->required()
                                                     ->reactive()
-                                                    ->live(onBlur: true)
+                                                    ->live()
                                                     ->native(false),
+                                                    
                                                 Forms\Components\TextInput::make('title')
                                                     ->required(),
+                                                    
                                                 Forms\Components\Select::make('option')
                                                     ->options([
                                                         'asset' => 'Asset',
@@ -116,83 +126,86 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->visible(fn($get) => $get('ticket_type') === 'request')
                                                     ->live()
                                                     ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state === 'classroom') {
-                                                            $set('asset_id', null);
-                                                        }
+                                                        // Reset related fields when option changes
+                                                        $set('asset_id', null);
+                                                        $set('section_id', null);
+                                                        $set('subject_id', null);
+                                                        $set('starts_at', null);
+                                                        $set('ends_at', null);
+                                                        $set('has_time_conflict', false);
                                                     }),
 
                                                 Forms\Components\DateTimePicker::make('starts_at')
                                                     ->visible(fn($get) => $get('option') === 'classroom')
-                                                    ->rules(['required_if:option,classroom'])
+                                                    ->required(fn($get) => $get('option') === 'classroom')
                                                     ->seconds(false)
+                                                    ->closeOnDateSelection()
                                                     ->minutesStep(15)
                                                     ->default(now()->startOfHour())
                                                     ->live()
                                                     ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
-                                                    if (!$state) return;
+                                                        if (!$state) return;
 
-                                                // Get the current selected end time duration
-                                                    $currentEndHour = $get('ends_at');
-
-                                                // If no end hour selected yet, default to starts_at + 1 hour
-                                                    if (!$currentEndHour) {
-                                                    $startHour = (int) Carbon::parse($state)->format('H');
-                                                    $defaultEndHour = ($startHour + 1) % 24;
-                                                    $set('ends_at', sprintf('%02d:00', $defaultEndHour));
-                                                    }
-                                                // If end hour is already selected, check if it's still valid
-                                                    else {
-                                                    $startHour = (int) Carbon::parse($state)->format('H');
-                                                    $endHour = (int) explode(':', $currentEndHour)[0];
-
-                                                // If end hour is not at least 1 hour after start hour
-                                                    if ($endHour <= $startHour) {
-                                                    $newEndHour = ($startHour + 1) % 24;
-                                                    $set('ends_at', sprintf('%02d:00', $newEndHour));
-                                                    }
-                                                }
-                
-                                                // Check for time conflicts when date changes
-                                                self::checkTimeConflict($get, $set);
-                                                }),
+                                                        // Get the current selected end time
+                                                        $currentEndTime = $get('ends_at');
+                                                        $startDateTime = Carbon::parse($state);
+                                                        
+                                                        // If no end time selected yet, default to starts_at + 1 hour
+                                                        if (!$currentEndTime) {
+                                                            $endDateTime = (clone $startDateTime)->addHour();
+                                                            $set('ends_at', $endDateTime->format('Y-m-d H:i:s'));
+                                                        } else {
+                                                            // If end time is already selected, check if it's still valid
+                                                            $endDateTime = Carbon::parse($currentEndTime);
+                                                            
+                                                            // If end time is before or equal to start time, add 1 hour to start time
+                                                            if ($endDateTime->lte($startDateTime)) {
+                                                                $newEndDateTime = (clone $startDateTime)->addHour();
+                                                                $set('ends_at', $newEndDateTime->format('Y-m-d H:i:s'));
+                                                            }
+                                                        }
+                                                        
+                                                        // Check for time conflicts when date changes
+                                                        self::checkTimeConflict($get, $set);
+                                                    }),
 
                                                 Forms\Components\Select::make('ends_at')
-                                                    ->required()
                                                     ->options(function (Forms\Get $get) {
-                                                    $startsAt = $get('starts_at');
-                                                    if (!$startsAt) {
-                                                        return [];
-                                                    }
+                                                        $startsAt = $get('starts_at');
+                                                        if (!$startsAt) {
+                                                            return [];
+                                                        }
 
-                                                    $startHour = (int) Carbon::parse($startsAt)->format('H');
-                                                    $options = [];
+                                                        $startDateTime = Carbon::parse($startsAt);
+                                                        $options = [];
 
-                                                // Generate options for the next 8 hours after start hour
-                                                    for ($i = 1; $i <= 8; $i++) {
-                                                    $hour = ($startHour + $i) % 24;
-                                                    $time = sprintf('%02d:00', $hour);
-                                                    $formattedTime = Carbon::createFromFormat('H:i', $time)->format('g:i A');
-                                                    $options[$time] = $formattedTime;
-                                                    }
+                                                        // Generate options for the next 8 hours after start time
+                                                        for ($i = 1; $i <= 8; $i++) {
+                                                            $endDateTime = (clone $startDateTime)->addHours($i);
+                                                            $key = $endDateTime->format('Y-m-d H:i:s');
+                                                            $display = $endDateTime->format('g:i A');
+                                                            $options[$key] = $display;
+                                                        }
 
-                                                    return $options;
+                                                        return $options;
                                                     })
                                                     ->live()
-                                                    ->required()
+                                                    ->required(fn($get) => $get('option') === 'classroom')
                                                     ->disabled(fn(Forms\Get $get) => !$get('starts_at'))
                                                     ->visible(fn($get) => $get('option') === 'classroom')
-                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
-                                                // Check for time conflicts when end time changes
-                                                    self::checkTimeConflict($get, $set);
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
+                                                        if (!$state) return;
+                                                        
+                                                        // Check for time conflicts when end time changes
+                                                        self::checkTimeConflict($get, $set);
                                                     }),
 
                                                 Forms\Components\Select::make('asset_id')
                                                     ->relationship('asset', 'name')
-                                                    ->required(fn($get) => $get('option') === 'asset')
+                                                    ->required(fn($get) => $get('option') === 'asset' || $get('ticket_type') === 'incident')
                                                     ->searchable()
                                                     ->preload()
                                                     ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') !== 'classroom')
                                                     ->visible(
                                                         fn($get) =>
                                                         $get('ticket_type') === 'incident' ||
@@ -201,17 +214,11 @@ class TicketResource extends Resource implements HasShieldPermissions
 
                                                 Forms\Components\Select::make('section_id')
                                                     ->relationship('section', 'name')
-                                                    ->required()
+                                                    ->required(fn($get) => $get('option') === 'classroom')
                                                     ->searchable()
                                                     ->preload()
                                                     ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') !== 'classroom')
-                                                    ->visible(fn($get) => $get('option') !== 'asset')
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state === 'asset') {
-                                                            $set('subject_id', null);
-                                                        }
-                                                    }),
+                                                    ->visible(fn($get) => $get('option') === 'classroom'),
 
                                                 Forms\Components\Select::make('subject_id')
                                                     ->options(Subject::all()->pluck('name', 'id'))
@@ -219,15 +226,11 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->searchable()
                                                     ->preload()
                                                     ->optionsLimit(5)
-                                                    ->visible(fn($get) => $get('option') === 'classroom' || ($get('ticket_type') === 'request' && $get('option') === 'asset'))
+                                                    ->visible(fn($get) => $get('option') === 'classroom')
                                                     ->live()
                                                     ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
-                                                    if ($state === 'asset') {
-                                                        $set('subject_id', null);
-                                                    }
-                                                    
-                                                    // Check for time conflicts when subject changes
-                                                    self::checkTimeConflict($get, $set);
+                                                        // Check for time conflicts when subject changes
+                                                        self::checkTimeConflict($get, $set);
                                                     }),
                                                 
                                                 Forms\Components\Section::make('Time Conflict Warning')
@@ -236,7 +239,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                             ->content('This classroom is already reserved for the selected time period.')
                                                             ->extraAttributes(['class' => 'text-danger-500 font-medium']),
                                                             
-                                                            Forms\Components\Radio::make('conflict_action')
+                                                        Forms\Components\Radio::make('conflict_action')
                                                             ->label('What would you like to do?')
                                                             ->options([
                                                                 'proceed' => 'Proceed with the conflicting time anyway',
@@ -244,28 +247,26 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                             ])
                                                             ->required()
                                                             ->live()
-                                                            ->afterStateUpdated(function (callable $set, $state) {
+                                                            ->afterStateUpdated(function (Forms\Set $set, $state) {
                                                                 if ($state === 'proceed') {
                                                                     // User wants to proceed despite conflict
                                                                     $set('confirm_conflict', true);
-                                                                    $set('first_step_validation', 'valid');
                                                                 } else {
                                                                     // User wants to change the time, reset dates
                                                                     $set('confirm_conflict', false);
                                                                     $set('starts_at', null);
                                                                     $set('ends_at', null);
                                                                     $set('has_time_conflict', false);
-                                                                    $set('first_step_validation', 'valid');
                                                                     
                                                                     // Use the correct Notification class
-                                                                    Notification::make()
+                                                                    \Filament\Notifications\Notification::make()
                                                                         ->title('Please select a new time')
                                                                         ->success()
                                                                         ->send();
                                                                 }
                                                             }),
                                                         
-                                                        // Keep this hidden field for tracking conflict state
+                                                        // Hidden fields for tracking conflict state
                                                         Forms\Components\Hidden::make('confirm_conflict')
                                                             ->default(false)
                                                             ->dehydrated(true),
@@ -277,12 +278,13 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->extraAttributes(['class' => 'bg-danger-50 border border-danger-200 rounded-xl p-4'])
                                                     ->visible(fn(Forms\Get $get) => $get('has_time_conflict') === true)
                                                     ->columnSpanFull(),
+                                                    
                                                 Forms\Components\Builder::make('description')
                                                     ->label('Remarks')
                                                     ->blocks([
                                                         Builder\Block::make('message')
                                                             ->schema([
-                                                                Textarea::make('message')
+                                                                Forms\Components\Textarea::make('message')
                                                                     ->label('Message')
                                                                     ->placeholder('Type your message...')
                                                                     ->rows(3)
@@ -296,7 +298,6 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                                     ->live(onBlur: true),
                                                             ])
                                                     ])
-                                                    
                                                     ->collapsible()
                                                     ->columnSpanFull(),
                                             ]),
@@ -328,44 +329,49 @@ class TicketResource extends Resource implements HasShieldPermissions
                                     ->required()
                                     ->searchable()
                                     ->default(function () {
-                                    // Find the first technician user
-                                    $technician = User::whereHas('roles', function ($query) {
-                                        $query->where('name', 'technician');
-                                    })->first();
-            
-                                    // If no technician found, find the first user
-                                    if (!$technician) {
-                                        $technician = User::first();
-                                    }
-            
-                                    // Throw an exception if no users exist
-                                    if (!$technician) {
-                                        throw new \Exception('No users available for ticket assignment');
-                                    }
-            
-                                    return $technician->id;
-                                    })
-                                    ->disabled(fn() => auth()->user()->hasRole('professor'))
-                                    ->dehydrated()
-                                    ->options(function () {
-                                    try {
-                                        if (auth()->user()->hasRole('professor')) {
-                                            // Direct database query instead of Eloquent for more reliable results
-                                            $technicianIds = DB::table('model_has_roles')
-                                                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                                                ->where('roles.name', 'technician')
-                                                ->pluck('model_has_roles.model_id')
-                                                ->toArray();
-                                            
-                                            return User::whereIn('id', $technicianIds)->pluck('name', 'id')->toArray();
+                                        // Get all technician users
+                                        $technicians = User::whereHas('roles', function ($query) {
+                                            $query->where('name', 'technician');
+                                        })->get();
+                                        
+                                        // If technicians exist, select one randomly
+                                        if ($technicians->count() > 0) {
+                                            return $technicians->random()->id;
                                         }
                                         
-                                        return User::all()->pluck('name', 'id')->toArray();
-                                    } catch (\Exception $e) {
-                                        // Fallback if anything goes wrong
-                                        return User::all()->pluck('name', 'id')->toArray();
-                                    }
-                                }),
+                                        // If no technician found, find any user
+                                        $user = User::first();
+                                        
+                                        // Throw an exception if no users exist
+                                        if (!$user) {
+                                            throw new \Exception('No users available for ticket assignment');
+                                        }
+                                        
+                                        return $user->id;
+                                    })
+                                    ->disabled(fn () => auth()->user()->hasRole('professor'))
+                                    ->dehydrated(true)
+                                    ->options(function () {
+                                        try {
+                                            // Only show technicians if the user is a professor
+                                            if (auth()->user()->hasRole('professor')) {
+                                                // Direct database query for more reliable results
+                                                $technicianIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                                                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                                                    ->where('roles.name', 'technician')
+                                                    ->pluck('model_has_roles.model_id')
+                                                    ->toArray();
+                                                
+                                                return User::whereIn('id', $technicianIds)->pluck('name', 'id')->toArray();
+                                            }
+                                            
+                                            // Non-professors can see all users
+                                            return User::all()->pluck('name', 'id')->toArray();
+                                        } catch (\Exception $e) {
+                                            // Fallback if anything goes wrong
+                                            return User::all()->pluck('name', 'id')->toArray();
+                                        }
+                                    }),
                                 Forms\Components\Hidden::make('ticket_status')
                                     ->default('open')
                                     ->dehydrated()
@@ -378,11 +384,9 @@ class TicketResource extends Resource implements HasShieldPermissions
                                     ->downloadable()
                                     ->columnSpanFull(),
                             ])->columns(2),
-                    ])->columnSpan(1), // Ensures the Wizard takes one column
+                    ])->columnSpan(1),
                 ]),
         ])
-
-
         ->disabled($isProfessor && $isEditMode); // Only disable form if professor AND in edit mode
 }
 
@@ -407,19 +411,18 @@ protected static function checkTimeConflict(Forms\Get $get, Forms\Set $set): voi
         return;
     }
     
-    $subjectId = $get('subject_id');
     $startsAt = $get('starts_at');
-    $endsAtTime = $get('ends_at');
+    $endsAt = $get('ends_at');
+    $subjectId = $get('subject_id');
     
     // If any required fields are missing, we can't check for conflicts yet
-    if (!$subjectId || !$startsAt || !$endsAtTime) {
+    if (!$startsAt || !$endsAt || !$subjectId) {
         return;
     }
     
-    // Convert times to Carbon instances for comparison
+    // Convert to Carbon instances for comparison
     $startsAtDate = Carbon::parse($startsAt);
-    list($hours, $minutes) = explode(':', $endsAtTime);
-    $endsAtDate = Carbon::parse($startsAt)->setTime((int)$hours, (int)$minutes);
+    $endsAtDate = Carbon::parse($endsAt);
     
     // Get current record ID if we're editing
     $currentId = null;
@@ -429,8 +432,8 @@ protected static function checkTimeConflict(Forms\Get $get, Forms\Set $set): voi
     
     // Check for overlapping bookings
     $conflictingBookings = Ticket::query()
-        ->where('subject_id', $subjectId)
         ->where('option', 'classroom')
+        ->where('subject_id', $subjectId)
         ->where('ticket_status', '!=', 'rejected')
         ->where(function ($query) use ($startsAtDate, $endsAtDate) {
             $query->where(function ($q) use ($startsAtDate, $endsAtDate) {
@@ -445,6 +448,10 @@ protected static function checkTimeConflict(Forms\Get $get, Forms\Set $set): voi
                 // New booking completely encapsulates an existing booking
                 $q->where('starts_at', '>=', $startsAtDate)
                   ->where('ends_at', '<=', $endsAtDate);
+            })->orWhere(function ($q) use ($startsAtDate, $endsAtDate) {
+                // Existing booking completely encapsulates the new booking
+                $q->where('starts_at', '<=', $startsAtDate)
+                  ->where('ends_at', '>=', $endsAtDate);
             });
         });
         
@@ -453,10 +460,23 @@ protected static function checkTimeConflict(Forms\Get $get, Forms\Set $set): voi
         $conflictingBookings->where('id', '!=', $currentId);
     }
     
+    // Add logging for debugging time conflict checks
+    \Illuminate\Support\Facades\Log::info('Time conflict check', [
+        'starts_at' => $startsAtDate->toDateTimeString(),
+        'ends_at' => $endsAtDate->toDateTimeString(),
+        'subject_id' => $subjectId,
+        'has_conflict' => $conflictingBookings->exists()
+    ]);
+    
     $hasConflict = $conflictingBookings->exists();
     
     // Set the conflict flag to control warning display
     $set('has_time_conflict', $hasConflict);
+    
+    // Reset conflict confirmation when conflict status changes
+    if (!$hasConflict) {
+        $set('confirm_conflict', false);
+    }
 }
 
 

@@ -18,7 +18,7 @@
     <style>
         body {
             font-family: Poppins, sans-serif;
-            background-image: url('qcu.jpg');
+            background-image: url('/images/qcu.jpg');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
@@ -37,7 +37,8 @@
                 <div class='lg:flex lg:items-center gap-x-2 relative'>
                     <div class="flex items-center shrink-0">
                         <a href="javascript:void(0)">
-                            <img src="logo.png" alt="Quezon City University Logo" class="h-16 w-16 mr-4">
+                            <img src="{{ url('/images/logo.png') }}" alt="Quezon City University Logo"
+                                class="h-16 w-16 mr-4">
                         </a>
                         <button id="toggleOpen" class='lg:hidden ml-auto'>
                             <svg class="w-7 h-7" fill="#fff" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -130,7 +131,7 @@
             <div class="mt-44 rounded-md px-4 py-12" id="about">
                 <div class="grid md:grid-cols-2 justify-center items-center gap-12 max-w-7xl mx-auto">
                     <div>
-                        <img src="qculab2.jpg" alt="Resource Management" class="w-full mx-auto" />
+                        <img src="{{ url('/images/qculab2.jpg') }}" alt="Resource Management" class="w-full mx-auto" />
                     </div>
                     <div class="max-md:text-center">
                         <h2 class="md:text-4xl text-3xl font-semibold md:!leading-[50px] mb-6">
@@ -167,7 +168,7 @@
                         </button>
                     </div>
                     <div>
-                        <img src="qculab.jpg" alt="Resource Management" class="w-full mx-auto" />
+                        <img src="{{ url('/images/qculab.jpg') }}" alt="Resource Management" class="w-full mx-auto" />
                     </div>
                 </div>
             </div>

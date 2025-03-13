@@ -174,15 +174,21 @@ class Calendar extends FullCalendarWidget
                                         ]
                                     );
 
-                                    // Find or create subject with required fields
+                                    // Replace your current Subject::firstOrCreate() block with this updated version
                                     $subject = Subject::firstOrCreate(
                                         ['name' => $subjectName],
                                         [
                                             'name' => $subjectName,
                                             'subject_code' => strtoupper(substr(str($subjectName)->slug(), 0, 6)),
                                             'subject_units' => 3, // default value
-                                            'lab_time' => '00:00:00',
-                                            'lecture_time' => '00:00:00'
+                                            'day' => 'Monday', // default value
+                                            'lab_time_starts_at' => '10:00:00',
+                                            'lab_time_ends_at' => '30:00:00',
+                                            'semester' => '1st Semester', // default value
+                                            'school_year' => '2024-2025', // default value
+                                            'description' => 'No description', // default value
+                                            'section_id' => 1, // Default section_id
+                                            'professor_id' => $professor->id // Add the professor ID from the current row
                                         ]
                                     );
 
@@ -191,7 +197,7 @@ class Calendar extends FullCalendarWidget
                                         $parsedStartsAt = Carbon::createFromFormat('m/d/Y H:i', $startsAt);
                                         $parsedEndsAt = Carbon::createFromFormat('m/d/Y H:i', $endsAt);
                                     } catch (\Exception $e) {
-                                        throw new \Exception("Invalid date format. Expected dd/mm/yyyy HH:mm for dates in row " . ($index + 2));
+                                        throw new \Exception("Invalid date format. Expected mm/dd/yyyy HH:mm for dates in row " . ($index + 2));
                                     }
 
                                     // Validate that end date is after start date

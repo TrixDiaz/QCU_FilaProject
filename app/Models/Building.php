@@ -13,15 +13,15 @@ class Building extends Model
     use HasFactory;
     use SoftDeletes;
 
-
+    protected $table = "buildings";
     protected $fillable = [
         'name',
-        'is_active',
         'slug',
+        'is_active',
         'created_at',
         'updated_at',
     ];
-    protected $dates = ['created_at', 'updated_at', 'deleted_at']; // Ensure timestamps are treated as dates
+    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
 
     public function classrooms(): HasMany
     {

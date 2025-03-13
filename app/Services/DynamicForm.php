@@ -2,25 +2,34 @@
 
 namespace App\Services;
 
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\TextInput;
+use Illuminate\Support\Str;
+
 final class DynamicForm
 {
     public static function schema($model): array
     {
         return [
-            \Filament\Forms\Components\Grid::make(2)
+            Grid::make(2)
                 ->schema([
-                    \Filament\Forms\Components\TextInput::make('name')
-                        ->live(onBlur: true)
-                        ->afterStateUpdated(function (string $operation, $state, \Filament\Forms\Set $set) {
-                            $set('slug', \Illuminate\Support\Str::slug($state));
+                    TextInput::make('name')
+                        ->required()
+                        ->live(debounce: 500)
+                        ->afterStateUpdated(function ($state, $set) {
+                            if (!empty($state)) {
+                                $set('slug', Str::slug($state));
+                            }
                         }),
 
-                    \Filament\Forms\Components\TextInput::make('slug')
-                        ->extraAttributes(['x-model' => "name.replace(/\s+/g, '-').toLowerCase()"])
+                    TextInput::make('slug')
+                        ->required()
                         ->unique($model, 'slug', ignoreRecord: true)
                         ->dehydrated()
-                        ->required()
-                        ->disabled(),
+                        ->readOnly()
+                        ->extraAlpineAttributes([
+                            'style' => 'background-color: #18181B; border-color: #18181B; border-style: none;',
+                        ]),
                 ]),
         ];
     }

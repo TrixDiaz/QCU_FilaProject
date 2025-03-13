@@ -27,13 +27,25 @@ class PublicAssetGroup extends Component
         }
 
         $this->assetGroups = AssetGroup::where('classroom_id', $this->classroomId)
-            ->with(['classroomAsset', 'classroomAsset.brand', 'classroomAsset.category'])
-            ->get();
-    }
-
+        ->with(['assets' => function ($query) {
+        $query->whereIn('status', ['active', 'inactive']);
+    },  'assets.brand', 'assets.category'])
+         ->get();
+    }   
     public function render()
     {
-        return view('livewire.public-asset-group')
-            ->layout('layouts.app');
+        $assetGroupsCount = $this->assetGroups->count();
+        $activeAssetsCount = \App\Models\Asset::where('status', 'active')->count();
+        $inactiveAssetsCount = \App\Models\Asset::where('status', 'inactive')->count();
+    
+        return view('livewire.public-asset-group', [
+            'assetGroupsCount' => $assetGroupsCount,
+            'activeAssetsCount' => $activeAssetsCount,
+            'inactiveAssetsCount' => $inactiveAssetsCount,
+        ])->layout('layouts.app');
     }
+    
+
+
+
 }

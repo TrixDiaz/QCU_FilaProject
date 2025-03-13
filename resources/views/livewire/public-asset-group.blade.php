@@ -16,6 +16,26 @@
                 Show QR Code
             </button>
         </div>
+                        <!-- Asset Summary Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Total Assets -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Total Assets</h3>
+                    <p class="text-4xl font-bold text-gray-700 dark:text-gray-300">{{ $assetGroupsCount }}</p>
+                </div>
+
+                <!-- Active Assets -->
+                <div class="bg-green-100 dark:bg-green-900 p-6 rounded-lg shadow-md border border-green-300 dark:border-green-700">
+                    <h3 class="text-lg font-semibold text-green-700 dark:text-green-300 mb-2">Active Assets</h3>
+                    <p class="text-4xl font-bold text-green-800 dark:text-green-100">{{ $activeAssetsCount }}</p>
+                </div>
+
+                <!-- Inactive Assets -->
+                <div class="bg-red-100 dark:bg-red-900 p-6 rounded-lg shadow-md border border-red-300 dark:border-red-700">
+                    <h3 class="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Inactive Assets</h3>
+                    <p class="text-4xl font-bold text-red-800 dark:text-red-100">{{ $inactiveAssetsCount }}</p>
+                </div>
+            </div>
 
         @if ($assetGroups && $assetGroups->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

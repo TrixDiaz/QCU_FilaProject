@@ -7,6 +7,9 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Actions\Action;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TicketInProgress;
+use App\Mail\TicketResolved;
 
 class EditTicket extends EditRecord
 {
@@ -61,7 +64,27 @@ class EditTicket extends EditRecord
                     'assigned_to' => auth()->id(), // Assign to the logged-in user
                 ]);
 
-                $this->notify('success', 'Ticket marked as In Progress and assigned to you.');
+                // Send email notifications
+                $assignedUser = auth()->user();
+                $creatorUser = \App\Models\User::find($this->record->created_by);
+
+                // Send to ticket creator
+                if ($creatorUser && $creatorUser->email) {
+                    Mail::to($creatorUser->email)
+                        ->send(new \App\Mail\TicketInProgress($this->record, $assignedUser));
+                }
+
+                // Send to assigned user (if different from creator)
+                if ($assignedUser && $assignedUser->email && $assignedUser->id != $this->record->created_by) {
+                    Mail::to($assignedUser->email)
+                        ->send(new \App\Mail\TicketInProgress($this->record, $assignedUser));
+                }
+
+                Notification::make()
+                    ->title('Ticket In Progress')
+                    ->success()
+                    ->body('Ticket marked as In Progress and assigned to you. Email notifications sent.')
+                    ->send();
             })
             ->color('warning');
     }
@@ -74,15 +97,36 @@ class EditTicket extends EditRecord
             ->requiresConfirmation()
             ->action(function () {
                 $this->record->update([
-                    'ticket_status' => 'resolved',  // Changed from 'in_progress' to 'resolved'
-                    'resolved_at' => now(),  // Add resolved timestamp
-                    'resolved_by' => auth()->id(),  // Add who resolved it
+                    'ticket_status' => 'resolved',
+                    'resolved_at' => now(),
+                    'resolved_by' => auth()->id(),
                 ]);
+
+                // Send email notifications
+                $resolvedByUser = auth()->user();
+                $creatorUser = \App\Models\User::find($this->record->created_by);
+                $assignedUser = \App\Models\User::find($this->record->assigned_to);
+
+                // Send to ticket creator
+                if ($creatorUser && $creatorUser->email) {
+                    Mail::to($creatorUser->email)
+                        ->send(new \App\Mail\TicketResolved($this->record, $resolvedByUser));
+                }
+
+                // Send to assigned user (if different from creator and resolver)
+                if (
+                    $assignedUser && $assignedUser->email &&
+                    $assignedUser->id != $this->record->created_by &&
+                    $assignedUser->id != auth()->id()
+                ) {
+                    Mail::to($assignedUser->email)
+                        ->send(new \App\Mail\TicketResolved($this->record, $resolvedByUser));
+                }
 
                 Notification::make()
                     ->title('Ticket Resolved')
                     ->success()
-                    ->body('The ticket has been marked as resolved.')
+                    ->body('The ticket has been marked as resolved. Email notifications sent.')
                     ->send();
 
                 $this->redirect($this->getResource()::getUrl('index'));

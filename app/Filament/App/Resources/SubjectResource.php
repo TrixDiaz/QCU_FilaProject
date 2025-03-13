@@ -165,9 +165,11 @@ class SubjectResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('lab_time')
+                Tables\Columns\TextColumn::make('lab_time_starts_at')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('lecture_time')
+                Tables\Columns\TextColumn::make('lab_time_ends_at')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('day')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

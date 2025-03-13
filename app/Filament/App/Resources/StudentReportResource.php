@@ -93,16 +93,20 @@ class StudentReportResource extends Resource implements HasShieldPermissions
                         $ticket->created_by = auth()->id();
                         $ticket->title = 'Computer Issue Report from ' . $record->attendance->student_full_name;
 
-                        // Prepare description with relevant details
-                        $description = [
-                            'terminal_number' => $record->attendance->terminal_number,
-                            'student_name' => $record->attendance->student_full_name,
-                            'student_number' => $record->attendance->student_number,
-                            'remarks' => $record->attendance->remarks ?? 'No specific remarks',
-                            'reported_at' => now()->format('Y-m-d H:i:s'),
-                        ];
+                        // Add the terminal number to the ticket
+                        $ticket->terminal_number = $record->attendance->terminal_number;
 
-                        $ticket->description = $description;
+                        // Add formatted description with sender role
+                        $userRole = auth()->user()->roles->first()->name ?? 'User';
+                        $ticket->description = [
+                            [
+                                "type" => "message",
+                                "data" => [
+                                    "message" => "Computer issue reported by student",
+                                    "sender_role" => $userRole
+                                ]
+                            ]
+                        ];
 
                         $ticket->ticket_type = 'incident';
                         $ticket->option = 'asset';
@@ -148,16 +152,20 @@ class StudentReportResource extends Resource implements HasShieldPermissions
                                 $ticket->created_by = auth()->id();
                                 $ticket->title = 'Computer Issue Report from ' . $record->attendance->student_full_name;
 
-                                // Prepare description with relevant details
-                                $description = [
-                                    'terminal_number' => $record->attendance->terminal_number,
-                                    'student_name' => $record->attendance->student_full_name,
-                                    'student_number' => $record->attendance->student_number,
-                                    'remarks' => $record->attendance->remarks ?? 'No specific remarks',
-                                    'reported_at' => now()->format('Y-m-d H:i:s'),
-                                ];
+                                // Add the terminal number to the ticket
+                                $ticket->terminal_number = $record->attendance->terminal_number;
 
-                                $ticket->description = $description;
+                                // Add formatted description with sender role
+                                $userRole = auth()->user()->roles->first()->name ?? 'User';
+                                $ticket->description = [
+                                    [
+                                        "type" => "message",
+                                        "data" => [
+                                            "message" => "Computer issue reported by student",
+                                            "sender_role" => $userRole
+                                        ]
+                                    ]
+                                ];
 
                                 $ticket->ticket_type = 'incident';
                                 $ticket->option = 'asset';

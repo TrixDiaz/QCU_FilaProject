@@ -18,21 +18,21 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('verifyEmail')
-                ->label('Verify Email')
-                ->icon('heroicon-m-envelope')
-                ->color('success')
-                ->visible(fn(\App\Models\User $record) => $record->email_verified_at === null)
-                ->action(function (\App\Models\User $record) {
-                    $record->email_verified_at = now();
-                    $record->save();
+            // Actions\Action::make('verifyEmail')
+            //     ->label('Verify Email')
+            //     ->icon('heroicon-m-envelope')
+            //     ->color('success')
+            //     ->visible(fn(\App\Models\User $record) => $record->email_verified_at === null)
+            //     ->action(function (\App\Models\User $record) {
+            //         $record->email_verified_at = now();
+            //         $record->save();
 
-                    \Filament\Notifications\Notification::make()
-                        ->success()
-                        ->title('Email Verified')
-                        ->body('User email has been verified successfully.')
-                        ->send();
-                }),
+            //         \Filament\Notifications\Notification::make()
+            //             ->success()
+            //             ->title('Email Verified')
+            //             ->body('User email has been verified successfully.')
+            //             ->send();
+            //     }),
             Actions\DeleteAction::make(),
         ];
     }
@@ -49,7 +49,7 @@ class EditUser extends EditRecord
             ->title('Account Resource Modified')
             ->body("Account {$user->name} Modified by {$auth->name}!")
             ->actions([\Filament\Notifications\Actions\Action::make('View')->url(UserResource::getUrl('edit', ['record' => $user]))])
-            ->sendToDatabase([$user,$auth]);
+            ->sendToDatabase([$user, $auth]);
 
         return $notification;
     }

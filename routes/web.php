@@ -7,6 +7,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Routes for forbidden page actions
+Route::post('/logout-and-home', [App\Http\Controllers\ForbiddenController::class, 'logoutAndRedirectHome'])->name('logout.and.home');
+Route::post('/send-technician-activation', [App\Http\Controllers\ForbiddenController::class, 'sendTechnicianActivation'])->name('send.technician.activation');
 
 // Public routes that require authentication
 Route::middleware(['auth'])->group(function () {

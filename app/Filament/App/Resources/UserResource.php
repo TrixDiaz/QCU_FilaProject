@@ -9,6 +9,7 @@ use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -120,10 +121,41 @@ class UserResource extends Resource implements HasShieldPermissions
 
                 //     ->sortable()
                 //     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\ToggleColumn::make('approval_status')
+                Tables\Columns\IconColumn::make('approval_status')
                     ->label('Approval Status')
-                    ->onIcon('heroicon-m-bolt')
-                    ->offIcon('heroicon-m-bolt-slash'),
+                    ->boolean()
+                    ->trueIcon('heroicon-m-bolt')
+                    ->tooltip('Click to Activate')
+                    ->falseIcon('heroicon-m-bolt-slash')
+                    ->trueColor('success')
+                    ->falseColor('warning')
+                    ->action(function (User $record) {
+                        // Only allow activation if not already approved
+                        if ($record->approval_status === true) {
+                            Notification::make()
+                                ->title('Already Approved')
+                                ->body('This user account is already activated.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
+                        // Activate the user
+                        $record->approval_status = true;
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Account Activated')
+                            ->body('User account has been activated successfully.')
+                            ->success()
+                            ->icon('heroicon-o-user-circle')
+                            ->iconColor('success')
+                            ->send();
+
+                        // Send email confirmation
+                        \Illuminate\Support\Facades\Mail::to($record->email)
+                            ->send(new \App\Mail\AccountActivated($record));
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created Date')
                     ->dateTime('m/d/Y')

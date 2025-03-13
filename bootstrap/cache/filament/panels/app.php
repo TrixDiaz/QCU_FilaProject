@@ -65,15 +65,15 @@
   ),
   'pages' => 
   array (
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Attendance.php' => 'App\\Filament\\App\\Pages\\Attendance',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Dashboard.php' => 'App\\Filament\\App\\Pages\\Dashboard',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Inventory.php' => 'App\\Filament\\App\\Pages\\Inventory',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Schedule.php' => 'App\\Filament\\App\\Pages\\Schedule',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Terminal.php' => 'App\\Filament\\App\\Pages\\Terminal',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Attendance.php' => 'App\\Filament\\App\\Pages\\Attendance',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Dashboard.php' => 'App\\Filament\\App\\Pages\\Dashboard',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Inventory.php' => 'App\\Filament\\App\\Pages\\Inventory',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Schedule.php' => 'App\\Filament\\App\\Pages\\Schedule',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Terminal.php' => 'App\\Filament\\App\\Pages\\Terminal',
   ),
   'pageDirectories' => 
   array (
-    0 => 'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament/App/Pages',
+    0 => 'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/App/Pages',
   ),
   'pageNamespaces' => 
   array (
@@ -81,22 +81,22 @@
   ),
   'resources' => 
   array (
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ApprovalResource.php' => 'App\\Filament\\App\\Resources\\ApprovalResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\AssetResource.php' => 'App\\Filament\\App\\Resources\\AssetResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\BuildingResource.php' => 'App\\Filament\\App\\Resources\\BuildingResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ClassroomResource.php' => 'App\\Filament\\App\\Resources\\ClassroomResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\EventResource.php' => 'App\\Filament\\App\\Resources\\EventResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\RoleResource.php' => 'App\\Filament\\App\\Resources\\RoleResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SectionResource.php' => 'App\\Filament\\App\\Resources\\SectionResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\StudentReportResource.php' => 'App\\Filament\\App\\Resources\\StudentReportResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SubjectResource.php' => 'App\\Filament\\App\\Resources\\SubjectResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\TicketResource.php' => 'App\\Filament\\App\\Resources\\TicketResource',
-    'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament\\App\\Resources\\UserResource.php' => 'App\\Filament\\App\\Resources\\UserResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ApprovalResource.php' => 'App\\Filament\\App\\Resources\\ApprovalResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\AssetResource.php' => 'App\\Filament\\App\\Resources\\AssetResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\BuildingResource.php' => 'App\\Filament\\App\\Resources\\BuildingResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ClassroomResource.php' => 'App\\Filament\\App\\Resources\\ClassroomResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\EventResource.php' => 'App\\Filament\\App\\Resources\\EventResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\RoleResource.php' => 'App\\Filament\\App\\Resources\\RoleResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SectionResource.php' => 'App\\Filament\\App\\Resources\\SectionResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\StudentReportResource.php' => 'App\\Filament\\App\\Resources\\StudentReportResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SubjectResource.php' => 'App\\Filament\\App\\Resources\\SubjectResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\TicketResource.php' => 'App\\Filament\\App\\Resources\\TicketResource',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\UserResource.php' => 'App\\Filament\\App\\Resources\\UserResource',
     0 => 'Z3d0X\\FilamentLogger\\Resources\\ActivityResource',
   ),
   'resourceDirectories' => 
   array (
-    0 => 'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament/App/Resources',
+    0 => 'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/App/Resources',
   ),
   'resourceNamespaces' => 
   array (
@@ -107,7 +107,7 @@
   ),
   'widgetDirectories' => 
   array (
-    0 => 'C:\\xampp\\htdocs\\QCU_FilaProject\\app\\Filament/App/Widgets',
+    0 => 'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/App/Widgets',
   ),
   'widgetNamespaces' => 
   array (

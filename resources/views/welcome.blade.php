@@ -111,10 +111,10 @@
                             Get Started
                         </button>
                     </a>
-                    <a href="#">
+                    <a href="{{ route('filament.app.auth.register') }}">
                         <button type='button'
                             class="bg-transparent hover:bg-blue-600 border border-blue-600 px-6 py-3.5 rounded-md text-gray-100 transition-all">
-                            Login to Your Account
+                            Create an Account
                         </button>
                     </a>
                 </div>

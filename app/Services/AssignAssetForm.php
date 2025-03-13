@@ -21,11 +21,11 @@ final class AssignAssetForm
                         ->preload()
                         ->required()
                         ->reactive()
-                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) {
+                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) use ($record) {
                             $classroomId = $state;
                             if ($classroomId) {
-                                // Auto-generate terminal number
-                                $nextTerminal = self::getNextTerminalNumber($classroomId);
+                                // Pass the record to getNextTerminalNumber
+                                $nextTerminal = self::getNextTerminalNumber($classroomId, $record);
                                 $set('name', $nextTerminal);
 
                                 // Generate unique code
@@ -40,11 +40,11 @@ final class AssignAssetForm
                         }),
 
                     \Filament\Forms\Components\TextInput::make('name')
-                        ->label('Terminal Number')
+                        ->label('Asset Name')
                         ->required()
                         ->disabled()
                         ->dehydrated()
-                        ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('classroom')),
+                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool) $get('classroom')),
                 ]),
 
             \Filament\Forms\Components\TextInput::make('code')
@@ -52,7 +52,7 @@ final class AssignAssetForm
                 ->required()
                 ->disabled()
                 ->dehydrated()
-                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('classroom'))
+                ->visible(fn(\Filament\Forms\Get $get): bool => (bool) $get('classroom'))
                 ->extraAttributes([
                     'style' => 'text-transform:uppercase',
                     'class' => 'uppercase'
@@ -127,9 +127,15 @@ final class AssignAssetForm
         }
     }
 
-    protected static function getNextTerminalNumber($classroomId)
+    protected static function getNextTerminalNumber($classroomId, $assetRecord = null)
     {
-        return DB::transaction(function () use ($classroomId) {
+        return DB::transaction(function () use ($classroomId, $assetRecord) {
+            // Get the asset type directly from the passed record
+            $originalAssetName = $assetRecord && isset($assetRecord->name) ? $assetRecord->name : 'PC';
+
+            // Replace spaces with hyphens in the asset name
+            $assetName = str_replace(' ', '-', $originalAssetName);
+
             $existingTerminals = \App\Models\AssetGroup::query()
                 ->where('classroom_id', $classroomId)
                 ->lockForUpdate()
@@ -137,14 +143,16 @@ final class AssignAssetForm
                 ->toArray();
 
             $highestNumber = 0;
+            $pattern = '/^' . preg_quote($assetName, '/') . '(\d+)$/';
+
             foreach ($existingTerminals as $terminal) {
-                if (preg_match('/^T(\d+)$/', $terminal, $matches)) {
+                if (preg_match($pattern, $terminal, $matches)) {
                     $highestNumber = max($highestNumber, (int)$matches[1]);
                 }
             }
 
             $nextNumber = $highestNumber + 1;
-            $nextTerminal = 'T' . $nextNumber;
+            $nextTerminal = $assetName . $nextNumber;
 
             do {
                 $exists = \App\Models\AssetGroup::query()
@@ -154,7 +162,7 @@ final class AssignAssetForm
 
                 if ($exists) {
                     $nextNumber++;
-                    $nextTerminal = 'T' . $nextNumber;
+                    $nextTerminal = $assetName . $nextNumber;
                 }
             } while ($exists);
 

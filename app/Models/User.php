@@ -20,19 +20,9 @@ class User extends Authenticatable implements FilamentUser
     use SoftDeletes;
     use HasRoles;
 
-    public function getVerifiedDateAttribute()
-    {
-        return $this->email_verified_at
-            ? $this->email_verified_at->format('M d, Y')
-            : 'Pending';
-    }
-
     public function canAccessPanel(Panel $panel): bool
     {
-        // return auth()->check()
-        //     && str_ends_with(auth()->user()->email, '@gmail.com')
-        //     && auth()->user()->approval_status === true;
-        return true;
+        return auth()->check() && auth()->user()->approval_status == true && str_ends_with(auth()->user()->email, '@qcu.edu.ph');
     }
 
     /**
@@ -45,7 +35,6 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'email_verified_at',
-        'approval_status',
 
     ];
 
@@ -69,11 +58,7 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-        ];
-    }
 
-    public function assignedTo(): HasMany
-    {
-        return $this->hasMany(User::class, 'assigned_to');
+        ];
     }
 }

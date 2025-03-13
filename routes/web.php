@@ -8,4 +8,12 @@ Route::get('/', function () {
 });
 
 
-Route::get('/publicAssetsGroups/{classroomId}', PublicAssetGroup::class)->name('publicAssetsGroups');
+// Public routes that require authentication
+Route::middleware(['auth'])->group(function () {
+    Route::get('/publicAssetsGroups/{classroomId}', PublicAssetGroup::class)->name('publicAssetsGroups');
+});
+
+// Redirect users to Filament login page if they're not authenticated
+Route::get('/login', function () {
+    return redirect()->route('filament.app.auth.login');
+})->name('login');

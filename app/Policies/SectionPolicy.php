@@ -79,7 +79,7 @@ class SectionPolicy
      */
     public function restore(User $user, Section $section): bool
     {
-        return $user->can('{{ Restore }}');
+        return $user->can('restore_section');
     }
 
     /**
@@ -87,7 +87,7 @@ class SectionPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('{{ RestoreAny }}');
+        return $user->can('restore_any_section');
     }
 
     /**

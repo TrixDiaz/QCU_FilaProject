@@ -79,7 +79,7 @@ class ClassroomPolicy
      */
     public function restore(User $user, Classroom $classroom): bool
     {
-        return $user->can('{{ Restore }}');
+        return $user->can('restore_classroom');
     }
 
     /**
@@ -87,7 +87,7 @@ class ClassroomPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('{{ RestoreAny }}');
+        return $user->can('restore_any_classroom');
     }
 
     /**

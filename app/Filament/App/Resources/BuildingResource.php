@@ -29,6 +29,10 @@ class BuildingResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'restore',
+            'restore_any',
+            'force_delete',
+            'force_delete_any',
             'publish'
         ];
     }

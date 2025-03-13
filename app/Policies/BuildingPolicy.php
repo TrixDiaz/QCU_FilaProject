@@ -63,7 +63,7 @@ class BuildingPolicy
      */
     public function forceDelete(User $user, Building $building): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_building');
     }
 
     /**
@@ -71,7 +71,7 @@ class BuildingPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_building');
     }
 
     /**
@@ -79,7 +79,7 @@ class BuildingPolicy
      */
     public function restore(User $user, Building $building): bool
     {
-        return $user->can('{{ Restore }}');
+        return $user->can('restore_building');
     }
 
     /**
@@ -87,7 +87,7 @@ class BuildingPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('{{ RestoreAny }}');
+        return $user->can('restore_any_building');
     }
 
     /**

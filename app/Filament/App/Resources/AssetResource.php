@@ -189,21 +189,7 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'active' => 'Active',
-                        'deploy' => 'Deployed'
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        // Check if values exist and are not empty
-                        if (!isset($data['values']) || empty($data['values'])) {
-                            return $query->where('status', 'active');
-                        }
-
-                        return $query->whereIn('status', $data['values']);
-                    })
-                    ->multiple()
+                //
             ])
             ->actions([
                 Tables\Actions\Action::make('assign')

@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\UserResource\Pages;
 use App\Filament\App\Resources\UserResource\RelationManagers;
+use App\Filament\Imports\UserImporter;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Filament\Tables\Actions\ImportAction;
 
 class UserResource extends Resource implements HasShieldPermissions
 {
@@ -108,18 +110,20 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->tooltip('Click to Copy')
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('verified_date')
-                    ->label('Verified Date')
-                    ->default(fn(User $record) => $record->email_verified_at === null ? 'Pending' : $record->email_verified_at->format('M d, Y'))
-                    ->colors([
-                        'success' => fn(User $record) => $record->email_verified_at !== null,
-                        'warning' => fn(User $record) => $record->email_verified_at === null,
-                    ])
+                // Tables\Columns\TextColumn::make('verified_date')
+                //     ->label('Verified Date')
+                //     ->default(fn(User $record) => $record->email_verified_at === null ? 'Pending' : $record->email_verified_at->format('M d, Y'))
+                //     ->colors([
+                //         'success' => fn(User $record) => $record->email_verified_at !== null,
+                //         'warning' => fn(User $record) => $record->email_verified_at === null,
+                //     ])
 
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\ToggleColumn::make('approval_status')
-                    ->label('Approval Status'),
+                    ->label('Approval Status')
+                    ->onIcon('heroicon-m-bolt')
+                    ->offIcon('heroicon-m-bolt-slash'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created Date')
                     ->dateTime('m/d/Y')
@@ -135,6 +139,11 @@ class UserResource extends Resource implements HasShieldPermissions
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+            ])
+            ->headerActions([
+                ImportAction::make()
+                    ->importer(UserImporter::class)
+                    ->color('secondary')
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

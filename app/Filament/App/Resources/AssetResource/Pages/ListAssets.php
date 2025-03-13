@@ -372,7 +372,9 @@ class ListAssets extends ListRecords
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make(),
+            'all' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->whereIn('status', ['active', 'deploy']))
+                ->badge(Asset::query()->whereIn('status', ['active', 'deploy'])->count()),
             'active' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'active'))
                 ->badge(Asset::query()->where('status', 'active')->count())
@@ -386,5 +388,10 @@ class ListAssets extends ListRecords
                 ->badge(Asset::query()->where('status', 'inactive')->count())
                 ->badgeColor('danger'),
         ];
+    }
+
+    public function getDefaultActiveTab(): string|int|null
+    {
+        return 'active';
     }
 }

@@ -16,7 +16,9 @@ class InventoryStatsOverview extends BaseWidget
         // Get categories and their asset counts
         $categories = Category::query()
             ->select('categories.*')
-            ->withCount('assets')
+            ->withCount(['assets' => function ($query) {
+                $query->where('status', 'deploy');
+            }])
             ->get();
 
         // Function to format descriptions with aligned numbers at the end

@@ -117,11 +117,7 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\ToggleColumn::make('approval_status')
-                    ->label('Approval Status')
-                    ->onLabel('Approved')
-                    ->offLabel('Pending')
-                    ->onColor('success')
-                    ->offColor('warning'),
+                    ->label('Approval Status'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created Date')
                     ->dateTime('m/d/Y')

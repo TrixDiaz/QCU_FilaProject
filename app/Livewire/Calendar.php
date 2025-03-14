@@ -148,20 +148,20 @@ class Calendar extends FullCalendarWidget
 
                                     // Find or create a default building if it doesn't exist
                                     $building = Building::firstOrCreate(
-                                        ['name' => 'Main Building'],
+                                        ['name' => 'Belmonte Hall'],
                                         [
-                                            'name' => 'Main Building',
-                                            'slug' => str('Main Building')->slug(),
+                                            'name' => 'Belmonte Hall',
+                                            'slug' => str('Belmonte Hall')->slug(),
                                         ]
                                     );
 
                                     // Find or create a default classroom if it doesn't exist
                                     $classroom = Classroom::firstOrCreate(
-                                        ['name' => 'Default Classroom'],
+                                        ['name' => 'IL605'],
                                         [
                                             'building_id' => $building->id,
-                                            'name' => 'Default Classroom',
-                                            'slug' => str('Default Classroom')->slug(),
+                                            'name' => 'IL605',
+                                            'slug' => str('IL605')->slug(),
                                         ]
                                     );
 

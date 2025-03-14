@@ -26,10 +26,7 @@ final class DynamicForm
                         ->required()
                         ->unique($model, 'slug', ignoreRecord: true)
                         ->dehydrated()
-                        ->readOnly()
-                        ->extraAlpineAttributes([
-                            'style' => 'background-color: #18181B; border-color: #18181B; border-style: none;',
-                        ]),
+                        ->readOnly(),
                 ]),
         ];
     }

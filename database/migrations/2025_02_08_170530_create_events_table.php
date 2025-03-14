@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('section_id')->nullable()->constrained('sections')->onDelete('cascade');
             $table->foreignId('subject_id')->nullable()->constrained('subjects')->onDelete('cascade');
             $table->string('title');
-            $table->string('color');
+            $table->string('color')->nullable();
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');
             $table->timestamps();

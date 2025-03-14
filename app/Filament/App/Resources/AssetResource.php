@@ -238,12 +238,6 @@ class AssetResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->tooltip('Actions')
             ])
-            ->headerActions([
-                \Filament\Tables\Actions\ImportAction::make()
-                    ->importer(\App\Filament\Imports\AssetImporter::class)
-                    ->label('Import Excel') // Custom label for button
-                    ->color('primary'),
-            ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),

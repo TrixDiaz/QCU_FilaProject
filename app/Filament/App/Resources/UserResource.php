@@ -121,29 +121,22 @@ class UserResource extends Resource implements HasShieldPermissions
 
                 //     ->sortable()
                 //     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\IconColumn::make('approval_status')
+                Tables\Columns\ToggleColumn::make('approval_status')
                     ->label('Approval Status')
-                    ->boolean()
-                    ->trueIcon('heroicon-m-bolt')
-                    ->tooltip('Click to Activate')
-                    ->falseIcon('heroicon-m-bolt-slash')
-                    ->trueColor('success')
-                    ->falseColor('warning')
-                    ->action(function (User $record) {
-                        // Only allow activation if not already approved
-                        if ($record->approval_status === true) {
-                            Notification::make()
-                                ->title('Already Approved')
-                                ->body('This user account is already activated.')
-                                ->warning()
-                                ->send();
-                            return;
+                    ->onIcon('heroicon-m-bolt')
+                    ->offIcon('heroicon-m-bolt-slash')
+                    ->onColor('success')
+                    ->offColor('warning')
+                    ->disabled(fn(User $record): bool => $record->approval_status === true)
+                    ->tooltip(fn(User $record): string => $record->approval_status ? 'Already Activated' : 'Click to Activate')
+                    ->beforeStateUpdated(function (User $record, $state) {
+                        // Only allow changing from false to true
+                        if ($record->approval_status === true || $state === false) {
+                            // Cancel the state update
+                            return false;
                         }
-
-                        // Activate the user
-                        $record->approval_status = true;
-                        $record->save();
-
+                    })
+                    ->afterStateUpdated(function (User $record) {
                         Notification::make()
                             ->title('Account Activated')
                             ->body('User account has been activated successfully.')

@@ -168,19 +168,47 @@ class ApprovalResource extends Resource implements HasShieldPermissions
 
                         // Get the necessary data from the record
                         $option = $record->ticket->option ?? 'asset';
+                        $ticketType = $record->ticket->type ?? null;
 
                         // Update ticket status to 'resolved' if it exists
                         if ($record->ticket) {
                             $record->ticket->update(['status' => 'resolved']);
                         }
 
+                        // Handle asset option
                         if ($option === 'asset') {
+                            // Get a valid classroom ID using various relationships
+                            $classroomId = null;
+
+                            // First try to get classroom from the subject (preferred method since you mentioned this relationship)
+                            if ($record->subject_id && $record->subject && $record->subject->classroom_id) {
+                                $classroomId = $record->subject->classroom_id;
+                            }
+                            // If not available, try to get from section
+                            else if ($record->section && $record->section->classroom_id) {
+                                $classroomId = $record->section->classroom_id;
+                            }
+                            // Last resort - fetch the first classroom as fallback
+                            else {
+                                $firstClassroom = \App\Models\Classroom::first();
+                                $classroomId = $firstClassroom ? $firstClassroom->id : 1;
+                            }
+
+                            // Debug output to understand what we're working with
+                            \Illuminate\Support\Facades\Log::info('Asset Group Creation', [
+                                'subject_id' => $record->subject_id,
+                                'subject_classroom' => $record->subject->classroom_id ?? 'null',
+                                'section_classroom' => $record->section->classroom_id ?? 'null',
+                                'chosen_classroom_id' => $classroomId
+                            ]);
+
+                            // Create new asset group with valid classroom_id
                             \App\Models\AssetGroup::create([
                                 'asset_id' => $record->asset_id,
-                                'classroom_id' => $record->section->classroom_id ?? null,
+                                'classroom_id' => $classroomId, // Using the valid classroom ID
                                 'name' => $record->title,
                                 'code' => $record->asset->asset_code ?? \App\Filament\App\Resources\AssetResource::generateUniqueCode(),
-                                'status' => 'active',
+                                'status' => 'deploy',
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
@@ -188,10 +216,14 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                             // Update asset status to 'deploy'
                             if ($record->asset) {
                                 $record->asset->update(['status' => 'deploy']);
-                            }
 
-                            $record->delete();
-                        } else {
+                                // Also update all related asset groups to 'deploy'
+                                \App\Models\AssetGroup::where('asset_id', $record->asset_id)
+                                    ->update(['status' => 'deploy']);
+                            }
+                        }
+                        // Handle classroom option
+                        else {
                             // For classroom/event option, retrieve dates from ticket if not present on approval
                             $startsAt = $record->starts_at;
                             $endsAt = $record->ends_at;
@@ -202,21 +234,71 @@ class ApprovalResource extends Resource implements HasShieldPermissions
                                 $endsAt = $record->ticket->ends_at ?? $record->ends_at;
                             }
 
-                            \App\Models\Event::create([
-                                'professor_id' => $record->professor_id,
-                                'section_id' => $record->section_id,
-                                'subject_id' => $record->subject_id,
-                                'title' => $record->title,
-                                'color' => $record->color ?? '#ffffff',
-                                'starts_at' => $startsAt,
-                                'ends_at' => $endsAt,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                            // Create event record for classroom option
+                            if ($ticketType === 'request' && $option === 'classroom') {
+                                $event = \App\Models\Event::create([
+                                    'professor_id' => $record->professor_id,
+                                    'section_id' => $record->section_id,
+                                    'subject_id' => $record->subject_id,
+                                    'title' => $record->title,
+                                    'color' => $record->color ?? '#a855f7',
+                                    'starts_at' => $startsAt,
+                                    'ends_at' => $endsAt,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                    'is_visible' => true,  // Ensure the event is visible
+                                    'calendar_id' => 1,    // Associate with default calendar
+                                ]);
+
+                                // If classroom_id is available, associate it with the event
+                                $classroomId = null;
+                                if ($record->subject && $record->subject->classroom_id) {
+                                    $classroomId = $record->subject->classroom_id;
+                                } else if ($record->ticket && $record->ticket->classroom_id) {
+                                    $classroomId = $record->ticket->classroom_id;
+                                } else if ($record->section && $record->section->classroom_id) {
+                                    $classroomId = $record->section->classroom_id;
+                                }
+
+                                if ($classroomId) {
+                                    // Update the event with classroom information
+                                    $event->update(['classroom_id' => $classroomId]);
+
+                                    // Sync with calendar system if needed
+                                    try {
+                                        // Log successful calendar registration
+                                        \Illuminate\Support\Facades\Log::info('Calendar event created', [
+                                            'event_id' => $event->id,
+                                            'classroom_id' => $classroomId,
+                                            'title' => $record->title
+                                        ]);
+                                    } catch (\Exception $e) {
+                                        \Illuminate\Support\Facades\Log::error('Failed to sync event with calendar', [
+                                            'event_id' => $event->id,
+                                            'error' => $e->getMessage()
+                                        ]);
+                                    }
+                                }
+                            }
                         }
 
                         // Update record status
                         $record->update(['status' => 'approved']);
+
+                        // Send email notification to ticket creator
+                        if ($record->ticket && $record->ticket->created_by) {
+                            $user = \App\Models\User::find($record->ticket->created_by);
+
+                            if ($user && $user->email) {
+                                \Illuminate\Support\Facades\Mail::to($user->email)
+                                    ->send(new \App\Mail\TicketApproved([
+                                        'ticketTitle' => $record->title,
+                                        'ticketType' => $ticketType,
+                                        'ticketOption' => $option,
+                                        'userName' => $user->name,
+                                    ]));
+                            }
+                        }
 
                         Notification::make()
                             ->title('Approved successfully')

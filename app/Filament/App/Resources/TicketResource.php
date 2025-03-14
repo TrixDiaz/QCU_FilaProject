@@ -227,7 +227,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                         ->searchable()
                                                         ->preload()
                                                         ->optionsLimit(5)
-                                                        ->visible(fn($get) => $get('option') === 'classroom')
+                                                        // ->visible(fn($get) => $get('option') === 'classroom')
                                                         ->live()
                                                         ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
                                                             // Check for time conflicts when subject changes
@@ -498,8 +498,15 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->default(fn($record): string => $record->ticket_number)
                     ->description(fn($record): string => 'Created By ' . $record->creator?->name),
-                Tables\Columns\TextColumn::make('asset.name')
-                    ->label('Asset')
+                Tables\Columns\TextColumn::make('assetinformation')
+                    ->label('Asset Info')
+                    ->default(function ($record) {
+                        if ($record->asset && $record->asset->name) {
+                            return $record->asset->name;
+                        }
+
+                        return $record->terminal_number ?? 'No Asset';
+                    })
                     ->description(fn($record): string => $record->ticket_type)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('title')

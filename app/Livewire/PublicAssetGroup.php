@@ -41,9 +41,10 @@ class PublicAssetGroup extends Component
             });
         }
 
-        $this->assetGroups = $query->with(['assets' => function ($query) {
-            $query->whereIn('status', ['active', 'inactive']);
-        }, 'assets.brand', 'assets.category'])
+        $this->assetGroups = AssetGroup::where('classroom_id', $this->classroomId)
+            ->with(['assets' => function ($query) {
+                $query->whereIn('status', ['active', 'inactive']);
+            },  'assets.brand', 'assets.category'])
             ->get();
     }
 

@@ -22,7 +22,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return auth()->check() && auth()->user()->approval_status == true;
+        return true;
     }
 
     /**

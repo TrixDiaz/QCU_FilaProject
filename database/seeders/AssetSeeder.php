@@ -20,7 +20,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN001',
                 'asset_code' => 'AC001',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 2,
@@ -29,7 +29,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN002',
                 'asset_code' => 'AC002',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 3,
@@ -38,7 +38,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN003',
                 'asset_code' => 'AC003',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 4,
@@ -47,7 +47,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN004',
                 'asset_code' => 'AC004',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 1,
@@ -56,7 +56,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN005',
                 'asset_code' => 'AC005',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 2,
@@ -65,7 +65,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN006',
                 'asset_code' => 'AC006',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 3,
@@ -74,7 +74,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN007',
                 'asset_code' => 'AC007',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 4,
@@ -83,7 +83,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN008',
                 'asset_code' => 'AC008',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 1,
@@ -92,7 +92,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN009',
                 'asset_code' => 'AC009',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 2,
@@ -101,7 +101,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN010',
                 'asset_code' => 'AC010',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 3,
@@ -110,7 +110,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN011',
                 'asset_code' => 'AC011',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 4,
@@ -119,7 +119,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN012',
                 'asset_code' => 'AC012',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 1,
@@ -128,7 +128,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN013',
                 'asset_code' => 'AC013',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 2,
@@ -137,7 +137,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN014',
                 'asset_code' => 'AC014',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 3,
@@ -146,7 +146,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN015',
                 'asset_code' => 'AC015',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 4,
@@ -155,7 +155,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN016',
                 'asset_code' => 'AC016',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 1,
@@ -164,7 +164,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN017',
                 'asset_code' => 'AC017',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 2,
@@ -173,7 +173,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN018',
                 'asset_code' => 'AC018',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 3,
@@ -182,7 +182,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN019',
                 'asset_code' => 'AC019',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
             [
                 'category_id' => 4,
@@ -191,7 +191,7 @@ class AssetSeeder extends Seeder
                 'serial_number' => 'SN020',
                 'asset_code' => 'AC020',
                 'expiry_date' => now(),
-                'status' => 'active'
+                'status' => 'available'
             ],
         ];
 

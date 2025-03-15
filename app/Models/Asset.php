@@ -29,9 +29,7 @@ class Asset extends Model
         'updated_at',
     ];
 
-    protected $casts = [
-        //        'status' => AssetStatus::class,
-    ];
+    protected $casts = [];
 
     public function brand(): BelongsTo
     {

@@ -117,7 +117,7 @@ class AppPanelProvider extends PanelProvider
             ->plugins([
                 \EightyNine\Reports\ReportsPlugin::make(),
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
-                \Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin::make(),    
+                \Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin::make(),
                 \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([

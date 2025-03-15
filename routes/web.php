@@ -20,3 +20,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/login', function () {
     return redirect()->route('filament.app.auth.login');
 })->name('login');
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

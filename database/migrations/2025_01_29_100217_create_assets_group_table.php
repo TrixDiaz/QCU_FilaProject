@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade')->unique();
             $table->string('name');
             $table->string('code');
-            $table->string('status');
+            $table->string('status')->default('available');
             $table->timestamps();
         });
     }

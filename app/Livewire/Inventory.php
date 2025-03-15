@@ -7,9 +7,12 @@ use App\Models\Asset;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Tag;
+use Livewire\WithPagination;
 
 class Inventory extends Component
 {
+    use WithPagination;
+
     public $filterType = 'all';
     public $filterValue = '';
     public $filterBrand = '';
@@ -20,71 +23,99 @@ class Inventory extends Component
     public $tags = [];
     public $totalAssets = 0;
     public $filteredCount = 0;
+    public $perPage = 12;
 
     public function mount()
     {
         $this->brands = Brand::withCount('assets')->get();
         $this->categories = Category::withCount('assets')->get();
         $this->tags = Tag::withCount('assets')->get();
-        $this->totalAssets = Asset::count();
+        $this->totalAssets = Asset::where('status', 'available')->count();
     }
 
     public function render()
     {
-        $assets = Asset::with(['brand', 'category', 'assetTags']);
+        $query = Asset::with(['brand', 'category', 'assetTags'])->where('status', 'available');
 
         if ($this->filterType === 'brand' && $this->filterValue) {
-            $assets->where('brand_id', $this->filterValue);
+            $query->where('brand_id', $this->filterValue);
         } elseif ($this->filterType === 'category' && $this->filterValue) {
-            $assets->where('category_id', $this->filterValue);
+            $query->where('category_id', $this->filterValue);
         } elseif ($this->filterType === 'tag' && $this->filterValue) {
-            $assets->whereHas('assetTags', function ($query) {
-                $query->where('tags.id', $this->filterValue);
+            $query->whereHas('assetTags', function ($q) {
+                $q->where('tags.id', $this->filterValue);
             });
         } elseif ($this->filterType === 'brand-category') {
             if ($this->filterBrand) {
-                $assets->where('brand_id', $this->filterBrand);
+                $query->where('brand_id', $this->filterBrand);
             }
             if ($this->filterCategory) {
-                $assets->where('category_id', $this->filterCategory);
+                $query->where('category_id', $this->filterCategory);
             }
         } elseif ($this->filterType === 'brand-tag') {
             if ($this->filterBrand) {
-                $assets->where('brand_id', $this->filterBrand);
+                $query->where('brand_id', $this->filterBrand);
             }
             if ($this->filterTag) {
-                $assets->whereHas('assetTags', function ($query) {
-                    $query->where('tags.id', $this->filterTag);
+                $query->whereHas('assetTags', function ($q) {
+                    $q->where('tags.id', $this->filterTag);
                 });
             }
         } elseif ($this->filterType === 'category-brand-tag') {
-            if ($this->filterBrand) {
-                $assets->where('brand_id', $this->filterBrand);
-            }
             if ($this->filterCategory) {
-                $assets->where('category_id', $this->filterCategory);
+                $query->where('category_id', $this->filterCategory);
+            }
+            if ($this->filterBrand) {
+                $query->where('brand_id', $this->filterBrand);
             }
             if ($this->filterTag) {
-                $assets->whereHas('assetTags', function ($query) {
-                    $query->where('tags.id', $this->filterTag);
+                $query->whereHas('assetTags', function ($q) {
+                    $q->where('tags.id', $this->filterTag);
                 });
             }
         }
 
-        $assets = $assets->get();
-        $this->filteredCount = $assets->count();
+        $assets = $query->paginate($this->perPage);
+        $this->filteredCount = $assets->total();
 
         return view('livewire.inventory', [
             'assets' => $assets
         ]);
     }
 
-    // Reset all filter values when the filter type changes
+    // Reset secondary filters when primary filter type changes
     public function updatedFilterType()
     {
         $this->filterValue = '';
         $this->filterBrand = '';
         $this->filterCategory = '';
         $this->filterTag = '';
+        $this->resetPage();
+    }
+
+    // Reset pagination when filters change
+    public function updatedFilterValue()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterBrand()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterCategory()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterTag()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->resetPage();
     }
 }

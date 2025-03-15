@@ -191,9 +191,32 @@
                             <div class="text-sm mt-2">
                                 <p><span class="font-medium">S/N:</span> {{ $asset->serial_number }}</p>
                                 <p><span class="font-medium">Asset Code:</span> {{ $asset->asset_code }}</p>
-                                @if ($asset->expiry_date)
-                                    <p><span class="font-medium">Expires:</span>
-                                        {{ \Carbon\Carbon::parse($asset->expiry_date)->format('M d, Y') }}</p>
+
+                                @php
+                                    $isSoftware = strtolower($asset->category->name) === 'software';
+                                    $hasLicenseTag = $asset->assetTags->contains(function ($tag) {
+                                        return strtolower($tag->name) === 'license';
+                                    });
+                                @endphp
+
+                                @if ($asset->expiry_date && ($isSoftware || $hasLicenseTag))
+                                    <p>
+                                        <span class="font-medium">Expires:</span>
+                                        {{ \Carbon\Carbon::parse($asset->expiry_date)->format('M d, Y') }}
+
+                                        @php
+                                            $daysUntilExpiry = \Carbon\Carbon::now()->diffInDays(
+                                                $asset->expiry_date,
+                                                false,
+                                            );
+                                        @endphp
+
+                                        @if ($daysUntilExpiry < 0)
+                                            <x-filament::badge color="danger">Expired</x-filament::badge>
+                                        @elseif ($daysUntilExpiry < 30)
+                                            <x-filament::badge color="warning">Expiring soon</x-filament::badge>
+                                        @endif
+                                    </p>
                                 @endif
                             </div>
 
@@ -225,6 +248,31 @@
                     @endif
                 </div>
             @endforelse
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="mt-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="perPage" class="rounded border-gray-300 shadow-sm">
+                            <option value="12">12 per page</option>
+                            <option value="24">24 per page</option>
+                            <option value="36">36 per page</option>
+                            <option value="48">48 per page</option>
+                            <option value="100">100 per page</option>
+                            <option value="200">200 per page</option>
+                            <option value="500">500 per page</option>
+                            <option value="1000">1000 per page</option>
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                </div>
+
+
+                <div>
+                    {{ $assets->links() }}
+                </div>
+            </div>
         </div>
     </section>
 </div>

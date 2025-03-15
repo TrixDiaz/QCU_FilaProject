@@ -2,7 +2,7 @@
     <section class="flex flex-row justify-between items-center mb-6">
         <div>
             <h2 class="text-xl font-bold">Inventory Assets</h2>
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-gray-500 capitalize">
                 @if ($filterType == 'all')
                     Showing all {{ $filteredCount }} assets
                 @elseif($filterType == 'brand' && $filterValue)
@@ -45,7 +45,7 @@
                     <x-filament::input.select wire:model.live="filterValue" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Brand</option>
                         @foreach ($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }} ({{ $brand->assets_count }})
+                            <option class="capitalize" value="{{ $brand->id }}">{{ $brand->name }}
                             </option>
                         @endforeach
                     </x-filament::input.select>
@@ -55,7 +55,7 @@
                     <x-filament::input.select wire:model.live="filterValue" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Category</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }} ({{ $category->assets_count }})
+                            <option class="capitalize" value="{{ $category->id }}">{{ $category->name }}
                             </option>
                         @endforeach
                     </x-filament::input.select>
@@ -65,7 +65,7 @@
                     <x-filament::input.select wire:model.live="filterValue" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Tag</option>
                         @foreach ($tags as $tag)
-                            <option value="{{ $tag->id }}">{{ $tag->name }} ({{ $tag->assets_count }})
+                            <option class="capitalize" value="{{ $tag->id }}">{{ $tag->name }}
                             </option>
                         @endforeach
                     </x-filament::input.select>
@@ -75,7 +75,7 @@
                     <x-filament::input.select wire:model.live="filterBrand" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Brand</option>
                         @foreach ($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                            <option class="capitalize" value="{{ $brand->id }}">{{ $brand->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -84,7 +84,7 @@
                         class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Category</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            <option class="capitalize" value="{{ $category->id }}">{{ $category->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -93,7 +93,7 @@
                     <x-filament::input.select wire:model.live="filterBrand" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Brand</option>
                         @foreach ($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                            <option class="capitalize" value="{{ $brand->id }}">{{ $brand->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -101,7 +101,7 @@
                     <x-filament::input.select wire:model.live="filterTag" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Tag</option>
                         @foreach ($tags as $tag)
-                            <option value="{{ $tag->id }}">{{ $tag->name }}</option>
+                            <option class="capitalize" value="{{ $tag->id }}">{{ $tag->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -111,7 +111,7 @@
                         class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Category</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            <option class="capitalize" value="{{ $category->id }}">{{ $category->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -119,7 +119,7 @@
                     <x-filament::input.select wire:model.live="filterBrand" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Brand</option>
                         @foreach ($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                            <option class="capitalize" value="{{ $brand->id }}">{{ $brand->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -127,7 +127,7 @@
                     <x-filament::input.select wire:model.live="filterTag" class="rounded border-gray-300 shadow-sm">
                         <option value="">Select Tag</option>
                         @foreach ($tags as $tag)
-                            <option value="{{ $tag->id }}">{{ $tag->name }}</option>
+                            <option class="capitalize" value="{{ $tag->id }}">{{ $tag->name }}</option>
                         @endforeach
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
@@ -137,7 +137,8 @@
 
     <section>
         @if ($filterType == 'brand' && $filterValue)
-            <h3 class="text-lg font-medium mb-4">{{ $brands->firstWhere('id', $filterValue)->name ?? 'Brand' }} Assets
+            <h3 class="text-lg font-medium mb-4 capitalize">
+                {{ $brands->firstWhere('id', $filterValue)->name ?? 'Brand' }} Assets
             </h3>
         @elseif($filterType == 'category' && $filterValue)
             <h3 class="text-lg font-medium mb-4">{{ $categories->firstWhere('id', $filterValue)->name ?? 'Category' }}

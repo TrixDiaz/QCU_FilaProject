@@ -1,54 +1,40 @@
 <div>
-    <div class="flex justify-between items-center col-span-full gap-4">
-        <x-filament::section class="w-full">
-            <div class="flex items-center gap-4 w-full">
-                <x-filament::input.wrapper class="flex-1">
+    {{-- Search and Create Asset --}}
+    <div class="flex justify-end items-center col-span-full gap-4 w-full">
+        <div x-data="{ isSearchOpen: false }" class="flex justify-end items-center w-full">
+            <div x-show="isSearchOpen" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 transform scale-95"
+                x-transition:enter-end="opacity-100 transform scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 transform scale-100"
+                x-transition:leave-end="opacity-0 transform scale-95" class="w-full mr-4">
+                <x-filament::input.wrapper class="w-full" suffix-icon="heroicon-m-x-mark">
                     <x-slot name="prefix">
-                        Search
+                        Search by: Asset Name, Brand, Category, Serial Number, Asset Code
                     </x-slot>
 
-                    <x-filament::input type="text" class="w-full" wire:model.live.debounce.500ms='search' />
-
-                </x-filament::input.wrapper>
-
-                <x-filament::button href="{{ route('filament.app.resources.assets.create') }}" tag="a"
-                    icon="heroicon-m-plus">
-                    New Asset
-                </x-filament::button>
-            </div>
-        </x-filament::section>
-    </div>
-    <!-- Pagination Controls -->
-    <x-filament::section class="my-4" collapsible collapsed>
-        <x-slot name="heading">
-            Pagination
-        </x-slot>
-        <div class="flex justify-between items-center">
-            <div>
-                <x-filament::input.wrapper>
-                    <x-filament::input.select wire:model.live="perPage" class="rounded border-gray-300 shadow-sm">
-                        <option value="12">12 per page</option>
-                        <option value="24">24 per page</option>
-                        <option value="36">36 per page</option>
-                        <option value="48">48 per page</option>
-                        <option value="100">100 per page</option>
-                        <option value="200">200 per page</option>
-                        <option value="500">500 per page</option>
-                        <option value="1000">1000 per page</option>
-                    </x-filament::input.select>
+                    <x-filament::input type="text" class="w-full" wire:model.live.debounce.500ms='search'
+                        @click.away="isSearchOpen = false" @keydown.escape.window="isSearchOpen = false" />
                 </x-filament::input.wrapper>
             </div>
 
-            <div class="fi-ta-pagination px-3 py-3 sm:px-6">
-                {{ $assets->links() }}
+            <div x-show="!isSearchOpen" @click="isSearchOpen = true" class="mr-4">
+                <x-filament::icon-button icon="heroicon-m-magnifying-glass" label="Search" size="lg"
+                    tooltip="Open Search" />
             </div>
         </div>
-    </x-filament::section>
-    <x-filament::section class="mb-4" collapsible collapsed>
+
+        <x-filament::button href="{{ route('filament.app.resources.assets.create') }}" tag="a" class="w-auto"
+            tooltip="Create New Asset" icon="heroicon-m-plus">
+            New
+        </x-filament::button>
+    </div>
+    <x-filament::section class="my-4" collapsible>
         <x-slot name="heading">
             Filtering
         </x-slot>
         <div class="flex flex-row justify-between items-center">
+            {{-- Show Count and Filtered Data --}}
             <div>
                 <div>
                     <h2 class="text-xl font-bold">Inventory Assets</h2>
@@ -82,7 +68,7 @@
                 </div>
             </div>
 
-
+            {{-- View Layout and Filter --}}
             <div class="flex flex-row justify-center align-center gap-4">
                 <div class="flex flex-row justify-center align-center gap-4">
                     <x-filament::icon-button size="xl" icon="heroicon-o-queue-list"
@@ -182,7 +168,8 @@
                             class="rounded border-gray-300 shadow-sm">
                             <option value="">Select Category</option>
                             @foreach ($categories as $category)
-                                <option class="capitalize" value="{{ $category->id }}">{{ $category->name }}</option>
+                                <option class="capitalize" value="{{ $category->id }}">{{ $category->name }}
+                                </option>
                             @endforeach
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
@@ -196,7 +183,8 @@
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
                     <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="filterTag" class="rounded border-gray-300 shadow-sm">
+                        <x-filament::input.select wire:model.live="filterTag"
+                            class="rounded border-gray-300 shadow-sm">
                             <option value="">Select Tag</option>
                             @foreach ($tags as $tag)
                                 <option class="capitalize" value="{{ $tag->id }}">{{ $tag->name }}</option>
@@ -216,30 +204,55 @@
     </x-filament::section>
 
     <x-filament::section>
-        @if ($filterType == 'brand' && $filterValue)
-            <h3 class="text-lg font-medium mb-4 capitalize">
-                {{ $brands->firstWhere('id', $filterValue)->name ?? 'Brand' }} Assets
-            </h3>
-        @elseif($filterType == 'category' && $filterValue)
-            <h3 class="text-lg font-medium mb-4">{{ $categories->firstWhere('id', $filterValue)->name ?? 'Category' }}
-                Assets</h3>
-        @elseif($filterType == 'tag' && $filterValue)
-            <h3 class="text-lg font-medium mb-4">Assets tagged with
-                "{{ $tags->firstWhere('id', $filterValue)->name ?? 'Tag' }}"</h3>
-        @elseif($filterType == 'brand-category' && $filterBrand && $filterCategory)
-            <h3 class="text-lg font-medium mb-4">{{ $brands->firstWhere('id', $filterBrand)->name ?? 'Brand' }}
-                {{ $categories->firstWhere('id', $filterCategory)->name ?? 'Category' }} Assets</h3>
-        @elseif($filterType == 'brand-tag' && $filterBrand && $filterTag)
-            <h3 class="text-lg font-medium mb-4">{{ $brands->firstWhere('id', $filterBrand)->name ?? 'Brand' }} Assets
-                with tag "{{ $tags->firstWhere('id', $filterTag)->name ?? 'Tag' }}"</h3>
-        @elseif($filterType == 'category-brand-tag' && $filterCategory && $filterBrand && $filterTag)
-            <h3 class="text-lg font-medium mb-4">
-                {{ $categories->firstWhere('id', $filterCategory)->name ?? 'Category' }} Assets
-                from {{ $brands->firstWhere('id', $filterBrand)->name ?? 'Brand' }}
-                with tag "{{ $tags->firstWhere('id', $filterTag)->name ?? 'Tag' }}"</h3>
-        @else
-            <h3 class="text-lg font-medium mb-4">All Assets</h3>
-        @endif
+        {{-- Table Header --}}
+        <div class="flex justify-between items-center mb-2">
+            <div>
+                @if ($filterType == 'brand' && $filterValue)
+                    <h3 class="text-lg font-medium mb-4 capitalize">
+                        {{ $brands->firstWhere('id', $filterValue)->name ?? 'Brand' }} Assets
+                    </h3>
+                @elseif($filterType == 'category' && $filterValue)
+                    <h3 class="text-lg font-medium mb-4">
+                        {{ $categories->firstWhere('id', $filterValue)->name ?? 'Category' }}
+                        Assets</h3>
+                @elseif($filterType == 'tag' && $filterValue)
+                    <h3 class="text-lg font-medium mb-4">Assets tagged with
+                        "{{ $tags->firstWhere('id', $filterValue)->name ?? 'Tag' }}"</h3>
+                @elseif($filterType == 'brand-category' && $filterBrand && $filterCategory)
+                    <h3 class="text-lg font-medium mb-4">
+                        {{ $brands->firstWhere('id', $filterBrand)->name ?? 'Brand' }}
+                        {{ $categories->firstWhere('id', $filterCategory)->name ?? 'Category' }} Assets</h3>
+                @elseif($filterType == 'brand-tag' && $filterBrand && $filterTag)
+                    <h3 class="text-lg font-medium mb-4">
+                        {{ $brands->firstWhere('id', $filterBrand)->name ?? 'Brand' }}
+                        Assets
+                        with tag "{{ $tags->firstWhere('id', $filterTag)->name ?? 'Tag' }}"</h3>
+                @elseif($filterType == 'category-brand-tag' && $filterCategory && $filterBrand && $filterTag)
+                    <h3 class="text-lg font-medium mb-4">
+                        {{ $categories->firstWhere('id', $filterCategory)->name ?? 'Category' }} Assets
+                        from {{ $brands->firstWhere('id', $filterBrand)->name ?? 'Brand' }}
+                        with tag "{{ $tags->firstWhere('id', $filterTag)->name ?? 'Tag' }}"</h3>
+                @else
+                    <h3 class="text-lg font-medium mb-4">All Assets</h3>
+                @endif
+                <x-filament::input.wrapper>
+                    <x-filament::input.select wire:model.live="perPage" class="rounded border-gray-300 shadow-sm">
+                        <option value="12">12 per page</option>
+                        <option value="24">24 per page</option>
+                        <option value="36">36 per page</option>
+                        <option value="48">48 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="200">200 per page</option>
+                        <option value="500">500 per page</option>
+                        <option value="1000">1000 per page</option>
+                    </x-filament::input.select>
+                </x-filament::input.wrapper>
+            </div>
+
+            <div>
+                {{ $assets->links() }}
+            </div>
+        </div>
 
         @if ($viewType === 'card')
             <!-- Card View (Existing) -->

@@ -179,6 +179,13 @@
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
                 @endif
+
+                @if ($filterType !== 'all')
+                    <x-filament::button color="danger" size="sm" wire:click="resetFilters" class="self-center"
+                        icon="heroicon-o-x-mark">
+                        Reset Filters
+                    </x-filament::button>
+                @endif
             </div>
         </div>
     </x-filament::section>

@@ -125,4 +125,15 @@ class Inventory extends Component
     {
         $this->viewType = $type;
     }
+
+    // Add this method to your Inventory class
+    public function resetFilters()
+    {
+        $this->filterType = 'all';
+        $this->filterValue = '';
+        $this->filterBrand = '';
+        $this->filterCategory = '';
+        $this->filterTag = '';
+        $this->resetPage();
+    }
 }

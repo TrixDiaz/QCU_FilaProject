@@ -8,10 +8,16 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Tag;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
+use League\Csv\Writer;
+use League\Csv\Reader;
+use SplTempFileObject;
 
 class Inventory extends Component
 {
     use WithPagination;
+    use WithFileUploads;
 
     public $filterType = 'all';
     public $filterValue = '';
@@ -24,8 +30,24 @@ class Inventory extends Component
     public $totalAssets = 0;
     public $filteredCount = 0;
     public $perPage = 12;
-    public $viewType = 'card'; // Add this property to track current view type
-    public $search = ''; // Add search property
+    public $viewType = 'card';
+    public $search = '';
+
+    // New properties for bulk actions
+    public $selected = [];
+    public $selectAll = false;
+    public $bulkAction = '';
+    public $confirmingBulkDelete = false;
+    public $importFile = null;
+    public $showImportModal = false;
+    public $showBulkEditModal = false;
+    public $bulkEditData = [
+        'status' => '',
+        'category_id' => '',
+        'brand_id' => '',
+    ];
+
+    protected $listeners = ['refreshAssets' => '$refresh'];
 
     public function mount()
     {
@@ -100,6 +122,11 @@ class Inventory extends Component
         $assets = $query->paginate($this->perPage);
         $this->filteredCount = $assets->total();
 
+        // Handle "Select All" checkboxes
+        if ($this->selectAll) {
+            $this->selected = $assets->pluck('id')->map(fn($id) => (string) $id)->toArray();
+        }
+
         return view('livewire.inventory', [
             'assets' => $assets
         ]);
@@ -113,6 +140,13 @@ class Inventory extends Component
         $this->filterCategory = '';
         $this->filterTag = '';
         $this->resetPage();
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if (!$value) {
+            $this->selected = [];
+        }
     }
 
     // Reset pagination when search changes
@@ -153,7 +187,7 @@ class Inventory extends Component
         $this->viewType = $type;
     }
 
-    // Add this method to your Inventory class
+    // Reset filters
     public function resetFilters()
     {
         $this->filterType = 'all';
@@ -163,5 +197,166 @@ class Inventory extends Component
         $this->filterTag = '';
         $this->search = '';
         $this->resetPage();
+    }
+
+    // Bulk action methods
+    public function confirmBulkDelete()
+    {
+        if (empty($this->selected)) {
+            $this->addError('bulkAction', 'Please select at least one asset');
+            return;
+        }
+
+        $this->confirmingBulkDelete = true;
+    }
+
+    public function doBulkDelete()
+    {
+        Asset::whereIn('id', $this->selected)->delete();
+        $this->confirmingBulkDelete = false;
+        $this->selected = [];
+        $this->selectAll = false;
+        $this->dispatch('notify', ['message' => count($this->selected) . ' assets deleted successfully', 'type' => 'success']);
+    }
+
+    public function openBulkEditModal()
+    {
+        if (empty($this->selected)) {
+            $this->addError('bulkAction', 'Please select at least one asset');
+            return;
+        }
+
+        $this->showBulkEditModal = true;
+    }
+
+    public function doBulkEdit()
+    {
+        $data = array_filter($this->bulkEditData);
+
+        if (empty($data)) {
+            $this->addError('bulkEdit', 'Please select at least one field to update');
+            return;
+        }
+
+        Asset::whereIn('id', $this->selected)->update($data);
+
+        $this->showBulkEditModal = false;
+        $this->bulkEditData = [
+            'status' => '',
+            'category_id' => '',
+            'brand_id' => '',
+        ];
+        $this->dispatch('notify', ['message' => count($this->selected) . ' assets updated successfully', 'type' => 'success']);
+    }
+
+    public function openImportModal()
+    {
+        $this->showImportModal = true;
+    }
+
+    public function importAssets()
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:csv,txt|max:1024',
+        ]);
+
+        try {
+            $csv = Reader::createFromPath($this->importFile->getRealPath(), 'r');
+            $csv->setHeaderOffset(0);
+
+            $records = $csv->getRecords();
+            $imported = 0;
+
+            DB::beginTransaction();
+
+            foreach ($records as $record) {
+                // Handle asset import logic here
+                $brand = Brand::firstOrCreate(['name' => $record['brand']]);
+                $category = Category::firstOrCreate(['name' => $record['category']]);
+
+                Asset::create([
+                    'name' => $record['name'],
+                    'serial_number' => $record['serial_number'],
+                    'asset_code' => $record['asset_code'] ?? '',
+                    'status' => $record['status'] ?? 'available',
+                    'brand_id' => $brand->id,
+                    'category_id' => $category->id,
+                    // Add other fields as necessary
+                ]);
+
+                $imported++;
+            }
+
+            DB::commit();
+
+            $this->showImportModal = false;
+            $this->importFile = null;
+            $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->addError('import', 'Error importing file: ' . $e->getMessage());
+        }
+    }
+
+    public function exportAssets()
+    {
+        $query = Asset::query();
+
+        if (!empty($this->selected)) {
+            $query->whereIn('id', $this->selected);
+        }
+
+        $assets = $query->with(['brand', 'category'])->get();
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        // Define CSV headers
+        $csv->insertOne(['Name', 'Serial Number', 'Asset Code', 'Status', 'Brand', 'Category']);
+
+        // Add data rows
+        foreach ($assets as $asset) {
+            $csv->insertOne([
+                $asset->name,
+                $asset->serial_number,
+                $asset->asset_code,
+                $asset->status,
+                $asset->brand->name,
+                $asset->category->name,
+            ]);
+        }
+
+        $filename = 'assets-export-' . date('Y-m-d') . '.csv';
+
+        return response()->streamDownload(
+            function () use ($csv) {
+                echo $csv->getContent();
+            },
+            $filename,
+            [
+                'Content-Type' => 'text/csv',
+            ]
+        );
+    }
+
+    public function executeBulkAction()
+    {
+        if (empty($this->selected)) {
+            $this->addError('bulkAction', 'Please select at least one asset');
+            return;
+        }
+
+        switch ($this->bulkAction) {
+            case 'delete':
+                $this->confirmBulkDelete();
+                break;
+            case 'edit':
+                $this->openBulkEditModal();
+                break;
+            case 'export':
+                return $this->exportAssets();
+                break;
+            default:
+                $this->addError('bulkAction', 'Please select a valid action');
+        }
     }
 }

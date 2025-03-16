@@ -22,7 +22,14 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return auth()->check() && auth()->user()->approval_status == true && str_ends_with(auth()->user()->email, '@gmail.com');
+        try {
+            return auth()->check() &&
+                auth()->user()->approval_status == true &&
+                str_ends_with(auth()->user()->email, '@gmail.com');
+        } catch (\Throwable $e) {
+            abort(403, 'Unauthorized access');
+            return false;
+        }
     }
 
     /**

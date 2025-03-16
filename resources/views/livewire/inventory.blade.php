@@ -1,6 +1,28 @@
 <div>
+    <div class="flex justify-between items-center col-span-full gap-4">
+        <x-filament::section class="w-full">
+            <div class="flex items-center gap-4 w-full">
+                <x-filament::input.wrapper class="flex-1">
+                    <x-slot name="prefix">
+                        Search
+                    </x-slot>
+
+                    <x-filament::input type="text" class="w-full" wire:model.live.debounce.500ms='search' />
+
+                </x-filament::input.wrapper>
+
+                <x-filament::button href="{{ route('filament.app.resources.assets.create') }}" tag="a"
+                    icon="heroicon-m-plus">
+                    New Asset
+                </x-filament::button>
+            </div>
+        </x-filament::section>
+    </div>
     <!-- Pagination Controls -->
-    <x-filament::section class="mb-4">
+    <x-filament::section class="my-4" collapsible collapsed>
+        <x-slot name="heading">
+            Pagination
+        </x-slot>
         <div class="flex justify-between items-center">
             <div>
                 <x-filament::input.wrapper>
@@ -22,7 +44,10 @@
             </div>
         </div>
     </x-filament::section>
-    <x-filament::section class="mb-4">
+    <x-filament::section class="mb-4" collapsible collapsed>
+        <x-slot name="heading">
+            Filtering
+        </x-slot>
         <div class="flex flex-row justify-between items-center">
             <div>
                 <div>
@@ -220,8 +245,7 @@
             <!-- Card View (Existing) -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 @forelse($assets as $asset)
-                    <x-filament::section>
-                        <!-- ...existing card content... -->
+                    <x-filament::section key="{{ $asset->id }}">
                         <div class="rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
                             <div class="p-4">
                                 <div class="flex justify-between mb-2">
@@ -290,9 +314,13 @@
                                     </div>
                                 @endif
 
-                                <div class="mt-3 flex justify-end">
-                                    <x-filament::button class="text-sm hover:underline">View
-                                        Details</x-filament::button>
+                                <div class="mt-3 flex justify-end gap-2">
+                                    <x-filament::button class="text-sm hover:underline">Deploy
+                                        Asset</x-filament::button>
+                                    <x-filament::button
+                                        href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
+                                        tag="a" class="text-sm hover:underline">Edit
+                                        Asset</x-filament::button>
                                 </div>
                             </div>
                         </div>
@@ -378,8 +406,12 @@
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell
                                     class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button class="text-primary-600 hover:text-primary-900 hover:underline">View
-                                        Details</button>
+                                    <x-filament::button class="text-sm hover:underline">Deploy
+                                        Asset</x-filament::button>
+                                    <x-filament::button
+                                        href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
+                                        tag="a" class="text-sm hover:underline">Edit
+                                        Asset</x-filament::button>
                                 </x-filament-tables::cell>
                             </x-filament-tables::row>
                         @empty

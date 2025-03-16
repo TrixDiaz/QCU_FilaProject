@@ -137,7 +137,10 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->visible(fn(Forms\Get $get) => $get('show_expiry_date')),
 
                         Forms\Components\Select::make('status')
-                            ->options(\App\Enums\AssetStatus::class)
+                            ->options([
+                                'available' => 'Available',
+                                'broken' => 'Broken',
+                            ])
                             ->native(false)
                             ->extraAttributes(['style' => 'text-transform:uppercase'])
                             ->visibleOn(['edit', 'view'])

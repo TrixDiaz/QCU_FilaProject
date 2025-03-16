@@ -25,6 +25,7 @@ class Inventory extends Component
     public $filteredCount = 0;
     public $perPage = 12;
     public $viewType = 'card'; // Add this property to track current view type
+    public $search = ''; // Add search property
 
     public function mount()
     {
@@ -38,6 +39,26 @@ class Inventory extends Component
     {
         $query = Asset::with(['brand', 'category', 'assetTags'])->where('status', 'available');
 
+        // Apply search if provided
+        if ($this->search) {
+            $searchTerm = '%' . $this->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                    ->orWhere('serial_number', 'like', $searchTerm)
+                    ->orWhere('asset_code', 'like', $searchTerm)
+                    ->orWhereHas('brand', function ($brandQuery) use ($searchTerm) {
+                        $brandQuery->where('name', 'like', $searchTerm);
+                    })
+                    ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
+                        $categoryQuery->where('name', 'like', $searchTerm);
+                    })
+                    ->orWhereHas('assetTags', function ($tagQuery) use ($searchTerm) {
+                        $tagQuery->where('name', 'like', $searchTerm);
+                    });
+            });
+        }
+
+        // Apply filters
         if ($this->filterType === 'brand' && $this->filterValue) {
             $query->where('brand_id', $this->filterValue);
         } elseif ($this->filterType === 'category' && $this->filterValue) {
@@ -94,6 +115,12 @@ class Inventory extends Component
         $this->resetPage();
     }
 
+    // Reset pagination when search changes
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
     // Reset pagination when filters change
     public function updatedFilterValue()
     {
@@ -134,6 +161,7 @@ class Inventory extends Component
         $this->filterBrand = '';
         $this->filterCategory = '';
         $this->filterTag = '';
+        $this->search = '';
         $this->resetPage();
     }
 }

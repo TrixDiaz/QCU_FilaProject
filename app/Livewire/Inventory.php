@@ -24,6 +24,7 @@ class Inventory extends Component
     public $totalAssets = 0;
     public $filteredCount = 0;
     public $perPage = 12;
+    public $viewType = 'card'; // Add this property to track current view type
 
     public function mount()
     {
@@ -117,5 +118,11 @@ class Inventory extends Component
     public function updatedPerPage()
     {
         $this->resetPage();
+    }
+
+    // Add a new method to toggle view type
+    public function setViewType($type)
+    {
+        $this->viewType = $type;
     }
 }

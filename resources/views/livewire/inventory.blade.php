@@ -1,8 +1,9 @@
 <div>
+
     <section class="flex flex-row justify-between items-center mb-6">
         <div>
             <h2 class="text-xl font-bold">Inventory Assets</h2>
-            <div class="text-sm text-gray-500 capitalize">
+            <div class="text-sm capitalize">
                 @if ($filterType == 'all')
                     Showing all {{ $filteredCount }} assets
                 @elseif($filterType == 'brand' && $filterValue)
@@ -27,7 +28,18 @@
             </div>
         </div>
 
-        <div class="flex space-x-4 gap-4">
+
+        <div class="flex gap-4">
+            <div class="flex flex-row justify-center align-center gap-4">
+                <x-filament::icon-button size="lg" icon="heroicon-o-queue-list" wire:click="setViewType('table')"
+                    :color="$viewType === 'table' ? 'primary' : 'gray'">
+                    <span class="sr-only">Table View</span>
+                </x-filament::icon-button>
+                <x-filament::icon-button size="lg" icon="heroicon-o-squares-2x2" wire:click="setViewType('card')"
+                    :color="$viewType === 'card' ? 'primary' : 'gray'">
+                    <span class="sr-only">Card View</span>
+                </x-filament::icon-button>
+            </div>
             <x-filament::input.wrapper>
                 <x-filament::input.select wire:model.live="filterType" class="rounded border-gray-300 shadow-sm">
                     <option value="all">All Assets ({{ $totalAssets }})</option>
@@ -161,94 +173,189 @@
             <h3 class="text-lg font-medium mb-4">All Assets</h3>
         @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            @forelse($assets as $asset)
-                <x-filament::section>
-                    <div class="rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
-                        <div class="p-4">
-                            <div class="flex justify-between mb-2">
-                                <div>
-                                    <x-filament::badge color="secondary">
-                                        <h3 class="font-bold capitalize">{{ $asset->brand->name }}</h3>
-                                    </x-filament::badge>
-                                    <x-filament::badge color="info" class="mt-2">
-                                        <span class="text-sm rounded py-1 capitalize">
-                                            {{ $asset->category->name }}
-                                        </span>
-                                    </x-filament::badge>
-                                </div>
-                                <div>
-                                    <x-filament::badge>
-                                        <span class="text-sm rounded px-2 py-1 capitalize">
-                                            {{ $asset->status }}
-                                        </span>
-                                    </x-filament::badge>
-                                </div>
-                            </div>
-
-                            <h4 class="text-lg font-semibold">{{ $asset->name }}</h4>
-
-                            <div class="text-sm mt-2">
-                                <p><span class="font-medium">S/N:</span> {{ $asset->serial_number }}</p>
-                                <p><span class="font-medium">Asset Code:</span> {{ $asset->asset_code }}</p>
-
-                                @php
-                                    $isSoftware = strtolower($asset->category->name) === 'software';
-                                    $hasLicenseTag = $asset->assetTags->contains(function ($tag) {
-                                        return strtolower($tag->name) === 'license';
-                                    });
-                                @endphp
-
-                                @if ($asset->expiry_date && ($isSoftware || $hasLicenseTag))
-                                    <p>
-                                        <span class="font-medium">Expires:</span>
-                                        {{ \Carbon\Carbon::parse($asset->expiry_date)->format('M d, Y') }}
-
-                                        @php
-                                            $daysUntilExpiry = \Carbon\Carbon::now()->diffInDays(
-                                                $asset->expiry_date,
-                                                false,
-                                            );
-                                        @endphp
-
-                                        @if ($daysUntilExpiry < 0)
-                                            <x-filament::badge color="danger">Expired</x-filament::badge>
-                                        @elseif ($daysUntilExpiry < 30)
-                                            <x-filament::badge color="warning">Expiring soon</x-filament::badge>
-                                        @endif
-                                    </p>
-                                @endif
-                            </div>
-
-                            @if ($asset->assetTags->count() > 0)
-                                <div class="mt-2 flex flex-wrap gap-1">
-                                    @foreach ($asset->assetTags as $tag)
-                                        <x-filament::badge>
-                                            <span class="text-xs rounded px-2 py-1">
-                                                {{ $tag->name }}
+        @if ($viewType === 'card')
+            <!-- Card View (Existing) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                @forelse($assets as $asset)
+                    <x-filament::section>
+                        <!-- ...existing card content... -->
+                        <div class="rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <div class="flex justify-between mb-2">
+                                    <div>
+                                        <x-filament::badge color="secondary">
+                                            <h3 class="font-bold capitalize">{{ $asset->brand->name }}</h3>
+                                        </x-filament::badge>
+                                        <x-filament::badge color="info" class="mt-2">
+                                            <span class="text-sm rounded py-1 capitalize">
+                                                {{ $asset->category->name }}
                                             </span>
                                         </x-filament::badge>
-                                    @endforeach
+                                    </div>
+                                    <div>
+                                        <x-filament::badge>
+                                            <span class="text-sm rounded px-2 py-1 capitalize">
+                                                {{ $asset->status }}
+                                            </span>
+                                        </x-filament::badge>
+                                    </div>
                                 </div>
-                            @endif
 
-                            <div class="mt-3 flex justify-end">
-                                <button class="text-sm hover:underline">View Details</button>
+                                <h4 class="text-lg font-semibold">{{ $asset->name }}</h4>
+
+                                <div class="text-sm mt-2">
+                                    <p><span class="font-medium">S/N:</span> {{ $asset->serial_number }}</p>
+                                    <p><span class="font-medium">Asset Code:</span> {{ $asset->asset_code }}</p>
+
+                                    @php
+                                        $isSoftware = strtolower($asset->category->name) === 'software';
+                                        $hasLicenseTag = $asset->assetTags->contains(function ($tag) {
+                                            return strtolower($tag->name) === 'license';
+                                        });
+                                    @endphp
+
+                                    @if ($asset->expiry_date && ($isSoftware || $hasLicenseTag))
+                                        <p>
+                                            <span class="font-medium">Expires:</span>
+                                            {{ \Carbon\Carbon::parse($asset->expiry_date)->format('M d, Y') }}
+
+                                            @php
+                                                $daysUntilExpiry = \Carbon\Carbon::now()->diffInDays(
+                                                    $asset->expiry_date,
+                                                    false,
+                                                );
+                                            @endphp
+
+                                            @if ($daysUntilExpiry < 0)
+                                                <x-filament::badge color="danger">Expired</x-filament::badge>
+                                            @elseif ($daysUntilExpiry < 30)
+                                                <x-filament::badge color="warning">Expiring soon</x-filament::badge>
+                                            @endif
+                                        </p>
+                                    @endif
+                                </div>
+
+                                @if ($asset->assetTags->count() > 0)
+                                    <div class="mt-2 flex flex-wrap gap-1">
+                                        @foreach ($asset->assetTags as $tag)
+                                            <x-filament::badge>
+                                                <span class="text-xs rounded px-2 py-1">
+                                                    {{ $tag->name }}
+                                                </span>
+                                            </x-filament::badge>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <div class="mt-3 flex justify-end">
+                                    <x-filament::button class="text-sm hover:underline">View
+                                        Details</x-filament::button>
+                                </div>
                             </div>
                         </div>
+                    </x-filament::section>
+                @empty
+                    <div class="col-span-full py-10 text-center">
+                        <p class="text-lg">No assets found matching your filter criteria.</p>
+                        @if ($filterType != 'all')
+                            <x-filament::button wire:click="$set('filterType', 'all')" class="mt-2 hover:underline">
+                                Show all assets
+                            </x-filament::button>
+                        @endif
                     </div>
-                </x-filament::section>
-            @empty
-                <div class="col-span-full py-10 text-center">
-                    <p class="text-lg">No assets found matching your filter criteria.</p>
-                    @if ($filterType != 'all')
-                        <button wire:click="$set('filterType', 'all')" class="mt-2 hover:underline">
-                            Show all assets
-                        </button>
-                    @endif
-                </div>
-            @endforelse
-        </div>
+                @endforelse
+            </div>
+        @else
+            <!-- Table View (Using standard HTML table) -->
+            <div class="overflow-x-auto rounded-lg">
+                <x-filament-tables::table class="min-w-full divide-y col-span-full">
+                    <thead class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
+                        <x-filament-tables::row>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Name</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Brand</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Category</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                S/N</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Asset Code</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Status</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Tags</x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Action</x-filament-tables::header-cell>
+                        </x-filament-tables::row>
+                    </thead>
+                    <tbody class="divide-y">
+                        @forelse($assets as $asset)
+                            <x-filament-tables::row class="">
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ $asset->name }}</div>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <x-filament::badge color="secondary">
+                                        <span class="capitalize">{{ $asset->brand->name }}</span>
+                                    </x-filament::badge>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <x-filament::badge color="info">
+                                        <span class="capitalize">{{ $asset->category->name }}</span>
+                                    </x-filament::badge>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ $asset->serial_number }}</div>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ $asset->asset_code }}</div>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <x-filament::badge>
+                                        <span class="capitalize">{{ $asset->status }}</span>
+                                    </x-filament::badge>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach ($asset->assetTags as $tag)
+                                            <x-filament::badge>
+                                                <span class="text-xs">{{ $tag->name }}</span>
+                                            </x-filament::badge>
+                                        @endforeach
+                                    </div>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell
+                                    class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-primary-600 hover:text-primary-900 hover:underline">View
+                                        Details</button>
+                                </x-filament-tables::cell>
+                            </x-filament-tables::row>
+                        @empty
+                            <tr>
+                                <x-filament-tables::cell colspan="8" class="px-6 py-10 text-center">
+                                    <p class="text-lg">No assets found matching your filter criteria.</p>
+                                    @if ($filterType != 'all')
+                                        <x-filament::button wire:click="$set('filterType', 'all')"
+                                            class="mt-2 text-primary-600 hover:text-primary-900 hover:underline">
+                                            Show all assets
+                                        </x-filament::button>
+                                    @endif
+                                </x-filament-tables::cell>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </x-filament-tables::table>
+            </div>
+        @endif
 
         <!-- Pagination Controls -->
         <div class="mt-6">
@@ -268,8 +375,7 @@
                     </x-filament::input.wrapper>
                 </div>
 
-
-                <div>
+                <div class="fi-ta-pagination px-3 py-3 sm:px-6">
                     {{ $assets->links() }}
                 </div>
             </div>

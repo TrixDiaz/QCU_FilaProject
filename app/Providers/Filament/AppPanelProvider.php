@@ -87,6 +87,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 'Assets',
+                'Schedule',
                 'Tickets',
                 'School',
                 'Reports',

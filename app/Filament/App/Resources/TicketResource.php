@@ -45,6 +45,8 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = Ticket::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationGroup = 'Tickets';
     protected static ?string $modelLabel = 'Tickets';
     protected static ?string $navigationLabel = 'Tickets';

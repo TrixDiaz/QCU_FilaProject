@@ -19,6 +19,7 @@ class Classroom extends Model
         'building_id',
         'name',
         'slug',
+        'floor',
         'is_active',
         'created_at',
         'updated_at',
@@ -34,10 +35,18 @@ class Classroom extends Model
         return $this->HasMany(Section::class);
     }
 
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Event::class);
+    }
+
     public function asset(): HasMany
     {
         return $this->HasMany(Asset::class);
     }
 
-
+    public function assetGroups(): HasMany
+    {
+        return $this->hasMany(AssetGroup::class);
+    }
 }

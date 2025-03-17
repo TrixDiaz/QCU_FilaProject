@@ -49,6 +49,8 @@ class SubjectResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationParentItem = 'Buildings';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('status', 'active')->count();

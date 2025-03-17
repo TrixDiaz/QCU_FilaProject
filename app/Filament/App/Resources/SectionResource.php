@@ -41,6 +41,8 @@ class SectionResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationParentItem = 'Buildings';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_active', true)->count();

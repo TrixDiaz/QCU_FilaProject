@@ -48,49 +48,49 @@ class AppPanelProvider extends PanelProvider
                 'Profile' => MenuItem::make()->url(fn(): string => \Filament\Pages\Auth\EditProfile::getUrl())
             ])
             ->navigationItems([
-                NavigationItem::make('Asset Report')
-                    ->url(fn(): string => AssetReport::getUrl())
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports')
-                    ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
-                NavigationItem::make('Inventory Report')
-                    ->url(fn(): string => InventoryReport::getUrl())
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports')
-                    ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
-                NavigationItem::make('Maintenance Report')
-                    ->url(fn(): string => MaintenanceReport::getUrl())
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports')
-                    ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
-                NavigationItem::make('Users Report')
-                    ->url(fn(): string => UsersReport::getUrl())
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports')
-                    ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
-                NavigationItem::make('Activity Log')
-                    ->url(fn(): string => ActivityResource::getUrl())
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('System Settings')
-                    ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
-                NavigationItem::make('Category Report')
-                    ->url(fn(): string => CategoryReport::getUrl())
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports')
-                    ->sort(1)
-                    ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                // NavigationItem::make('Asset Report')
+                //     ->url(fn(): string => AssetReport::getUrl())
+                //     ->icon('heroicon-o-presentation-chart-line')
+                //     ->group('Reports')
+                //     ->sort(1)
+                //     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                // NavigationItem::make('Inventory Report')
+                //     ->url(fn(): string => InventoryReport::getUrl())
+                //     ->icon('heroicon-o-presentation-chart-line')
+                //     ->group('Reports')
+                //     ->sort(1)
+                //     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                // NavigationItem::make('Maintenance Report')
+                //     ->url(fn(): string => MaintenanceReport::getUrl())
+                //     ->icon('heroicon-o-presentation-chart-line')
+                //     ->group('Reports')
+                //     ->sort(1)
+                //     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                // NavigationItem::make('Users Report')
+                //     ->url(fn(): string => UsersReport::getUrl())
+                //     ->icon('heroicon-o-presentation-chart-line')
+                //     ->group('Reports')
+                //     ->sort(1)
+                //     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                // NavigationItem::make('Activity Log')
+                //     ->url(fn(): string => ActivityResource::getUrl())
+                //     ->icon('heroicon-o-presentation-chart-line')
+                //     ->group('System Settings')
+                //     ->sort(1)
+                //     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
+                // NavigationItem::make('Category Report')
+                //     ->url(fn(): string => CategoryReport::getUrl())
+                //     ->icon('heroicon-o-presentation-chart-line')
+                //     ->group('Reports')
+                //     ->sort(1)
+                //     ->visible(fn() => auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'technician'])),
             ])
             ->navigationGroups([
                 'Assets',
                 'Schedule',
                 'Tickets',
                 'School',
-                'Reports',
+                'Report Builder',
                 'System Settings',
             ])
             ->sidebarCollapsibleOnDesktop()

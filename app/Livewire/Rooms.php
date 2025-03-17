@@ -78,29 +78,26 @@ class Rooms extends Component
             $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             $this->schedulesByDay = array_fill_keys($days, []);
 
-            // Since we don't have a direct schedules relationship yet, let's derive them from sections
-            // or use the Event model if available
-            // Get active sections for this classroom that have events
-            $sections = $this->currentClassroom->sections()->with(['classroom'])->get();
+            // Get all sections associated with this classroom
+            $sections = $this->currentClassroom->sections()->with(['subject'])->get();
 
-            // If you have an events table that contains the schedule information
-            $events = \App\Models\Event::whereIn('section_id', $sections->pluck('id'))
-                ->get()
-                ->groupBy(function ($event) {
-                    // Convert timestamp to day name
-                    return date('l', strtotime($event->starts_at));
-                });
+            // Collect all subjects from these sections
+            foreach ($sections as $section) {
+                foreach ($section->subject as $subject) {
+                    // Make sure we have a day value
+                    if ($subject->day) {
+                        // Format the time data
+                        $startTime = optional($subject->lab_time_starts_at)->format('H:i:s');
+                        $endTime = optional($subject->lab_time_ends_at)->format('H:i:s');
 
-            foreach ($events as $day => $dayEvents) {
-                if (in_array($day, $days)) {
-                    foreach ($dayEvents as $event) {
-                        $section = $sections->firstWhere('id', $event->section_id);
-
-                        $this->schedulesByDay[$day][] = (object)[
-                            'start_time' => $event->starts_at,
-                            'end_time' => $event->ends_at,
+                        // Add to the appropriate day's schedule
+                        $this->schedulesByDay[$subject->day][] = (object)[
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
                             'section' => $section,
-                            'subject' => $event->title
+                            'subject' => $subject->name,
+                            'subject_code' => $subject->subject_code,
+                            'professor' => optional($subject->professor)->name ?? 'N/A'
                         ];
                     }
                 }

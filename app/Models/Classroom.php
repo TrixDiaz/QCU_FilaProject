@@ -37,7 +37,7 @@ class Classroom extends Model
 
     public function schedules(): HasMany
     {
-        return $this->hasMany(Event::class);
+        return $this->hasMany(Subject::class);
     }
 
     public function asset(): HasMany

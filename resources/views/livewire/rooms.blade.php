@@ -34,10 +34,18 @@
             overflow-y: auto;
         }
     </style>
+    {{-- Create New Schedule --}}
+    <div class="flex justify-end items-center gap-2 my-4">
+        <x-filament::button href="{{ route('filament.app.resources.subjects.create') }}" tag="a" size="sm"
+            color="primary">
+            Create New Schedule
+        </x-filament::button>
+
+    </div>
     <!-- Search Bar -->
     <x-filament::section>
         <div class="rounded shadow-sm">
-            <label for="search" class="block text-sm font-medium mb-1">Search Classrooms</label>
+            <label for="search" class="block text-sm font-medium mb-2">Search Classrooms</label>
             <x-filament::input.wrapper>
                 <x-filament::input type="text" wire:model.live.debounce.300ms="search" id="search"
                     placeholder="Search by classroom name, building or floor..." />
@@ -50,7 +58,7 @@
         <div class="rounded shadow-sm mb-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="building" class="block text-sm font-medium">Building</label>
+                    <label for="building" class="block text-sm font-medium mb-2">Building</label>
                     <x-filament::input.wrapper>
                         <x-filament::input.select id="building" wire:model.live="selectedBuilding">
                             <option value="">All Buildings</option>
@@ -65,7 +73,7 @@
                 </div>
 
                 <div>
-                    <label for="floor" class="block text-sm font-medium">Floor</label>
+                    <label for="floor" class="block text-sm font-medium mb-2">Floor</label>
                     <x-filament::input.wrapper>
                         <x-filament::input.select id="floor" wire:model.live="selectedFloor" :disabled="!count($floors)">
                             <option value="">All Floors</option>
@@ -144,10 +152,15 @@
                                             {{ $classroom->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </x-filament-tables::cell>
-                                    <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap gap-2">
                                         <x-filament::button size="sm"
                                             wire:click="viewClassroomDetails({{ $classroom->id }})" tag="button">
                                             View Details
+                                        </x-filament::button>
+                                        <x-filament::button size="sm"
+                                            href="{{ route('filament.app.resources.subjects.edit', $classroom) }}"
+                                            tag="a">
+                                            Edit Schedule
                                         </x-filament::button>
                                     </x-filament-tables::cell>
                                 </x-filament-tables::row>
@@ -182,10 +195,15 @@
                                     @endif
                                 </div>
 
-                                <div class="mt-3 flex justify-end">
-                                    <x-filament::button size="sm"
+                                <div class="mt-3 flex justify-end gap-2">
+                                    <x-filament::button size="xs"
                                         wire:click="viewClassroomDetails({{ $classroom->id }})" tag="button">
                                         View Details
+                                    </x-filament::button>
+                                    <x-filament::button size="xs"
+                                        href="{{ route('filament.app.resources.subjects.edit', $classroom) }}"
+                                        tag="a">
+                                        Edit Schedule
                                     </x-filament::button>
                                 </div>
                             </div>

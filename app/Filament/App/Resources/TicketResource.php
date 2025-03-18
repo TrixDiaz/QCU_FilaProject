@@ -63,249 +63,256 @@ class TicketResource extends Resource implements HasShieldPermissions
 
 
     public static function form(Form $form): Form
-    {
-        $isProfessor = auth()->user()->hasRole('professor');
-        $isEditMode = $form->getOperation() === 'edit';
+{
+    $isProfessor = auth()->user()->hasRole('professor');
+    $isEditMode = $form->getOperation() === 'edit';
 
-        return $form
-            ->schema([
-                Forms\Components\Grid::make()
-                    ->schema([
-                        Forms\Components\Section::make()
+    return $form
+        ->schema([
+            Forms\Components\Grid::make()
+                ->schema([
+                    Forms\Components\Section::make()
+                        ->schema([
+                            Forms\Components\Placeholder::make('ticket_status')
+                                ->label('Ticket Current Status')
+                                ->content(fn($record): string => $record->ticket_status ?? 'New')
+                                ->extraAttributes(['class' => 'capitalize']),
+                        ])
+                        ->columnSpan(1),
+
+                    Forms\Components\Section::make()
+                        ->schema([
+                            Forms\Components\Placeholder::make('ticket')
+                                ->label('Ticket Number')
+                                ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
+                        ])
+                        ->columnSpan(1),
+                ])
+                ->columns(2),
+            Forms\Components\Section::make()
+                ->schema([
+                    Wizard::make([
+                        Wizard\Step::make('Ticket Information')
                             ->schema([
-                                Forms\Components\Placeholder::make('ticket_status')
-                                    ->label('Ticket Current Status')
-                                    ->content(fn($record): string => $record->ticket_status ?? 'New')
-                                    ->extraAttributes(['class' => 'capitalize']),
-                            ])
-                            ->columnSpan(1),
+                                Forms\Components\Section::make()
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('ticket_type')
+                                                    ->options([
+                                                        'request' => 'Request',
+                                                        'incident' => 'Incident',
+                                                    ])
+                                                    ->afterStateUpdated(function ($state, $set) {
+                                                        $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8)));
 
-                        Forms\Components\Section::make()
-                            ->schema([
-                                Forms\Components\Placeholder::make('ticket')
-                                    ->label('Ticket Number')
-                                    ->content(fn($get): string => $get('ticket_number') ?? 'Please Select Ticket Type to Generate'),
-                            ])
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2),
-                Forms\Components\Section::make()
-                    ->schema([
-                        Wizard::make([
-                            Wizard\Step::make('Ticket Information')
-                                ->schema([
-                                    Forms\Components\Section::make()
-                                        ->schema([
-                                            Forms\Components\Grid::make(2)
-                                                ->schema([
-                                                    Forms\Components\Select::make('ticket_type')
-                                                        ->options([
-                                                            'request' => 'Request',
-                                                            'incident' => 'Incident',
-                                                        ])
-                                                        ->afterStateUpdated(function ($state, $set) {
-                                                            $set('ticket_number', ($state === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8)));
+                                                        // Reset option if changing ticket type
+                                                        $set('request_type', null); // Keep as request_type in form but map correctly in database
+                                                        $set('asset_id', null);
+                                                        $set('section_id', null);
+                                                        $set('subject_id', null);
+                                                    })
+                                                    ->required()
+                                                    ->reactive()
+                                                    ->live()
+                                                    ->native(false),
 
-                                                            // Reset option if changing ticket type
-                                                            $set('option', null);
-                                                            $set('asset_id', null);
-                                                            $set('section_id', null);
-                                                            $set('subject_id', null);
-                                                        })
-                                                        ->required()
-                                                        ->reactive()
-                                                        ->live()
-                                                        ->native(false),
+                                                Forms\Components\TextInput::make('title')
+                                                    ->required(),
 
-                                                    Forms\Components\TextInput::make('title')
-                                                        ->required(),
+                                                Forms\Components\Select::make('request_type') // Keep as request_type in form
+                                                    ->options([
+                                                        'asset' => 'Asset',
+                                                        'classroom' => 'Classroom',
+                                                    ])
+                                                    ->required()
+                                                    ->visible(fn($get) => $get('ticket_type') === 'request')
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        // Reset related fields when option changes
+                                                        $set('asset_id', null);
+                                                        $set('section_id', null);
+                                                        $set('subject_id', null);
+                                                        $set('starts_at', null);
+                                                        $set('ends_at', null);
+                                                        $set('has_time_conflict', false);
+                                                    }),
+                                                Forms\Components\Select::make('classroom_id')
+                                                    ->relationship('classroom', 'name')
+                                                    ->required(fn($get) => $get('request_type') === 'classroom')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('request_type') === 'classroom')
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                                                        // Check for time conflicts when classroom changes
+                                                        self::checkTimeConflict($get, $set);
+                                                    }),
 
-                                                    Forms\Components\Select::make('option')
-                                                        ->options([
-                                                            'asset' => 'Asset',
-                                                            'classroom' => 'Classroom',
-                                                        ])
-                                                        ->required()
-                                                        ->visible(fn($get) => $get('ticket_type') === 'request')
-                                                        ->live()
-                                                        ->afterStateUpdated(function ($state, callable $set) {
-                                                            // Reset related fields when option changes
-                                                            $set('asset_id', null);
-                                                            $set('section_id', null);
-                                                            $set('subject_id', null);
-                                                            $set('starts_at', null);
-                                                            $set('ends_at', null);
-                                                            $set('has_time_conflict', false);
-                                                        }),
+                                                Forms\Components\DateTimePicker::make('starts_at')
+                                                    ->visible(fn($get) => $get('request_type') === 'classroom')
+                                                    ->required(fn($get) => $get('request_type') === 'classroom')
+                                                    ->seconds(false)
+                                                    ->closeOnDateSelection()
+                                                    ->minutesStep(15)
+                                                    ->default(now()->startOfHour())
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
+                                                        if (!$state) return;
 
-                                                    Forms\Components\DateTimePicker::make('starts_at')
-                                                        ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->required(fn($get) => $get('option') === 'classroom')
-                                                        ->seconds(false)
-                                                        ->closeOnDateSelection()
-                                                        ->minutesStep(15)
-                                                        ->default(now()->startOfHour())
-                                                        ->live()
-                                                        ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
-                                                            if (!$state) return;
+                                                        // Get the current selected end time
+                                                        $currentEndTime = $get('ends_at');
+                                                        $startDateTime = Carbon::parse($state);
 
-                                                            // Get the current selected end time
-                                                            $currentEndTime = $get('ends_at');
-                                                            $startDateTime = Carbon::parse($state);
+                                                        // If no end time selected yet, default to starts_at + 1 hour
+                                                        if (!$currentEndTime) {
+                                                            $endDateTime = (clone $startDateTime)->addHour();
+                                                            $set('ends_at', $endDateTime->format('Y-m-d H:i:s'));
+                                                        } else {
+                                                            // If end time is already selected, check if it's still valid
+                                                            $endDateTime = Carbon::parse($currentEndTime);
 
-                                                            // If no end time selected yet, default to starts_at + 1 hour
-                                                            if (!$currentEndTime) {
-                                                                $endDateTime = (clone $startDateTime)->addHour();
-                                                                $set('ends_at', $endDateTime->format('Y-m-d H:i:s'));
-                                                            } else {
-                                                                // If end time is already selected, check if it's still valid
-                                                                $endDateTime = Carbon::parse($currentEndTime);
+                                                            // If end time is before or equal to start time, add 1 hour to start time
+                                                            if ($endDateTime->lte($startDateTime)) {
+                                                                $newEndDateTime = (clone $startDateTime)->addHour();
+                                                                $set('ends_at', $newEndDateTime->format('Y-m-d H:i:s'));
+                                                            }
+                                                        }
 
-                                                                // If end time is before or equal to start time, add 1 hour to start time
-                                                                if ($endDateTime->lte($startDateTime)) {
-                                                                    $newEndDateTime = (clone $startDateTime)->addHour();
-                                                                    $set('ends_at', $newEndDateTime->format('Y-m-d H:i:s'));
+                                                        // Check for time conflicts when date changes
+                                                        self::checkTimeConflict($get, $set);
+                                                    }),
+
+                                                Forms\Components\Select::make('ends_at')
+                                                    ->options(function (Forms\Get $get) {
+                                                        $startsAt = $get('starts_at');
+                                                        if (!$startsAt) {
+                                                            return [];
+                                                        }
+
+                                                        $startDateTime = Carbon::parse($startsAt);
+                                                        $options = [];
+
+                                                        // Generate options for the next 8 hours after start time
+                                                        for ($i = 1; $i <= 8; $i++) {
+                                                            $endDateTime = (clone $startDateTime)->addHours($i);
+                                                            $key = $endDateTime->format('Y-m-d H:i:s');
+                                                            $display = $endDateTime->format('g:i A');
+                                                            $options[$key] = $display;
+                                                        }
+
+                                                        return $options;
+                                                    })
+                                                    ->live()
+                                                    ->required(fn($get) => $get('request_type') === 'classroom')
+                                                    ->disabled(fn(Forms\Get $get) => !$get('starts_at'))
+                                                    ->visible(fn($get) => $get('request_type') === 'classroom')
+                                                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
+                                                        if (!$state) return;
+
+                                                        // Check for time conflicts when end time changes
+                                                        self::checkTimeConflict($get, $set);
+                                                    }),
+
+                                                Forms\Components\Select::make('asset_id')
+                                                    ->relationship('asset', 'name')
+                                                    ->required(fn($get) => $get('request_type') === 'asset' || $get('ticket_type') === 'incident')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(
+                                                        fn($get) =>
+                                                        $get('ticket_type') === 'incident' ||
+                                                            ($get('ticket_type') === 'request' && $get('request_type') === 'asset')
+                                                    ),
+
+                                                Forms\Components\Select::make('section_id')
+                                                    ->relationship('section', 'name')
+                                                    ->required(fn($get) => $get('request_type') === 'classroom')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('request_type') === 'classroom'),
+
+                                                Forms\Components\Select::make('subject_id')
+                                                    ->options(Subject::all()->pluck('name', 'id'))
+                                                    ->required(fn($get) => $get('request_type') === 'classroom')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->optionsLimit(5)
+                                                    ->visible(fn($get) => $get('request_type') === 'classroom')
+                                                    ->live(),
+
+                                                Forms\Components\Section::make('Time Conflict Warning')
+                                                    ->schema([
+                                                        Forms\Components\Placeholder::make('conflict_warning')
+                                                            ->content('This classroom is already reserved for the selected time period.')
+                                                            ->extraAttributes(['class' => 'text-danger-500 font-medium']),
+
+                                                        Forms\Components\Radio::make('conflict_action')
+                                                            ->label('What would you like to do?')
+                                                            ->options([
+                                                                'proceed' => 'Proceed with the conflicting time anyway',
+                                                                'change' => 'Select a different time',
+                                                            ])
+                                                            ->required()
+                                                            ->live()
+                                                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                                                if ($state === 'proceed') {
+                                                                    // User wants to proceed despite conflict
+                                                                    $set('confirm_conflict', true);
+                                                                } else {
+                                                                    // User wants to change the time, reset dates
+                                                                    $set('confirm_conflict', false);
+                                                                    $set('starts_at', null);
+                                                                    $set('ends_at', null);
+                                                                    $set('has_time_conflict', false);
+
+                                                                    // Use the correct Notification class
+                                                                    \Filament\Notifications\Notification::make()
+                                                                        ->title('Please select a new time')
+                                                                        ->success()
+                                                                        ->send();
                                                                 }
-                                                            }
+                                                            }),
 
-                                                            // Check for time conflicts when date changes
-                                                            self::checkTimeConflict($get, $set);
-                                                        }),
+                                                        // Hidden fields for tracking conflict state
+                                                        Forms\Components\Hidden::make('confirm_conflict')
+                                                            ->default(false)
+                                                            ->dehydrated(true),
 
-                                                    Forms\Components\Select::make('ends_at')
-                                                        ->options(function (Forms\Get $get) {
-                                                            $startsAt = $get('starts_at');
-                                                            if (!$startsAt) {
-                                                                return [];
-                                                            }
+                                                        Forms\Components\Hidden::make('has_time_conflict')
+                                                            ->default(false)
+                                                            ->dehydrated(true),
+                                                    ])
+                                                    ->extraAttributes(['class' => 'bg-danger-50 border border-danger-200 rounded-xl p-4'])
+                                                    ->visible(fn(Forms\Get $get) => $get('has_time_conflict') === true)
+                                                    ->columnSpanFull(),
 
-                                                            $startDateTime = Carbon::parse($startsAt);
-                                                            $options = [];
-
-                                                            // Generate options for the next 8 hours after start time
-                                                            for ($i = 1; $i <= 8; $i++) {
-                                                                $endDateTime = (clone $startDateTime)->addHours($i);
-                                                                $key = $endDateTime->format('Y-m-d H:i:s');
-                                                                $display = $endDateTime->format('g:i A');
-                                                                $options[$key] = $display;
-                                                            }
-
-                                                            return $options;
-                                                        })
-                                                        ->live()
-                                                        ->required(fn($get) => $get('option') === 'classroom')
-                                                        ->disabled(fn(Forms\Get $get) => !$get('starts_at'))
-                                                        ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state) {
-                                                            if (!$state) return;
-
-                                                            // Check for time conflicts when end time changes
-                                                            self::checkTimeConflict($get, $set);
-                                                        }),
-
-                                                    Forms\Components\Select::make('asset_id')
-                                                        ->relationship('asset', 'name')
-                                                        ->required(fn($get) => $get('option') === 'asset' || $get('ticket_type') === 'incident')
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5)
-                                                        ->visible(
-                                                            fn($get) =>
-                                                            $get('ticket_type') === 'incident' ||
-                                                                ($get('ticket_type') === 'request' && $get('option') === 'asset')
-                                                        ),
-
-                                                    Forms\Components\Select::make('section_id')
-                                                        ->relationship('section', 'name')
-                                                        ->required(fn($get) => $get('option') === 'classroom')
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5)
-                                                        ->visible(fn($get) => $get('option') === 'classroom'),
-
-                                                    Forms\Components\Select::make('subject_id')
-                                                        ->options(Subject::all()->pluck('name', 'id'))
-                                                        ->required(fn($get) => $get('option') === 'classroom')
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->optionsLimit(5)
-                                                        // ->visible(fn($get) => $get('option') === 'classroom')
-                                                        ->live()
-                                                        ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
-                                                            // Check for time conflicts when subject changes
-                                                            self::checkTimeConflict($get, $set);
-                                                        }),
-
-                                                    Forms\Components\Section::make('Time Conflict Warning')
-                                                        ->schema([
-                                                            Forms\Components\Placeholder::make('conflict_warning')
-                                                                ->content('This classroom is already reserved for the selected time period.')
-                                                                ->extraAttributes(['class' => 'text-danger-500 font-medium']),
-
-                                                            Forms\Components\Radio::make('conflict_action')
-                                                                ->label('What would you like to do?')
-                                                                ->options([
-                                                                    'proceed' => 'Proceed with the conflicting time anyway',
-                                                                    'change' => 'Select a different time',
-                                                                ])
-                                                                ->required()
-                                                                ->live()
-                                                                ->afterStateUpdated(function (Forms\Set $set, $state) {
-                                                                    if ($state === 'proceed') {
-                                                                        // User wants to proceed despite conflict
-                                                                        $set('confirm_conflict', true);
-                                                                    } else {
-                                                                        // User wants to change the time, reset dates
-                                                                        $set('confirm_conflict', false);
-                                                                        $set('starts_at', null);
-                                                                        $set('ends_at', null);
-                                                                        $set('has_time_conflict', false);
-
-                                                                        // Use the correct Notification class
-                                                                        \Filament\Notifications\Notification::make()
-                                                                            ->title('Please select a new time')
-                                                                            ->success()
-                                                                            ->send();
-                                                                    }
-                                                                }),
-
-                                                            // Hidden fields for tracking conflict state
-                                                            Forms\Components\Hidden::make('confirm_conflict')
-                                                                ->default(false)
-                                                                ->dehydrated(true),
-
-                                                            Forms\Components\Hidden::make('has_time_conflict')
-                                                                ->default(false)
-                                                                ->dehydrated(true),
-                                                        ])
-                                                        ->extraAttributes(['class' => 'bg-danger-50 border border-danger-200 rounded-xl p-4'])
-                                                        ->visible(fn(Forms\Get $get) => $get('has_time_conflict') === true)
-                                                        ->columnSpanFull(),
-
-                                                    Forms\Components\Builder::make('description')
-                                                        ->label('Remarks')
-                                                        ->blocks([
-                                                            Builder\Block::make('message')
-                                                                ->schema([
-                                                                    Forms\Components\Textarea::make('message')
-                                                                        ->label('Message')
-                                                                        ->placeholder('Type your message...')
-                                                                        ->rows(3)
-                                                                        ->required()
-                                                                        ->live(onBlur: true),
-                                                                    Forms\Components\TextInput::make('sender_role')
-                                                                        ->label('Sender')
-                                                                        ->default(fn() => auth()->user()->name)
-                                                                        ->readOnly()
-                                                                        ->required()
-                                                                        ->live(onBlur: true),
-                                                                ])
-                                                        ])
-                                                        ->collapsible()
-                                                        ->columnSpanFull(),
-                                                ]),
-                                        ]),
-                                ]),
+                                                Forms\Components\Builder::make('description')
+                                                    ->label('Remarks')
+                                                    ->blocks([
+                                                        Builder\Block::make('message')
+                                                            ->schema([
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Message')
+                                                                    ->placeholder('Type your message...')
+                                                                    ->rows(3)
+                                                                    ->required()
+                                                                    ->live(onBlur: true),
+                                                                Forms\Components\TextInput::make('sender_role')
+                                                                    ->label('Sender')
+                                                                    ->default(fn() => auth()->user()->name)
+                                                                    ->readOnly()
+                                                                    ->required()
+                                                                    ->live(onBlur: true),
+                                                            ])
+                                                    ])
+                                                    ->collapsible()
+                                                    ->columnSpanFull(),
+                                            ]),
+                                    ]),
+                            ]),
 
                             Wizard\Step::make('Other Information')
                                 ->schema([
@@ -409,17 +416,17 @@ class TicketResource extends Resource implements HasShieldPermissions
     protected static function checkTimeConflict(Forms\Get $get, Forms\Set $set): void
     {
         // Only check for conflicts if this is a classroom request
-        if ($get('option') !== 'classroom') {
+        if ($get('request_type') !== 'classroom') { // Changed from request_type to ticket_request_type
             $set('has_time_conflict', false);
             return;
         }
 
         $startsAt = $get('starts_at');
         $endsAt = $get('ends_at');
-        $subjectId = $get('subject_id');
+        $classroomId = $get('classroom_id');
 
         // If any required fields are missing, we can't check for conflicts yet
-        if (!$startsAt || !$endsAt || !$subjectId) {
+        if (!$startsAt || !$endsAt || !$classroomId) {
             return;
         }
 
@@ -435,8 +442,8 @@ class TicketResource extends Resource implements HasShieldPermissions
 
         // Check for overlapping bookings
         $conflictingBookings = Ticket::query()
-            ->where('option', 'classroom')
-            ->where('subject_id', $subjectId)
+            ->where('request_type', 'classroom')  // Changed from request_type to ticket_request_type
+            ->where('classroom_id', $classroomId)
             ->where('ticket_status', '!=', 'rejected')
             ->where(function ($query) use ($startsAtDate, $endsAtDate) {
                 $query->where(function ($q) use ($startsAtDate, $endsAtDate) {
@@ -467,7 +474,7 @@ class TicketResource extends Resource implements HasShieldPermissions
         \Illuminate\Support\Facades\Log::info('Time conflict check', [
             'starts_at' => $startsAtDate->toDateTimeString(),
             'ends_at' => $endsAtDate->toDateTimeString(),
-            'subject_id' => $subjectId,
+            'classroom_id' => $classroomId,
             'has_conflict' => $conflictingBookings->exists()
         ]);
 

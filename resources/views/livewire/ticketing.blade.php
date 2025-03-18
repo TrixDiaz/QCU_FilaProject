@@ -21,12 +21,12 @@
                             <div class="text-sm capitalize">
                                 @if($filterType == 'all')
                                     Showing all {{ $filteredCount }} tickets
-                                @elseif($filterType == 'status' && $filterValue)
-                                    Showing {{ $filteredCount }} {{ $filterValue }} tickets
-                                @elseif($filterType == 'priority' && $filterValue)
-                                    Showing {{ $filteredCount }} {{ $filterValue }} priority tickets
-                                @elseif($filterType == 'assigned' && $filterValue)
-                                    Showing {{ $filteredCount }} tickets assigned to {{ $users[$filterValue] ?? 'Unknown' }}
+                                @elseif($filterType == 'status' && $ticketStatus)
+                                    Showing {{ $filteredCount }} {{ $ticketStatus }} tickets
+                                @elseif($filterType == 'priority' && $priority)
+                                    Showing {{ $filteredCount }} {{ $priority }} priority tickets
+                                @elseif($filterType == 'assigned' && $assignedTo)
+                                    Showing {{ $filteredCount }} tickets assigned to {{ $users[$assignedTo] ?? 'Unknown' }}
                                 @endif
                             </div>
                         </div>
@@ -127,7 +127,6 @@
                                 icon="heroicon-m-magnifying-glass" 
                                 @click="isSearchOpen = true"
                                 label="Search" 
-                                size="lg" 
                                 tooltip="Open Search" 
                             />
 
@@ -135,8 +134,9 @@
                                 tag="a"
                                 href="{{ route('filament.app.resources.tickets.create') }}"
                                 icon="heroicon-m-plus"
+                                tooltip="Create New Ticket"
                             >
-                                New Ticket
+                                New
                             </x-filament::button>
                         </div>
                     </div>
@@ -170,160 +170,24 @@
         </div>
     </x-filament::section>
 
-    {{-- Active Filters Display --}}
-    @if($search || $ticketStatus || $priority || $assignedTo)
-        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
-            <div class="flex items-center space-x-2">
-                <span class="text-sm font-medium text-gray-700">Active Filters:</span>
-                <div class="flex flex-wrap gap-2">
-                    @if($search)
-                        <x-filament::badge>
-                            Search: {{ $search }}
-                            <button wire:click="$set('search', '')" class="ml-1">&times;</button>
-                        </x-filament::badge>
-                    @endif
-                    @if($ticketStatus)
-                        <x-filament::badge>
-                            Status: {{ ucfirst($ticketStatus) }}
-                            <button wire:click="$set('ticketStatus', '')" class="ml-1">&times;</button>
-                        </x-filament::badge>
-                    @endif
-                    @if($priority)
-                        <x-filament::badge>
-                            Priority: {{ ucfirst($priority) }}
-                            <button wire:click="$set('priority', '')" class="ml-1">&times;</button>
-                        </x-filament::badge>
-                    @endif
-                    @if($assignedTo)
-                        <x-filament::badge>
-                            Assigned: {{ $users[$assignedTo] }}
-                            <button wire:click="$set('assignedTo', '')" class="ml-1">&times;</button>
-                        </x-filament::badge>
-                    @endif
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Bulk Actions Bar --}}
-    @if(count($selected) > 0)
-        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium">{{ count($selected) }} selected</span>
-                    <x-filament::button wire:click="$set('selected', [])" size="sm" color="danger" outline>
-                        Clear
-                    </x-filament::button>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="bulkAction">
-                            <option value="">Bulk Actions</option>
-                            <option value="delete">Delete Selected</option>
-                            <option value="edit">Edit Selected</option>
-                            <option value="export">Export Selected</option>
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                    <x-filament::button wire:click="executeBulkAction" :disabled="empty($bulkAction)">
-                        Apply
-                    </x-filament::button>
-                </div>
-                <div class="flex items-center gap-4">
-                    <x-filament::button @click="showImportModal = true" color="success" icon="heroicon-o-arrow-up-tray">
-                        Import
-                    </x-filament::button>
-                    <x-filament::button wire:click="exportTickets" color="info" icon="heroicon-o-arrow-down-tray">
-                        Export
-                    </x-filament::button>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Tickets Display --}}
-    <div class="overflow-x-auto rounded-lg">
-        <x-filament-tables::table class="min-w-full divide-y col-span-full">
-            <thead class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
-                <x-filament-tables::row>
-                    <x-filament-tables::header-cell scope="col" class="w-12 px-4 py-3">
-                        <x-filament::input.checkbox 
-                            wire:model.live="selectAll" 
-                            @click="toggleAllCheckboxes()"
-                            id="select-all-table" 
-                            class="rounded" 
-                        />
-                    </x-filament-tables::header-cell>
-
-                    @if(count($selected) >= 2)
-                        <x-filament-tables::header-cell scope="col" colspan="7" class="px-3 py-3">
-                            <div class="flex items-center gap-4">
-                                <span class="font-medium text-sm">{{ count($selected) }} selected</span>
-
-                                <x-filament::button wire:click="$set('selected', [])" size="sm" color="danger" outline>
-                                    Clear
-                                </x-filament::button>
-
-                                <x-filament::input.wrapper>
-                                    <x-filament::input.select wire:model.live="bulkAction" class="rounded border-gray-300 shadow-sm">
-                                        <option value="">Bulk Actions</option>
-                                        <option value="delete">Delete Selected</option>
-                                        <option value="edit">Edit Selected</option>
-                                        <option value="export">Export Selected</option>
-                                    </x-filament::input.select>
-                                </x-filament::input.wrapper>
-
-                                <x-filament::button wire:click="executeBulkAction" :disabled="empty($bulkAction)">
-                                    Apply
-                                </x-filament::button>
-                            </div>
-                        </x-filament-tables::header-cell>
-                    @else
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                            Ticket Information
-                        </x-filament-tables::header-cell>
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                            Type
-                        </x-filament-tables::header-cell>
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                            Status
-                        </x-filament-tables::header-cell>
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                            Priority
-                        </x-filament-tables::header-cell>
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                            Assigned To
-                        </x-filament-tables::header-cell>
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                            Created At
-                        </x-filament-tables::header-cell>
-                    @endif
-
-                    <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                        Actions
-                    </x-filament-tables::header-cell>
-                </x-filament-tables::row>
-            </thead>
-            <tbody class="divide-y">
-                @forelse($tickets as $ticket)
-                    <x-filament-tables::row :class="in_array((string) $ticket->id, $selected) ? 'bg-primary-50' : ''">
-                        <x-filament-tables::cell class="w-12 px-4 py-4 whitespace-nowrap">
-                            <x-filament::input.checkbox 
+    @if($viewType === 'card')
+        {{-- Card View Implementation --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @forelse($tickets as $ticket)
+                <x-filament::section :class="in_array((string) $ticket->id, $selected) ? 'ring-2 ring-primary-500' : ''">
+                    <div class="p-4">
+                        <div class="absolute top-2 left-2">
+                            <x-filament::input.checkbox
                                 wire:model.live="selected"
                                 value="{{ $ticket->id }}"
-                                wire:key="table-checkbox-{{ $ticket->id }}"
-                                :class="in_array((string) $ticket->id, $selected) ? 'bg-primary-500' : ''"
+                                wire:key="card-checkbox-{{ $ticket->id }}"
                             />
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex flex-col">
-                                <div class="text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</div>
-                                <div class="text-sm text-gray-500">{{ $ticket->title }}</div>
-                            </div>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                        </div>
+
+                        <div class="flex justify-between mb-2 mt-6">
                             <x-filament::badge color="secondary">
-                                <span class="capitalize">{{ $ticket->ticket_type }}</span>
+                                {{ $ticket->ticket_number }}
                             </x-filament::badge>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
                             <x-filament::badge :color="match($ticket->ticket_status) {
                                 'open' => 'success',
                                 'in_progress' => 'warning',
@@ -331,76 +195,234 @@
                                 'closed' => 'secondary',
                                 default => 'gray'
                             }">
-                                <span class="capitalize">{{ $ticket->ticket_status }}</span>
+                                {{ ucfirst($ticket->ticket_status) }}
                             </x-filament::badge>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                        </div>
+
+                        <h4 class="text-lg font-semibold">{{ $ticket->title }}</h4>
+
+                        <div class="mt-2">
                             <x-filament::badge :color="match($ticket->priority) {
                                 'high' => 'danger',
                                 'medium' => 'warning',
                                 'low' => 'success',
                                 default => 'gray'
                             }">
-                                <span class="capitalize">{{ $ticket->priority }}</span>
+                                Priority: {{ ucfirst($ticket->priority) }}
                             </x-filament::badge>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $ticket->assignedUser?->name ?? 'Unassigned' }}</div>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $ticket->created_at->format('M d, Y H:i') }}</div>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end gap-2">
+                        </div>
+
+                        <div class="mt-3">
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Assigned To:</span>
+                                {{ $ticket->assignedUser?->name ?? 'Unassigned' }}
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Created:</span>
+                                {{ $ticket->created_at->format('M d, Y H:i') }}
+                            </p>
+                        </div>
+
+                        <div class="mt-4 flex justify-end gap-2">
+                            <x-filament::button
+                                wire:click="viewTicket({{ $ticket->id }})"
+                                size="sm"
+                                color="gray"
+                            >
+                                View
+                            </x-filament::button>
+
+                            @unless(auth()->user()->hasRole('professor'))
                                 <x-filament::button
+                                    wire:click="editTicket({{ $ticket->id }})"
                                     size="sm"
-                                    color="gray"
-                                    wire:click="viewTicket({{ $ticket->id }})"
-                                    class="hover:underline"
+                                    color="warning"
                                 >
-                                    View
+                                    Edit
                                 </x-filament::button>
+                            @endunless
+                        </div>
+                    </div>
+                </x-filament::section>
+            @empty
+                <div class="col-span-full py-10 text-center">
+                    <p class="text-lg">No tickets found matching your filter criteria.</p>
+                    @if($filterType != 'all')
+                        <x-filament::button 
+                            wire:click="$set('filterType', 'all')"
+                            class="mt-2"
+                        >
+                            Show all tickets
+                        </x-filament::button>
+                    @endif
+                </div>
+            @endforelse
+        </div>
+    @else
+        {{-- Table View Implementation --}}
+        <div class="overflow-x-auto rounded-lg">
+            <x-filament-tables::table class="min-w-full divide-y col-span-full">
+                <thead class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
+                    <x-filament-tables::row>
+                        <x-filament-tables::header-cell scope="col" class="w-12 px-4 py-3">
+                            <x-filament::input.checkbox 
+                                wire:model.live="selectAll" 
+                                @click="toggleAllCheckboxes()"
+                                id="select-all-table" 
+                                class="rounded" 
+                            />
+                        </x-filament-tables::header-cell>
 
-                                @unless(auth()->user()->hasRole('professor'))
-                                    <x-filament::button
-                                        size="sm"
-                                        color="warning"
-                                        wire:click="editTicket({{ $ticket->id }})"
-                                        class="hover:underline"
-                                    >
-                                        Edit
+                        @if(count($selected) >= 2)
+                            <x-filament-tables::header-cell scope="col" colspan="7" class="px-3 py-3">
+                                <div class="flex items-center gap-4">
+                                    <span class="font-medium text-sm">{{ count($selected) }} selected</span>
+
+                                    <x-filament::button wire:click="$set('selected', [])" size="sm" color="danger" outline>
+                                        Clear
                                     </x-filament::button>
 
-                                    <x-filament::button
-                                        size="sm"
-                                        color="danger"
-                                        wire:click="confirmTicketDeletion({{ $ticket->id }})"
-                                        class="hover:underline"
-                                    >
-                                        Delete
+                                    <x-filament::input.wrapper>
+                                        <x-filament::input.select wire:model.live="bulkAction" class="rounded border-gray-300 shadow-sm">
+                                            <option value="">Bulk Actions</option>
+                                            <option value="delete">Delete Selected</option>
+                                            <option value="edit">Edit Selected</option>
+                                            <option value="export">Export Selected</option>
+                                        </x-filament::input.select>
+                                    </x-filament::input.wrapper>
+
+                                    <x-filament::button wire:click="executeBulkAction" :disabled="empty($bulkAction)">
+                                        Apply
                                     </x-filament::button>
-                                @endunless
-                            </div>
-                        </x-filament-tables::cell>
+                                </div>
+                            </x-filament-tables::header-cell>
+                        @else
+                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Ticket Information
+                            </x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Type
+                            </x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Status
+                            </x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Priority
+                            </x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Assigned To
+                            </x-filament-tables::header-cell>
+                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Created At
+                            </x-filament-tables::header-cell>
+                        @endif
+
+                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                            Actions
+                        </x-filament-tables::header-cell>
                     </x-filament-tables::row>
-                @empty
-                    <tr>
-                        <x-filament-tables::cell colspan="8" class="px-6 py-10 text-center">
-                            <p class="text-lg">No tickets found matching your filter criteria.</p>
-                            @if($filterType != 'all')
-                                <x-filament::button 
-                                    wire:click="$set('filterType', 'all')"
-                                    class="mt-2 text-primary-600 hover:text-primary-900 hover:underline"
-                                >
-                                    Show all tickets
-                                </x-filament::button>
-                            @endif
-                        </x-filament-tables::cell>
-                    </tr>
-                @endforelse
-            </tbody>
-        </x-filament-tables::table>
-    </div>
+                </thead>
+                <tbody class="divide-y">
+                    @forelse($tickets as $ticket)
+                        <x-filament-tables::row :class="in_array((string) $ticket->id, $selected) ? 'bg-primary-50' : ''">
+                            <x-filament-tables::cell class="w-12 px-4 py-4 whitespace-nowrap">
+                                <x-filament::input.checkbox 
+                                    wire:model.live="selected"
+                                    value="{{ $ticket->id }}"
+                                    wire:key="table-checkbox-{{ $ticket->id }}"
+                                    :class="in_array((string) $ticket->id, $selected) ? 'bg-primary-500' : ''"
+                                />
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex flex-col">
+                                    <div class="text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</div>
+                                    <div class="text-sm text-gray-500">{{ $ticket->title }}</div>
+                                </div>
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                <x-filament::badge color="secondary">
+                                    <span class="capitalize">{{ $ticket->ticket_type }}</span>
+                                </x-filament::badge>
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                <x-filament::badge :color="match($ticket->ticket_status) {
+                                    'open' => 'success',
+                                    'in_progress' => 'warning',
+                                    'resolved' => 'info',
+                                    'closed' => 'secondary',
+                                    default => 'gray'
+                                }">
+                                    <span class="capitalize">{{ $ticket->ticket_status }}</span>
+                                </x-filament::badge>
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                <x-filament::badge :color="match($ticket->priority) {
+                                    'high' => 'danger',
+                                    'medium' => 'warning',
+                                    'low' => 'success',
+                                    default => 'gray'
+                                }">
+                                    <span class="capitalize">{{ $ticket->priority }}</span>
+                                </x-filament::badge>
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ $ticket->assignedUser?->name ?? 'Unassigned' }}</div>
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ $ticket->created_at->format('M d, Y H:i') }}</div>
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end gap-2">
+                                    <x-filament::button
+                                        size="sm"
+                                        color="gray"
+                                        wire:click="viewTicket({{ $ticket->id }})"
+                                        class="hover:underline"
+                                    >
+                                        View
+                                    </x-filament::button>
+
+                                    @unless(auth()->user()->hasRole('professor'))
+                                        <x-filament::button
+                                            size="sm"
+                                            color="warning"
+                                            wire:click="editTicket({{ $ticket->id }})"
+                                            class="hover:underline"
+                                        >
+                                            Edit
+                                        </x-filament::button>
+
+                                        <x-filament::button
+                                            size="sm"
+                                            color="danger"
+                                            wire:click="confirmTicketDeletion({{ $ticket->id }})"
+                                            class="hover:underline"
+                                        >
+                                            Delete
+                                        </x-filament::button>
+                                    @endunless
+                                </div>
+                            </x-filament-tables::cell>
+                        </x-filament-tables::row>
+                    @empty
+                        <tr>
+                            <x-filament-tables::cell colspan="8" class="px-6 py-10 text-center">
+                                <p class="text-lg">No tickets found matching your filter criteria.</p>
+                                @if($filterType != 'all')
+                                    <x-filament::button 
+                                        wire:click="$set('filterType', 'all')"
+                                        class="mt-2 text-primary-600 hover:text-primary-900 hover:underline"
+                                    >
+                                        Show all tickets
+                                    </x-filament::button>
+                                @endif
+                            </x-filament-tables::cell>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </x-filament-tables::table>
+        </div>
+    @endif
 
     {{-- Pagination Controls --}}
     <div class="mt-6">

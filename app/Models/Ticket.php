@@ -20,7 +20,7 @@ class Ticket extends Model
         'title',
         'description',
         'ticket_type',
-        'option',
+        'request_type',
         'priority',
         'due_date',
         'date_finished',
@@ -60,6 +60,11 @@ class Ticket extends Model
     public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class, 'section_id');
+    }
+
+    public function classroom(): BelongsTo
+    {
+        return $this->belongsTo(Classroom::class, 'classroom_id');
     }
 
     public function setAttachmentsAttribute($value)

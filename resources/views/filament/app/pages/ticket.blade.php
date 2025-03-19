@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    <livewire:ticket />
+    <livewire:ticketing />
 </x-filament-panels::page>

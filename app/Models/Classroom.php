@@ -49,4 +49,9 @@ class Classroom extends Model
     {
         return $this->hasMany(AssetGroup::class);
     }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'classroom_id');
+    }
 }

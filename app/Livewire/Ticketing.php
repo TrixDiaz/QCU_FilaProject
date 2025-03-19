@@ -467,11 +467,6 @@ class Ticketing extends Component
         $this->resetPage();
     }
 
-    public function viewTicket($ticketId)
-    {
-        return redirect()->route('filament.app.resources.tickets.view', ['record' => $ticketId]);
-    }
-
     public function editTicket($ticketId)
     {
         return redirect()->route('filament.app.resources.tickets.edit', ['record' => $ticketId]);

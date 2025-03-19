@@ -147,7 +147,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                                     ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
                                                         // Check for time conflicts when classroom changes
                                                         self::checkTimeConflict($get, $set);
-                                                    }),
+                                                    })
+                                                    ->visible(fn($get) => $get('request_type') === 'asset'),
 
                                                 Forms\Components\DateTimePicker::make('starts_at')
                                                     ->visible(fn($get) => $get('request_type') === 'classroom')

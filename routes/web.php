@@ -16,11 +16,21 @@ Route::post('/send-technician-activation', [App\Http\Controllers\ForbiddenContro
 // Public routes that require authentication
 Route::middleware(['auth'])->group(function () {
     Route::get('/publicAssetsGroups/{classroomId}', PublicAssetGroup::class)->name('publicAssetsGroups');
-    Route::prefix('tickets')->name('filament.app.resources.tickets.')->group(function () {
-        Route::get('/', [TicketResource::class, 'index'])->name('index');
-        Route::get('/create', [TicketResource::class, 'create'])->name('create');
-        Route::get('/{record}', [TicketResource::class, 'view'])->name('view');
-        Route::get('/{record}/edit', [TicketResource::class, 'edit'])->name('edit');
+    
+    // Fix: Use the correct namespace and redirect to Filament pages
+    Route::prefix('tickets')->group(function () {
+        Route::get('/', function() {
+            return redirect()->route('filament.app.resources.tickets.index');
+        });
+        Route::get('/create', function() {
+            return redirect()->route('filament.app.resources.tickets.create');
+        });
+        Route::get('/{record}', function($record) {
+            return redirect()->route('filament.app.resources.tickets.view', ['record' => $record]);
+        });
+        Route::get('/{record}/edit', function($record) {
+            return redirect()->route('filament.app.resources.tickets.edit', ['record' => $record]);
+        });
     });
 });
 

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
+use Illuminate\Support\Facades\Storage;
 
 class Inventory extends Component
 {
@@ -255,88 +256,58 @@ class Inventory extends Component
     }
 
     public function importAssets()
-    {
-        $this->validate([
-            'importFile' => 'required|file|mimes:csv,txt|max:1024',
-        ]);
+{
+    $this->validate([
+        'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
+    ]);
 
-        try {
-            $csv = Reader::createFromPath($this->importFile->getRealPath(), 'r');
-            $csv->setHeaderOffset(0);
-
-            $records = $csv->getRecords();
-            $imported = 0;
-
-            DB::beginTransaction();
-
-            foreach ($records as $record) {
-                // Handle asset import logic here
-                $brand = Brand::firstOrCreate(['name' => $record['brand']]);
-                $category = Category::firstOrCreate(['name' => $record['category']]);
-
-                Asset::create([
-                    'name' => $record['name'],
-                    'serial_number' => $record['serial_number'],
-                    'asset_code' => $record['asset_code'] ?? '',
-                    'status' => $record['status'] ?? 'available',
-                    'brand_id' => $brand->id,
-                    'category_id' => $category->id,
-                    // Add other fields as necessary
-                ]);
-
-                $imported++;
-            }
-
-            DB::commit();
-
-            $this->showImportModal = false;
-            $this->importFile = null;
-            $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->addError('import', 'Error importing file: ' . $e->getMessage());
-        }
+    if (!$this->importFile) {
+        $this->addError('importFile', 'No file selected.');
+        return;
     }
 
-    public function exportAssets()
-    {
-        $query = Asset::query();
+    try {
+        // Store temporarily and get the path
+        $path = $this->importFile->store('temp');  // Saves in storage/app/temp
+        $fullPath = Storage::path($path);  // Gets the absolute path
 
-        if (!empty($this->selected)) {
-            $query->whereIn('id', $this->selected);
-        }
+        $csv = Reader::createFromPath($fullPath, 'r');
+        $csv->setHeaderOffset(0);
 
-        $assets = $query->with(['brand', 'category'])->get();
+        $records = $csv->getRecords();
+        $imported = 0;
 
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        DB::beginTransaction();
 
-        // Define CSV headers
-        $csv->insertOne(['Name', 'Serial Number', 'Asset Code', 'Status', 'Brand', 'Category']);
+        foreach ($records as $record) {
+            $brand = Brand::firstOrCreate(['name' => $record['brand']]);
+            $category = Category::firstOrCreate(['name' => $record['category']]);
 
-        // Add data rows
-        foreach ($assets as $asset) {
-            $csv->insertOne([
-                $asset->name,
-                $asset->serial_number,
-                $asset->asset_code,
-                $asset->status,
-                $asset->brand->name,
-                $asset->category->name,
+            Asset::create([
+                'name' => $record['name'],
+                'serial_number' => $record['serial_number'],
+                'asset_code' => $record['asset_code'] ?? '',
+                'status' => $record['status'] ?? 'available',
+                'brand_id' => $brand->id,
+                'category_id' => $category->id,
             ]);
+
+            $imported++;
         }
 
-        $filename = 'assets-export-' . date('Y-m-d') . '.csv';
+        DB::commit();
+        $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
+        $this->importFile = null;
+        $this->showImportModal = false;
 
-        return response()->streamDownload(
-            function () use ($csv) {
-                echo $csv->getContent();
-            },
-            $filename,
-            [
-                'Content-Type' => 'text/csv',
-            ]
-        );
+        // Clean up the file after importing
+        Storage::delete($path);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
     }
+}
+
 
     public function executeBulkAction()
     {

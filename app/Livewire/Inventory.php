@@ -7,6 +7,8 @@ use App\Models\Asset;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Tag;
+use App\Models\Classroom;
+use App\Models\AssetGroup;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +50,14 @@ class Inventory extends Component
         'brand_id' => '',
     ];
 
+    // Deployment properties
+    public $classrooms = [];
+    public $deployAssetId;
+    public $selectedClassroom;
+    public $deploymentName;
+    public $deploymentCode;
+    public $statusActive = true;
+
     protected $listeners = ['refreshAssets' => '$refresh'];
 
     public function mount()
@@ -56,6 +66,7 @@ class Inventory extends Component
         $this->categories = Category::withCount('assets')->get();
         $this->tags = Tag::withCount('assets')->get();
         $this->totalAssets = Asset::where('status', 'available')->count();
+        $this->classrooms = Classroom::with('building')->get();
     }
 
     public function render()
@@ -131,6 +142,46 @@ class Inventory extends Component
         return view('livewire.inventory', [
             'assets' => $assets
         ]);
+    }
+
+    // Deploy asset method
+    public function deployAsset($assetId, $classroomId, $name, $code, $isActive)
+    {
+        $this->validate([
+            'selectedClassroom' => 'required',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Create the asset group record
+            AssetGroup::create([
+                'asset_id' => $assetId,
+                'classroom_id' => $classroomId,
+                'name' => $name,
+                'code' => $code,
+                'status' => $isActive ? 'active' : 'inactive',
+            ]);
+
+            // Update asset status to deployed
+            $asset = Asset::find($assetId);
+            $asset->status = 'deployed';
+            $asset->save();
+
+            DB::commit();
+
+            $this->dispatch('notify', ['message' => 'Asset deployed successfully', 'type' => 'success']);
+
+            // Reset deployment form
+            $this->reset(['deployAssetId', 'selectedClassroom', 'deploymentName', 'deploymentCode']);
+            $this->statusActive = true;
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('notify', ['message' => 'Error deploying asset: ' . $e->getMessage(), 'type' => 'error']);
+            return false;
+        }
     }
 
     // Reset secondary filters when primary filter type changes
@@ -256,57 +307,57 @@ class Inventory extends Component
     }
 
     public function importAssets()
-{
-    $this->validate([
-        'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
-    ]);
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
+        ]);
 
-    if (!$this->importFile) {
-        $this->addError('importFile', 'No file selected.');
-        return;
-    }
-
-    try {
-        // Store temporarily and get the path
-        $path = $this->importFile->store('temp');  // Saves in storage/app/temp
-        $fullPath = Storage::path($path);  // Gets the absolute path
-
-        $csv = Reader::createFromPath($fullPath, 'r');
-        $csv->setHeaderOffset(0);
-
-        $records = $csv->getRecords();
-        $imported = 0;
-
-        DB::beginTransaction();
-
-        foreach ($records as $record) {
-            $brand = Brand::firstOrCreate(['name' => $record['brand']]);
-            $category = Category::firstOrCreate(['name' => $record['category']]);
-
-            Asset::create([
-                'name' => $record['name'],
-                'serial_number' => $record['serial_number'],
-                'asset_code' => $record['asset_code'] ?? '',
-                'status' => $record['status'] ?? 'available',
-                'brand_id' => $brand->id,
-                'category_id' => $category->id,
-            ]);
-
-            $imported++;
+        if (!$this->importFile) {
+            $this->addError('importFile', 'No file selected.');
+            return;
         }
 
-        DB::commit();
-        $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
-        $this->importFile = null;
-        $this->showImportModal = false;
+        try {
+            // Store temporarily and get the path
+            $path = $this->importFile->store('temp');  // Saves in storage/app/temp
+            $fullPath = Storage::path($path);  // Gets the absolute path
 
-        // Clean up the file after importing
-        Storage::delete($path);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
+            $csv = Reader::createFromPath($fullPath, 'r');
+            $csv->setHeaderOffset(0);
+
+            $records = $csv->getRecords();
+            $imported = 0;
+
+            DB::beginTransaction();
+
+            foreach ($records as $record) {
+                $brand = Brand::firstOrCreate(['name' => $record['brand']]);
+                $category = Category::firstOrCreate(['name' => $record['category']]);
+
+                Asset::create([
+                    'name' => $record['name'],
+                    'serial_number' => $record['serial_number'],
+                    'asset_code' => $record['asset_code'] ?? '',
+                    'status' => $record['status'] ?? 'available',
+                    'brand_id' => $brand->id,
+                    'category_id' => $category->id,
+                ]);
+
+                $imported++;
+            }
+
+            DB::commit();
+            $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
+            $this->importFile = null;
+            $this->showImportModal = false;
+
+            // Clean up the file after importing
+            Storage::delete($path);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
+        }
     }
-}
 
 
     public function executeBulkAction()

@@ -18,6 +18,10 @@ use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\AssetImport;
+
+
 
 class Inventory extends Component
 {
@@ -43,7 +47,11 @@ class Inventory extends Component
     public $selectAll = false;
     public $bulkAction = '';
     public $confirmingBulkDelete = false;
-    public $importFile = null;
+    public $importFile;
+    protected $rules = [
+        'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
+    ];
+
     public $showImportModal = false;
     public $showBulkEditModal = false;
     public $bulkEditData = [
@@ -60,7 +68,18 @@ class Inventory extends Component
     public $deploymentCode;
     public $statusActive = true;
 
-    protected $listeners = ['refreshAssets' => '$refresh'];
+   // protected $listeners = ['refreshAssets' => '$refresh'];
+
+ //  protected $listeners = [
+    //'importFileSelected' => 'importFileSelected',
+//];
+
+//public function importFileSelected($file)
+//{
+    //$this->importFile = $file;
+//}
+
+
 
     public function mount()
     {
@@ -331,58 +350,52 @@ class Inventory extends Component
         $this->showImportModal = true;
     }
 
+    public function resetImportFile()
+    {
+    // Reset the file input
+    $this->importFile = null;
+    // Optionally reset any other variables related to import (e.g., error messages, etc.)
+    $this->resetErrorBag();
+    }
+
     public function importAssets()
     {
-        $this->validate([
-            'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
-        ]);
+    $this->validate([
+        'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
+    ]);
 
-        if (!$this->importFile) {
-            $this->addError('importFile', 'No file selected.');
-            return;
-        }
-
-        try {
-            // Store temporarily and get the path
-            $path = $this->importFile->store('temp');  // Saves in storage/app/temp
-            $fullPath = Storage::path($path);  // Gets the absolute path
-
-            $csv = Reader::createFromPath($fullPath, 'r');
-            $csv->setHeaderOffset(0);
-
-            $records = $csv->getRecords();
-            $imported = 0;
-
-            DB::beginTransaction();
-
-            foreach ($records as $record) {
-                $brand = Brand::firstOrCreate(['name' => $record['brand']]);
-                $category = Category::firstOrCreate(['name' => $record['category']]);
-
-                Asset::create([
-                    'name' => $record['name'],
-                    'serial_number' => $record['serial_number'],
-                    'asset_code' => $record['asset_code'] ?? '',
-                    'status' => $record['status'] ?? 'available',
-                    'brand_id' => $brand->id,
-                    'category_id' => $category->id,
-                ]);
-
-                $imported++;
-            }
-
-            DB::commit();
-            $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
-            $this->importFile = null;
-            $this->showImportModal = false;
-
-            // Clean up the file after importing
-            Storage::delete($path);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
-        }
+    // Check if file is selected
+    if (!$this->importFile) {
+        $this->addError('importFile', 'No file selected.');
+        return;
     }
+
+    try {
+        // Store the file temporarily and get the path
+        $path = $this->importFile->store('temp');  // Saves in storage/app/temp
+        $fullPath = Storage::path($path);  // Gets the absolute path
+
+        // Import using Maatwebsite Excel
+        Excel::import(new AssetImport, $fullPath);
+
+        // Show success message using Livewire's notification system
+        session()->flash('message', 'Assets imported successfully!');
+        session()->flash('type', 'success');
+
+        // Reset file input and hide modal
+        $this->resetImportFile();
+        $this->showImportModal = false;
+
+        // Clean up the file after importing
+        Storage::delete($path);
+    } catch (\Exception $e) {
+        $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
+    }
+}
+
+
+
+    
 
 
     public function executeBulkAction()

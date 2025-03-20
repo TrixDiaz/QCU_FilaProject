@@ -3,6 +3,7 @@
     step: 1,
     selectedType: null,
     selectedSubType: null,
+    darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches),
     openModal() {
         this.isOpen = true;
         this.step = 1;
@@ -25,8 +26,20 @@
         this.selectedSubType = subType;
         $wire.selectSubType(subType);
         this.step = 3;
+    },
+    toggleDarkMode() {
+        this.darkMode = !this.darkMode;
+        localStorage.setItem('darkMode', this.darkMode);
+    },
+    init() {
+        // Listen for system dark mode changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (!localStorage.getItem('darkMode')) {
+                this.darkMode = e.matches;
+            }
+        });
     }
-}" class="relative">
+}" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()">
     <style>
         [x-cloak] {
             display: none !important;
@@ -46,20 +59,92 @@
         }
     </style>
 
+    <!-- Flash Messages -->
+    <div x-data="{
+        show: false,
+        message: '',
+        type: 'success',
+        showNotification(message, type = 'success') {
+            this.message = message;
+            this.type = type;
+            this.show = true;
+            setTimeout(() => this.show = false, 5000);
+        }
+    }" @notify.window="showNotification($event.detail.message, $event.detail.type)"
+        x-show="show" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform translate-x-full"
+        x-transition:enter-end="opacity-100 transform translate-x-0" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform translate-x-0"
+        x-transition:leave-end="opacity-0 transform translate-x-full" class="fixed top-4 right-4 z-50 max-w-sm"
+        style="display:none;">
+        <div :class="{
+            'bg-green-50 border-green-400 text-green-700': type === 'success',
+            'bg-red-50 border-red-400 text-red-700': type === 'error',
+            'bg-blue-50 border-blue-400 text-blue-700': type === 'info'
+        }"
+            class="p-4 rounded-md border-l-4 shadow-md dark:bg-opacity-20">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg x-show="type === 'success'" class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <svg x-show="type === 'error'" class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <svg x-show="type === 'info'" class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p x-text="message" class="text-sm"></p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <div class="-mx-1.5 -my-1.5">
+                        <button @click="show = false" class="inline-flex rounded-md p-1.5"
+                            :class="{
+                                'bg-green-50 text-green-500 hover:bg-green-100': type === 'success',
+                                'bg-red-50 text-red-500 hover:bg-red-100': type === 'error',
+                                'bg-blue-50 text-blue-500 hover:bg-blue-100': type === 'info'
+                            }">
+                            <span class="sr-only">Dismiss</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <section>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button @click="openModal()"
-                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center">
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
                 <span class="text-2xl mb-2">⚠️</span>
                 Report Issue
             </button>
 
-            <button class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center">
+            <button
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
                 <span class="text-2xl mb-2">⚠️</span>
                 Request Asset
             </button>
 
-            <button class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center">
+            <button
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
                 <span class="text-2xl mb-2">⚠️</span>
                 General Inquiry
             </button>
@@ -72,13 +157,14 @@
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
         class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
         <!-- Backdrop -->
-        <div class="fixed inset-0 opacity-30"></div>
+        <div class="fixed inset-0 bg-black dark:bg-gray-900 opacity-30"></div>
 
         <!-- Modal Content -->
         <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative rounded-lg shadow-xl max-w-3xl w-full">
+            <div class="relative rounded-lg shadow-xl max-w-3xl w-full bg-gray-100 dark:bg-gray-800 dark:text-white">
                 <!-- Header -->
-                <div class="border-b px-4 py-3 flex items-center justify-between">
+                <div
+                    class="border-b px-4 py-3 flex items-center justify-between bg-gray-200 dark:bg-gray-700 dark:border-gray-600">
                     <h2 class="text-xl font-bold">
                         <span x-show="step === 1">Select Issue Type</span>
                         <span x-show="step === 2 && selectedType === 'hardware'">Select Hardware Type</span>
@@ -87,10 +173,10 @@
                         <span x-show="step === 3">Submit Ticket</span>
                     </h2>
                     <div class="flex items-center space-x-2">
-                        <button x-show="step > 1" @click="step--" type="button" class="">
+                        <button x-show="step > 1" @click="step--" type="button" class="dark:text-white">
                             ← Back
                         </button>
-                        <button @click="closeModal()" type="button" class="">
+                        <button @click="closeModal()" type="button" class="dark:text-white">
                             ✕
                         </button>
                     </div>
@@ -99,21 +185,21 @@
                 <!-- Step 1: Issue Types -->
                 <div x-show="step === 1" class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
                     <div @click="selectType('application')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">💻</div>
                             <h3 class="mt-4 text-lg font-semibold">Application</h3>
                         </div>
                     </div>
 
                     <div @click="selectType('internet')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🌐</div>
                             <h3 class="mt-4 text-lg font-semibold">Internet</h3>
                         </div>
                     </div>
 
                     <div @click="selectType('hardware')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🖥️</div>
                             <h3 class="mt-4 text-lg font-semibold">Hardware</h3>
                         </div>
@@ -124,28 +210,28 @@
                 <div x-show="step === 2 && selectedType === 'application'" x-cloak
                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div @click="selectSubType('word')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">📝</div>
                             <h3 class="mt-4 text-lg font-semibold">Microsoft Word</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('chrome')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🌐</div>
                             <h3 class="mt-4 text-lg font-semibold">Chrome</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('excel')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">📊</div>
                             <h3 class="mt-4 text-lg font-semibold">Microsoft Excel</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('other_app')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">📦</div>
                             <h3 class="mt-4 text-lg font-semibold">Other Application</h3>
                         </div>
@@ -156,28 +242,28 @@
                 <div x-show="step === 2 && selectedType === 'hardware'" x-cloak
                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div @click="selectSubType('mouse')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🖱️</div>
                             <h3 class="mt-4 text-lg font-semibold">Mouse</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('keyboard')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">⌨️</div>
                             <h3 class="mt-4 text-lg font-semibold">Keyboard</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('monitor')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🖥️</div>
                             <h3 class="mt-4 text-lg font-semibold">Monitor</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('other')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🔄</div>
                             <h3 class="mt-4 text-lg font-semibold">Other</h3>
                         </div>
@@ -188,14 +274,14 @@
                 <div x-show="step === 2 && selectedType === 'internet'" x-cloak
                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div @click="selectSubType('lan')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🔌</div>
                             <h3 class="mt-4 text-lg font-semibold">LAN</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('wifi')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">📶</div>
                             <h3 class="mt-4 text-lg font-semibold">WiFi</h3>
                         </div>
@@ -204,13 +290,13 @@
 
                 <!-- Step 3: Ticket Form -->
                 <div x-show="step === 3" x-cloak class="p-4">
-                    <div class="border-l-4 p-4 mb-4">
+                    <div class="border-l-4 border-blue-500 p-4 mb-4 bg-blue-50 dark:bg-blue-900 dark:border-blue-400">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 ℹ️
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm">
+                                <p class="text-sm dark:text-gray-200">
                                     You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
                                     - <strong x-text="selectedSubType"></strong>
                                 </p>
@@ -218,13 +304,14 @@
                         </div>
                     </div>
 
-                    <div class="bg-yellow-50 border-l-4 p-4 mb-4">
+                    <div
+                        class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 dark:bg-yellow-900 dark:border-yellow-500">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 ⚠️
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm">
+                                <p class="text-sm dark:text-gray-200">
                                     We've pre-filled the form based on your selection. Please review and edit the
                                     details to match your specific issue before submitting.
                                 </p>
@@ -234,29 +321,67 @@
 
                     <form class="space-y-4" wire:submit.prevent="submitTicket">
                         <div>
-                            <label for="title" class="block text-sm font-medium text-gray-700">Issue Title</label>
+                            <label for="title"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issue Title</label>
                             <input type="text" id="title" wire:model.defer="title"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             @error('title')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
                             <label for="description"
-                                class="block text-sm font-medium text-gray-700">Description</label>
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                             <textarea id="description" wire:model.defer="description" rows="4"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"></textarea>
-                            <div class="mt-1 text-xs text-gray-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 Replace any [bracketed text] with your specific details.
                             </div>
                             @error('description')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
+
+                        <!-- Asset Dropdown -->
                         <div>
-                            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                            <label for="asset_id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Related
+                                Asset</label>
+                            <select id="asset_id" wire:model.defer="asset_id"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">-- Select Asset (Optional) --</option>
+                                @foreach ($assets as $asset)
+                                    <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->asset_tag }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('asset_id')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <!-- Assign to Technician -->
+                        <div>
+                            <label for="assigned_to"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign to
+                                Technician</label>
+                            <select id="assigned_to" wire:model.defer="assigned_to"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">-- Auto-assign --</option>
+                                @foreach ($technicians as $tech)
+                                    <option value="{{ $tech->id }}">{{ $tech->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('assigned_to')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="priority"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
                             <select id="priority" wire:model.defer="priority"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
@@ -265,15 +390,15 @@
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="flex justify-end space-x-3">
-                            <button @click.prevent="step = 1" type="button"
-                                class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <div class="flex justify-end space-x-3 gap-4">
+                            <x-filament::button outlined @click.prevent="step = 1" type="button"
+                                class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
                                 Cancel
-                            </button>
-                            <button type="submit"
-                                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium  bg-blue-600 hover:bg-blue-700">
+                            </x-filament::button>
+                            <x-filament::button type="submit"
+                                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
                                 Submit Ticket
-                            </button>
+                            </x-filament::button>
                         </div>
                     </form>
                 </div>

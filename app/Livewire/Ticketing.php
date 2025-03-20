@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Ticket;
+use App\Models\Asset;
+use App\Models\User;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
@@ -11,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
 
 class Ticketing extends Component implements HasTable, HasForms
 {
@@ -23,9 +26,13 @@ class Ticketing extends Component implements HasTable, HasForms
     public $title = '';
     public $description = '';
     public $priority = 'medium';
+    public $asset_id = null; // Added for asset dropdown
+    public $assigned_to = null; // Added for technician assignment
 
     // Control variables
     public $showTicketForm = false;
+    public $assets = []; // Will hold available assets
+    public $technicians = []; // Will hold technician users
 
     protected $listeners = ['close-modal' => 'resetForm'];
 
@@ -33,14 +40,34 @@ class Ticketing extends Component implements HasTable, HasForms
         'title' => 'required|min:5',
         'description' => 'required|min:10',
         'priority' => 'required|in:low,medium,high',
+        'asset_id' => 'nullable|exists:assets,id',
+        'assigned_to' => 'nullable|exists:users,id',
     ];
+
+    public function mount()
+    {
+        // Load assets and technicians when component is mounted
+        $this->loadAssets();
+        $this->loadTechnicians();
+    }
+
+    protected function loadAssets()
+    {
+        $this->assets = Asset::all();
+    }
+
+    protected function loadTechnicians()
+    {
+        $this->technicians = User::whereHas('roles', function ($query) {
+            $query->where('name', 'technician');
+        })->get();
+    }
 
     public function selectIssueType($type)
     {
         $this->selectedType = $type;
         $this->selectedSubType = null;
         $this->showTicketForm = false;
-
         // All types now show a subtype selection before the form
         // No special condition needed anymore as we've made all types behave the same
     }
@@ -49,7 +76,6 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $this->selectedSubType = $subType;
         $this->showTicketForm = true;
-
         // Auto-generate title and description based on selected type and subtype
         $this->generateTicketContent();
     }
@@ -58,7 +84,6 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         // Generate title based on type and subtype
         $this->title = ucfirst($this->selectedType) . ' Issue: ' . $this->getReadableSubtype();
-
         // Generate description based on type and subtype
         $this->description = $this->generateDescription();
     }
@@ -71,11 +96,9 @@ class Ticketing extends Component implements HasTable, HasForms
             'keyboard' => 'Keyboard',
             'monitor' => 'Monitor',
             'other' => 'Other Hardware',
-
             // Internet
             'lan' => 'LAN Connection',
             'wifi' => 'WiFi Connection',
-
             // Application
             'word' => 'Microsoft Word',
             'chrome' => 'Google Chrome',
@@ -122,6 +145,8 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->title = '';
         $this->description = '';
         $this->priority = 'medium';
+        $this->asset_id = null;
+        $this->assigned_to = null;
         $this->showTicketForm = false;
         $this->resetErrorBag();
     }
@@ -131,29 +156,74 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->validate();
 
         try {
+            // Generate a unique ticket number
+            $ticketNumber = $this->generateTicketNumber();
+
             // Create ticket
             Ticket::create([
+                'ticket_number' => $ticketNumber,
                 'title' => $this->title,
                 'description' => $this->description,
                 'priority' => $this->priority,
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
+                'asset_id' => $this->asset_id,
+                'assigned_to' => $this->assigned_to,
                 'user_id' => Auth::id(),
-                'status' => 'open',
+                'created_by' => Auth::id(),
+                'ticket_type' => 'incident',
+                'ticket_status' => 'open',
+                'option' => 'asset',
             ]);
 
-            // Reset form and show success message
+            // Reset form
             $this->resetForm();
 
-            // Dispatch event to update Alpine.js state
-            $this->dispatch('ticket-created', [
-                'message' => 'Ticket created successfully!'
+            // Close the modal with Alpine.js
+            $this->dispatch('close-ticket-modal');
+
+            // Dispatch both notification types for flexibility
+            $this->dispatch('notify', [
+                'message' => "Ticket {$ticketNumber} has been created successfully.",
+                'type' => 'success'
             ]);
 
-            session()->flash('message', 'Ticket created successfully!');
+            // Show Filament notification
+            Notification::make()
+                ->title('Ticket Created')
+                ->body("Ticket {$ticketNumber} has been created successfully.")
+                ->success()
+                ->send();
         } catch (\Exception $e) {
-            session()->flash('error', 'Error creating ticket: ' . $e->getMessage());
+            $this->dispatch('notify', [
+                'message' => 'Error creating ticket: ' . $e->getMessage(),
+                'type' => 'error'
+            ]);
+
+            Notification::make()
+                ->title('Error')
+                ->body('Error creating ticket: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
+    }
+
+    /**
+     * Generate a unique ticket number in the format INC-xxxxxx
+     */
+    protected function generateTicketNumber()
+    {
+        $prefix = 'INC-';
+        $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        $ticketNumber = $prefix . $randomPart;
+
+        // Check if this ticket number already exists
+        while (Ticket::where('ticket_number', $ticketNumber)->exists()) {
+            $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            $ticketNumber = $prefix . $randomPart;
+        }
+
+        return $ticketNumber;
     }
 
     public function table(Table $table): Table
@@ -163,9 +233,10 @@ class Ticketing extends Component implements HasTable, HasForms
             ->columns([
                 TextColumn::make('id'),
                 TextColumn::make('title'),
-                TextColumn::make('type'),
-                TextColumn::make('subtype'),
-                TextColumn::make('status'),
+                TextColumn::make('ticket_type'),
+                TextColumn::make('subtype')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ticket_status'),
                 TextColumn::make('priority'),
                 TextColumn::make('created_at')
                     ->dateTime(),

@@ -31,6 +31,22 @@
         this.darkMode = !this.darkMode;
         localStorage.setItem('darkMode', this.darkMode);
     },
+    openAssetRequest() {
+        this.isOpen = true;
+        this.step = 3;
+        this.selectedType = 'asset_request';  // Changed from 'asset'
+        this.selectedSubType = null;
+        $wire.selectIssueType('asset_request');
+        $wire.selectSubType(null);
+    },
+    openGeneralInquiry() {
+        this.isOpen = true;
+        this.step = 3;
+        this.selectedType = 'general_inquiry';
+        this.selectedSubType = null;
+        $wire.selectIssueType('general_inquiry');
+        $wire.selectSubType(null);
+    },
     init() {
         // Listen for system dark mode changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
@@ -46,17 +62,30 @@
         }
 
         .sizePadding {
-            padding: 4rem;
-        }
+        padding: 1.5rem;
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
 
-        .fontSize {
-            font-size: 1.5rem;
-        }
+    .fontSize {
+        font-size: 1rem;
+    }
 
-        .card-hover:hover {
-            transform: scale(1.02);
-            transition: transform 0.2s ease-in-out;
-        }
+    .card-hover:hover {
+        transform: scale(1.02);
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .button-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
     </style>
 
     <!-- Flash Messages -->
@@ -119,7 +148,7 @@
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                 fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                                     clip-rule="evenodd" />
                             </svg>
                         </button>
@@ -133,20 +162,26 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button @click="openModal()"
                 class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
-                <span class="text-2xl mb-2">⚠️</span>
+                <span class="text-2xl mb-3">⚠️</span>
                 Report Issue
             </button>
 
-            <button
+            <button @click="openAssetRequest()"
                 class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
-                <span class="text-2xl mb-2">⚠️</span>
+                <span class="text-2xl mb-3">📦</span>
                 Request Asset
+            </button>
+
+            <button @click="openGeneralInquiry()"
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
+                <span class="text-2xl mb-3">❓</span>
+                General Inquiry
             </button>
 
             <button
                 class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
-                <span class="text-2xl mb-2">⚠️</span>
-                General Inquiry
+                <span class="text-2xl mb-3">⚠️</span>
+                Request Classroom
             </button>
         </div>
     </section>
@@ -170,12 +205,17 @@
                         <span x-show="step === 2 && selectedType === 'hardware'">Select Hardware Type</span>
                         <span x-show="step === 2 && selectedType === 'internet'">Select Internet Connection Type</span>
                         <span x-show="step === 2 && selectedType === 'application'">Select Application Type</span>
-                        <span x-show="step === 3">Submit Ticket</span>
+                        <span x-show="step === 3 && selectedType === 'asset_request'">Request New Asset</span>
+                        <span x-show="step === 3 && selectedType === 'general_inquiry'">Submit General Inquiry</span>
+    <span x-show="step === 3 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry'">Submit Ticket</span>
                     </h2>
                     <div class="flex items-center space-x-2">
-                        <button x-show="step > 1" @click="step--" type="button" class="dark:text-white">
-                            ← Back
-                        </button>
+                        <button x-show="step > 1 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry'" 
+    @click="step--" 
+    type="button" 
+    class="dark:text-white">
+    ← Back
+</button>
                         <button @click="closeModal()" type="button" class="dark:text-white">
                             ✕
                         </button>
@@ -297,8 +337,16 @@
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm dark:text-gray-200">
-                                    You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
-                                    - <strong x-text="selectedSubType"></strong>
+                                    <span x-show="selectedType === 'asset_request'">
+                                        You are submitting a new asset request. Please provide details below.
+                                    </span>
+                                    <span x-show="selectedType === 'general_inquiry'">
+                                        Please provide your question or concern below.
+                                    </span>
+                                    <span x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
+                                        You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
+                                        - <strong x-text="selectedSubType"></strong>
+                                    </span>
                                 </p>
                             </div>
                         </div>

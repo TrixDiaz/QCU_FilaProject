@@ -12,7 +12,7 @@ class EditAsset extends EditRecord
 
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        return route('filament.app.pages.inventory');
     }
 
     protected function getHeaderActions(): array

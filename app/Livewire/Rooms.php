@@ -4,6 +4,7 @@ namespace App\Livewire;
 use App\Models\Classroom;
 use App\Models\Building;
 use App\Models\Subject;
+use App\Models\AssetGroup;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -24,10 +25,19 @@ class Rooms extends Component
     public $showingClassroomDetails = false;
     public $currentClassroom = null;
     public $schedulesByDay = [];
+    public $expiry_date = [];
     
     // New properties for modal filters
     public $modalSelectedSchoolYear = '';
     public $modalSelectedSemester = '';
+    
+    // Asset-related properties
+    public $showingAssetDetails = false;
+    public $assetSearch = '';
+    public $assetCategoryFilter = '';
+    public $classroomAssets = [];
+    public $assetCategories = [];
+    public $showingClassroomAssets = false;
     
     // Add query string parameters
     protected $queryString = [
@@ -130,7 +140,6 @@ class Rooms extends Component
         }
     }
     
-    // New method to load schedules with filters
     public function loadClassroomSchedules()
     {
         if (!$this->currentClassroom) {
@@ -182,7 +191,6 @@ class Rooms extends Component
         }
     }
     
-    // New methods to handle modal filter changes
     public function updatedModalSelectedSchoolYear()
     {
         $this->loadClassroomSchedules();
@@ -202,9 +210,101 @@ class Rooms extends Component
         $this->schedulesByDay = [];
     }
 
+    public function viewAssets($classroomId)
+    {
+        $this->currentClassroom = Classroom::find($classroomId);
+        
+        if ($this->currentClassroom) {
+            // Load asset categories for filtering
+            $this->assetCategories = \App\Models\Category::all();
+            
+            // Load assets for this classroom
+            $this->loadClassroomAssets();
+            
+            $this->showingAssetDetails = true;
+        }
+    }
+
+    protected function loadClassroomAssets()
+    {
+        $query = AssetGroup::where('classroom_id', $this->currentClassroom->id)
+            ->with(['assets.category', 'assets.brand']);
+        
+        // Apply search filter
+        if (!empty($this->assetSearch)) {
+            $search = '%' . $this->assetSearch . '%';
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', $search)
+                  ->orWhere('code', 'like', $search)
+                  ->orWhereHas('assets', function($subQ) use ($search) {
+                      $subQ->where('serial_number', 'like', $search);
+                  });
+            });
+        }
+        
+        // Apply category filter
+        if (!empty($this->assetCategoryFilter)) {
+            $query->whereHas('assets', function($q) {
+                $q->where('category_id', $this->assetCategoryFilter);
+            });
+        }
+        
+        $this->classroomAssets = $query->get();
+    }
+
+    // Added missing method for updating asset search
+    public function updatedAssetSearch()
+    {
+        $this->loadClassroomAssets();
+    }
+
+    // Added missing method for updating asset category filter
+    public function updatedAssetCategoryFilter()
+    {
+        $this->loadClassroomAssets();
+    }
+
+    public function closeAssetDetails()
+    {
+        $this->showingAssetDetails = false;
+        $this->assetSearch = '';
+        $this->assetCategoryFilter = '';
+        $this->classroomAssets = [];
+    }
+
+    public function viewAssetDetails($assetGroupId)
+    {
+        // You can implement this method to show detailed information about a specific asset
+        // This could open another modal or redirect to a dedicated page
+    }
+
+    public function reportAssetIssue($assetGroupId)
+    {
+        // Implement the functionality to report an issue with an asset
+        // This could create a new ticket or maintenance request
+    }
+
+    public function viewClassroomAssets($classroomId)
+    {
+        $this->currentClassroom = Classroom::with(['assetGroups.assets'])->find($classroomId);
+        $this->showingClassroomAssets = true;
+    }
+
+    public function closeClassroomAssets()
+    {
+        $this->showingClassroomAssets = false;
+        $this->currentClassroom = null;
+    }
+
+    // In your AssetGroup model
+public function assets()
+{
+    return $this->belongsTo(Asset::class, 'asset_id');
+}
+
     public function render()
     {
-        $classroomsQuery = Classroom::with('building');
+        $classroomsQuery = Classroom::with(['building', 'assetGroups.assets']);
 
         if ($this->selectedBuilding) {
             $classroomsQuery->where('building_id', $this->selectedBuilding);

@@ -180,6 +180,11 @@
                                     wire:click="viewClassroomDetails({{ $classroom->id }})" tag="button">
                                     View Details
                                 </x-filament::button>
+
+                                <x-filament::button size="sm"
+                                wire:click="viewClassroomAssets({{ $classroom->id }})" tag="button">
+                                View Assets
+                            </x-filament::button>
                                 <x-filament::button size="sm"
                                     href="{{ route('filament.app.resources.subjects.edit', $classroom) }}"
                                     tag="a">
@@ -241,6 +246,138 @@
 </div>
 @endif
 
+
+<!-- Classroom Assets Modal -->
+@if ($showingClassroomAssets && $currentClassroom)
+<x-filament::section class="dark:bg-gray-900">
+    <div x-data="{
+        show: false
+    }" x-init="setTimeout(() => show = true, 50);" x-show="show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform scale-95"
+        x-transition:enter-end="opacity-100 transform scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform scale-100"
+        x-transition:leave-end="opacity-0 transform scale-95"
+        class="fixed inset-0 transition-opacity z-50 flex items-center justify-center bg-gray-900 bg-opacity-50"
+        style="display: none;">
+        <div
+            class="rounded-lg shadow-xl transform transition-all w-full max-w-4xl max-h-[90vh] overflow-hidden dark:bg-gray-800 bg-white flex flex-col">
+            <!-- Header - Sticky -->
+            <div
+                class="px-4 py-3 sm:px-6 flex justify-between items-center sticky top-0 z-10 bg-white dark:bg-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+                    {{ $currentClassroom->name }} Assets
+                </h3>
+                <button @click="show = false; setTimeout(() => $wire.closeClassroomAssets(), 200)"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-colors duration-200">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Main Content - Scrollable -->
+            <div class="flex-1 overflow-y-auto relative">
+                <div class="px-4 py-4 sm:px-6 dark:bg-gray-800">
+                    <!-- Asset Groups Table -->
+                    <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
+                        x-transition:enter-start="opacity-0 transform translate-y-4"
+                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                        class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
+                        <h4 class="text-lg font-medium mb-4 dark:text-gray-100">Asset Details</h4>
+
+                        @if ($currentClassroom->assetGroups->isEmpty())
+                            <p class="text-gray-500 dark:text-gray-400 italic">No assets found for this classroom.</p>
+                        @else
+                        <div class="rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
+                            <table class="min-w-full">
+                                <thead class="bg-gray-50 dark:bg-gray-800">
+                                    <tr>
+                                        
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Name
+                                        </th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Category
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Brand
+                                        </th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                           Asset Code
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Serial No.
+                                        </th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Asset Type
+                                        </th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Expiry Date
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-900">
+                                    @foreach ($currentClassroom->assetGroups as $assetGroup)
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-600 border-t border-gray-200 dark:border-gray-700">
+                                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->name }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->assets->category->name ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->assets->brand->name ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->code }}
+                                            </td>
+                                            <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->assets->serial_number ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->assets->name ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    {{ $assetGroup->status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100' }}">
+                                                    {{ ucfirst($assetGroup->status ?? 'N/A') }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $assetGroup->expiry_date ? \Carbon\Carbon::parse($assetGroup->expiry_date)->format('M d, Y') : 'N/A' }}
+                                            </td>
+                                        </tr>
+                                  
+                            </div>
+                                    @endforeach
+
+                                </tbody>
+                                </table>
+                        @endif
+                        </div>
+                        </div>
+                        </div>
+
+            <!-- Footer - Sticky -->
+            <div x-show="show" x-transition:enter="transition ease-out delay-450 duration-300"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
+                <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomAssets(), 200)"
+                    tag="button"
+                    class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
+                    Close
+                </x-filament::button>
+            </div>
+        </div>
+    </div>
+</x-filament::section>
+@endif
 <!-- Classroom Details Modal -->
 @if ($showingClassroomDetails && $currentClassroom)
 <x-filament::section class="dark:bg-gray-900">

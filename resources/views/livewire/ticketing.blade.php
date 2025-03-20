@@ -49,19 +49,17 @@
     <section>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button @click="openModal()"
-                class="sizePadding fontSize bg-red-600 hover:bg-red-700 text-white rounded-lg flex flex-col items-center justify-center">
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center">
                 <span class="text-2xl mb-2">⚠️</span>
                 Report Issue
             </button>
 
-            <button
-                class="sizePadding fontSize bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg flex flex-col items-center justify-center">
+            <button class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center">
                 <span class="text-2xl mb-2">⚠️</span>
                 Request Asset
             </button>
 
-            <button
-                class="sizePadding fontSize bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex flex-col items-center justify-center">
+            <button class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center">
                 <span class="text-2xl mb-2">⚠️</span>
                 General Inquiry
             </button>
@@ -74,11 +72,11 @@
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
         class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black opacity-30"></div>
+        <div class="fixed inset-0 opacity-30"></div>
 
         <!-- Modal Content -->
         <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-lg shadow-xl max-w-3xl w-full">
+            <div class="relative rounded-lg shadow-xl max-w-3xl w-full">
                 <!-- Header -->
                 <div class="border-b px-4 py-3 flex items-center justify-between">
                     <h2 class="text-xl font-bold">
@@ -89,11 +87,10 @@
                         <span x-show="step === 3">Submit Ticket</span>
                     </h2>
                     <div class="flex items-center space-x-2">
-                        <button x-show="step > 1" @click="step--" type="button"
-                            class="text-blue-600 hover:text-blue-800">
+                        <button x-show="step > 1" @click="step--" type="button" class="">
                             ← Back
                         </button>
-                        <button @click="closeModal()" type="button" class="text-gray-400 hover:text-gray-500">
+                        <button @click="closeModal()" type="button" class="">
                             ✕
                         </button>
                     </div>
@@ -102,22 +99,22 @@
                 <!-- Step 1: Issue Types -->
                 <div x-show="step === 1" class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
                     <div @click="selectType('application')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">💻</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">💻</div>
                             <h3 class="mt-4 text-lg font-semibold">Application</h3>
                         </div>
                     </div>
 
                     <div @click="selectType('internet')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🌐</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🌐</div>
                             <h3 class="mt-4 text-lg font-semibold">Internet</h3>
                         </div>
                     </div>
 
                     <div @click="selectType('hardware')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🖥️</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🖥️</div>
                             <h3 class="mt-4 text-lg font-semibold">Hardware</h3>
                         </div>
                     </div>
@@ -127,29 +124,29 @@
                 <div x-show="step === 2 && selectedType === 'application'" x-cloak
                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div @click="selectSubType('word')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">📝</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">📝</div>
                             <h3 class="mt-4 text-lg font-semibold">Microsoft Word</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('chrome')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🌐</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🌐</div>
                             <h3 class="mt-4 text-lg font-semibold">Chrome</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('excel')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">📊</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">📊</div>
                             <h3 class="mt-4 text-lg font-semibold">Microsoft Excel</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('other_app')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">📦</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">📦</div>
                             <h3 class="mt-4 text-lg font-semibold">Other Application</h3>
                         </div>
                     </div>
@@ -159,29 +156,29 @@
                 <div x-show="step === 2 && selectedType === 'hardware'" x-cloak
                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div @click="selectSubType('mouse')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🖱️</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🖱️</div>
                             <h3 class="mt-4 text-lg font-semibold">Mouse</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('keyboard')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">⌨️</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">⌨️</div>
                             <h3 class="mt-4 text-lg font-semibold">Keyboard</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('monitor')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🖥️</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🖥️</div>
                             <h3 class="mt-4 text-lg font-semibold">Monitor</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('other')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🔄</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🔄</div>
                             <h3 class="mt-4 text-lg font-semibold">Other</h3>
                         </div>
                     </div>
@@ -191,15 +188,15 @@
                 <div x-show="step === 2 && selectedType === 'internet'" x-cloak
                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div @click="selectSubType('lan')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">🔌</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">🔌</div>
                             <h3 class="mt-4 text-lg font-semibold">LAN</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('wifi')" class="cursor-pointer card-hover">
-                        <div class="p-6 bg-white rounded-lg shadow-md text-center">
-                            <div class="h-12 w-12 mx-auto text-blue-500">📶</div>
+                        <div class="p-6 rounded-lg shadow-md text-center">
+                            <div class="h-12 w-12 mx-auto">📶</div>
                             <h3 class="mt-4 text-lg font-semibold">WiFi</h3>
                         </div>
                     </div>
@@ -207,13 +204,13 @@
 
                 <!-- Step 3: Ticket Form -->
                 <div x-show="step === 3" x-cloak class="p-4">
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                    <div class="border-l-4 p-4 mb-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 ℹ️
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-blue-700">
+                                <p class="text-sm">
                                     You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
                                     - <strong x-text="selectedSubType"></strong>
                                 </p>
@@ -221,13 +218,13 @@
                         </div>
                     </div>
 
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="bg-yellow-50 border-l-4 p-4 mb-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 ⚠️
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-yellow-700">
+                                <p class="text-sm">
                                     We've pre-filled the form based on your selection. Please review and edit the
                                     details to match your specific issue before submitting.
                                 </p>
@@ -239,7 +236,7 @@
                         <div>
                             <label for="title" class="block text-sm font-medium text-gray-700">Issue Title</label>
                             <input type="text" id="title" wire:model.defer="title"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
                             @error('title')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
@@ -248,7 +245,7 @@
                             <label for="description"
                                 class="block text-sm font-medium text-gray-700">Description</label>
                             <textarea id="description" wire:model.defer="description" rows="4"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"></textarea>
                             <div class="mt-1 text-xs text-gray-500">
                                 Replace any [bracketed text] with your specific details.
                             </div>
@@ -259,7 +256,7 @@
                         <div>
                             <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
                             <select id="priority" wire:model.defer="priority"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
@@ -270,11 +267,11 @@
                         </div>
                         <div class="flex justify-end space-x-3">
                             <button @click.prevent="step = 1" type="button"
-                                class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
                                 Cancel
                             </button>
                             <button type="submit"
-                                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium  bg-blue-600 hover:bg-blue-700">
                                 Submit Ticket
                             </button>
                         </div>

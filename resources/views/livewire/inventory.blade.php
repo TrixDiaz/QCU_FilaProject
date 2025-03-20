@@ -298,8 +298,7 @@
                                         <x-filament::input.wrapper class="flex-1">
                                             <x-slot name="prefix">
                                                 <span class="text-gray-500">Search by: Asset Name, Brand, Category,
-                                                    Serial Number,
-                                                    Asset Code</span>
+                                                    Serial Number,</span>
                                             </x-slot>
 
                                             <x-filament::input type="text" class="w-full"
@@ -465,7 +464,6 @@
 
                                 <div class="text-sm mt-2">
                                     <p><span class="font-medium">S/N:</span> {{ $asset->serial_number }}</p>
-                                    <p><span class="font-medium">Asset Code:</span> {{ $asset->asset_code }}</p>
 
                                     @php
                                         $isSoftware = strtolower($asset->category->name) === 'software';
@@ -511,12 +509,12 @@
                                     <x-filament::button
                                         @click="$dispatch('open-deploy-modal', { assetId: {{ $asset->id }}, assetName: '{{ $asset->name }}' })"
                                         class="text-sm hover:underline">
-                                        Deploy Asset
+                                        Asset
                                     </x-filament::button>
                                     <x-filament::button
                                         href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
                                         tag="a" class="text-sm hover:underline">Edit
-                                        Asset</x-filament::button>
+                                    </x-filament::button>
                                 </div>
                             </div>
                         </div>
@@ -588,9 +586,6 @@
                                     S/N</x-filament-tables::header-cell>
                                 <x-filament-tables::header-cell scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                    Asset Code</x-filament-tables::header-cell>
-                                <x-filament-tables::header-cell scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Status</x-filament-tables::header-cell>
                             @endif
 
@@ -627,9 +622,6 @@
                                     <div class="text-sm text-gray-900">{{ $asset->serial_number }}</div>
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $asset->asset_code }}</div>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
                                     <x-filament::badge>
                                         <span class="capitalize">{{ $asset->status }}</span>
                                     </x-filament::badge>
@@ -648,12 +640,12 @@
                                     <x-filament::button
                                         @click="$dispatch('open-deploy-modal', { assetId: {{ $asset->id }}, assetName: '{{ $asset->name }}' })"
                                         class="text-sm hover:underline">
-                                        Deploy Asset
+                                        Deploy
                                     </x-filament::button>
                                     <x-filament::button
                                         href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
                                         tag="a" class="text-sm hover:underline">Edit
-                                        Asset</x-filament::button>
+                                    </x-filament::button>
                                 </x-filament-tables::cell>
                             </x-filament-tables::row>
                         @empty

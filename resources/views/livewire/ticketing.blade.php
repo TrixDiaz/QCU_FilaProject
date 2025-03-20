@@ -47,6 +47,14 @@
         $wire.selectIssueType('general_inquiry');
         $wire.selectSubType(null);
     },
+    openClassroomRequest() {
+        this.isOpen = true;
+        this.step = 3;
+        this.selectedType = 'classroom_request';
+        this.selectedSubType = null;
+        $wire.selectIssueType('classroom_request');
+        $wire.selectSubType(null);
+    },
     init() {
         // Listen for system dark mode changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
@@ -117,19 +125,19 @@
                     <svg x-show="type === 'success'" class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 00-1.414 1.414l2 2a1 1 001.414 0l4-4z"
                             clip-rule="evenodd" />
                     </svg>
                     <svg x-show="type === 'error'" class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293 1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z"
                             clip-rule="evenodd" />
                     </svg>
                     <svg x-show="type === 'info'" class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 11-2 0 1 1 012 0zM9 9a1 1 000 2v3a1 1 001 1h1a1 1 100-2h-1V9a1 1 00-1-1z"
                             clip-rule="evenodd" />
                     </svg>
                 </div>
@@ -148,7 +156,7 @@
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                 fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    d="M4.293 4.293a1 1 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 010-1.414z"
                                     clip-rule="evenodd" />
                             </svg>
                         </button>
@@ -178,9 +186,9 @@
                 General Inquiry
             </button>
 
-            <button
+            <button @click="openClassroomRequest()"
                 class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
-                <span class="text-2xl mb-3">⚠️</span>
+                <span class="text-2xl mb-3">🏫</span>
                 Request Classroom
             </button>
         </div>
@@ -207,15 +215,16 @@
                         <span x-show="step === 2 && selectedType === 'application'">Select Application Type</span>
                         <span x-show="step === 3 && selectedType === 'asset_request'">Request New Asset</span>
                         <span x-show="step === 3 && selectedType === 'general_inquiry'">Submit General Inquiry</span>
-    <span x-show="step === 3 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry'">Submit Ticket</span>
+                        <span x-show="step === 3 && selectedType === 'classroom_request'">Request Classroom</span>
+                        <span x-show="step === 3 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry'">Submit Ticket</span>
                     </h2>
                     <div class="flex items-center space-x-2">
-                        <button x-show="step > 1 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry'" 
-    @click="step--" 
-    type="button" 
-    class="dark:text-white">
-    ← Back
-</button>
+                        <button x-show="step > 1 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry' && selectedType !== 'classroom_request'" 
+                            @click="step--" 
+                            type="button" 
+                            class="dark:text-white">
+                            ← Back
+                        </button>
                         <button @click="closeModal()" type="button" class="dark:text-white">
                             ✕
                         </button>
@@ -343,6 +352,9 @@
                                     <span x-show="selectedType === 'general_inquiry'">
                                         Please provide your question or concern below.
                                     </span>
+                                    <span x-show="selectedType === 'classroom_request'">
+                                        You are submitting a classroom request. Please select the classroom and section below.
+                                    </span>
                                     <span x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
                                         You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
                                         - <strong x-text="selectedSubType"></strong>
@@ -438,6 +450,40 @@
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
+
+                        <!-- Classroom-specific fields -->
+                        <div x-show="selectedType === 'classroom_request'" class="space-y-4">
+                            <div>
+                                <label for="classroom"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Classroom</label>
+                                <select id="classroom" wire:model.defer="classroom_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="">-- Select Classroom --</option>
+                                    @foreach ($classrooms as $classroom)
+                                        <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('classroom_id')
+                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="section"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Section</label>
+                                <select id="section" wire:model.defer="section_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="">-- Select Section --</option>
+                                    @foreach ($sections as $section)
+                                        <option value="{{ $section->id }}">{{ $section->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('section_id')
+                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
                         <div class="flex justify-end space-x-3 gap-4">
                             <x-filament::button outlined @click.prevent="step = 1" type="button"
                                 class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">

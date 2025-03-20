@@ -7,12 +7,15 @@ use App\Models\Asset;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Tag;
+use App\Models\Classroom;
+use App\Models\AssetGroup;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
+use Illuminate\Support\Facades\Storage;
 
 class Inventory extends Component
 {
@@ -47,6 +50,14 @@ class Inventory extends Component
         'brand_id' => '',
     ];
 
+    // Deployment properties
+    public $classrooms = [];
+    public $deployAssetId;
+    public $selectedClassroom;
+    public $deploymentName;
+    public $deploymentCode;
+    public $statusActive = true;
+
     protected $listeners = ['refreshAssets' => '$refresh'];
 
     public function mount()
@@ -55,6 +66,7 @@ class Inventory extends Component
         $this->categories = Category::withCount('assets')->get();
         $this->tags = Tag::withCount('assets')->get();
         $this->totalAssets = Asset::where('status', 'available')->count();
+        $this->classrooms = Classroom::with('building')->get();
     }
 
     public function render()
@@ -130,6 +142,46 @@ class Inventory extends Component
         return view('livewire.inventory', [
             'assets' => $assets
         ]);
+    }
+
+    // Deploy asset method
+    public function deployAsset($assetId, $classroomId, $name, $code, $isActive)
+    {
+        $this->validate([
+            'selectedClassroom' => 'required',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Create the asset group record
+            AssetGroup::create([
+                'asset_id' => $assetId,
+                'classroom_id' => $classroomId,
+                'name' => $name,
+                'code' => $code,
+                'status' => $isActive ? 'active' : 'inactive',
+            ]);
+
+            // Update asset status to deployed
+            $asset = Asset::find($assetId);
+            $asset->status = 'deployed';
+            $asset->save();
+
+            DB::commit();
+
+            $this->dispatch('notify', ['message' => 'Asset deployed successfully', 'type' => 'success']);
+
+            // Reset deployment form
+            $this->reset(['deployAssetId', 'selectedClassroom', 'deploymentName', 'deploymentCode']);
+            $this->statusActive = true;
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('notify', ['message' => 'Error deploying asset: ' . $e->getMessage(), 'type' => 'error']);
+            return false;
+        }
     }
 
     // Reset secondary filters when primary filter type changes
@@ -257,11 +309,20 @@ class Inventory extends Component
     public function importAssets()
     {
         $this->validate([
-            'importFile' => 'required|file|mimes:csv,txt|max:1024',
+            'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
         ]);
 
+        if (!$this->importFile) {
+            $this->addError('importFile', 'No file selected.');
+            return;
+        }
+
         try {
-            $csv = Reader::createFromPath($this->importFile->getRealPath(), 'r');
+            // Store temporarily and get the path
+            $path = $this->importFile->store('temp');  // Saves in storage/app/temp
+            $fullPath = Storage::path($path);  // Gets the absolute path
+
+            $csv = Reader::createFromPath($fullPath, 'r');
             $csv->setHeaderOffset(0);
 
             $records = $csv->getRecords();
@@ -270,7 +331,6 @@ class Inventory extends Component
             DB::beginTransaction();
 
             foreach ($records as $record) {
-                // Handle asset import logic here
                 $brand = Brand::firstOrCreate(['name' => $record['brand']]);
                 $category = Category::firstOrCreate(['name' => $record['category']]);
 
@@ -281,62 +341,24 @@ class Inventory extends Component
                     'status' => $record['status'] ?? 'available',
                     'brand_id' => $brand->id,
                     'category_id' => $category->id,
-                    // Add other fields as necessary
                 ]);
 
                 $imported++;
             }
 
             DB::commit();
-
-            $this->showImportModal = false;
-            $this->importFile = null;
             $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
+            $this->importFile = null;
+            $this->showImportModal = false;
+
+            // Clean up the file after importing
+            Storage::delete($path);
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->addError('import', 'Error importing file: ' . $e->getMessage());
+            $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
         }
     }
 
-    public function exportAssets()
-    {
-        $query = Asset::query();
-
-        if (!empty($this->selected)) {
-            $query->whereIn('id', $this->selected);
-        }
-
-        $assets = $query->with(['brand', 'category'])->get();
-
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
-
-        // Define CSV headers
-        $csv->insertOne(['Name', 'Serial Number', 'Asset Code', 'Status', 'Brand', 'Category']);
-
-        // Add data rows
-        foreach ($assets as $asset) {
-            $csv->insertOne([
-                $asset->name,
-                $asset->serial_number,
-                $asset->asset_code,
-                $asset->status,
-                $asset->brand->name,
-                $asset->category->name,
-            ]);
-        }
-
-        $filename = 'assets-export-' . date('Y-m-d') . '.csv';
-
-        return response()->streamDownload(
-            function () use ($csv) {
-                echo $csv->getContent();
-            },
-            $filename,
-            [
-                'Content-Type' => 'text/csv',
-            ]
-        );
-    }
 
     public function executeBulkAction()
     {

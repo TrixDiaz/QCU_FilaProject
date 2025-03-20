@@ -64,6 +64,25 @@ class Inventories extends Component implements HasTable, HasForms
             ->get();
     }
 
+                public $excelFile;
+            public $skipHeader = true;
+
+            public function importExcel()
+            {
+                $this->validate([
+                    'excelFile' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+                ]);
+                
+                // Process the Excel file (you'll need a package like maatwebsite/excel for this)
+                // ...
+                
+                // Reset the form
+                $this->reset(['excelFile', 'skipHeader']);
+                
+                // Show success message
+                session()->flash('message', 'Assets imported successfully!');
+            }   
+
     public static function table(Table $table): Table
     {
         return $table

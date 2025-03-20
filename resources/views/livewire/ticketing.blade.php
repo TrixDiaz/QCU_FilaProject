@@ -224,14 +224,6 @@
                         </div>
 
                         <div class="mt-4 flex justify-end gap-2">
-                            <x-filament::button
-                                wire:click="viewTicket({{ $ticket->id }})"
-                                size="sm"
-                                color="gray"
-                            >
-                                View
-                            </x-filament::button>
-
                             @unless(auth()->user()->hasRole('professor'))
                                 <x-filament::button
                                     wire:click="editTicket({{ $ticket->id }})"
@@ -373,15 +365,6 @@
                             </x-filament-tables::cell>
                             <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
-                                    <x-filament::button
-                                        size="sm"
-                                        color="gray"
-                                        wire:click="viewTicket({{ $ticket->id }})"
-                                        class="hover:underline"
-                                    >
-                                        View
-                                    </x-filament::button>
-
                                     @unless(auth()->user()->hasRole('professor'))
                                         <x-filament::button
                                             size="sm"

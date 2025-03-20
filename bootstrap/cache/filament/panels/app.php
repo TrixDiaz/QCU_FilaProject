@@ -39,7 +39,7 @@
     'app.filament.app.pages.rooms' => 'App\\Filament\\App\\Pages\\Rooms',
     'app.filament.app.pages.schedule' => 'App\\Filament\\App\\Pages\\Schedule',
     'app.filament.app.pages.terminal' => 'App\\Filament\\App\\Pages\\Terminal',
-    'app.filament.app.pages.ticket' => 'App\\Filament\\App\\Pages\\Ticket',
+    'app.filament.app.pages.tickets' => 'App\\Filament\\App\\Pages\\Tickets',
     'filament.livewire.database-notifications' => 'Filament\\Livewire\\DatabaseNotifications',
     'filament.pages.auth.edit-profile' => 'Filament\\Pages\\Auth\\EditProfile',
     'filament.livewire.global-search' => 'Filament\\Livewire\\GlobalSearch',
@@ -72,7 +72,7 @@
     'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Rooms.php' => 'App\\Filament\\App\\Pages\\Rooms',
     'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Schedule.php' => 'App\\Filament\\App\\Pages\\Schedule',
     'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Terminal.php' => 'App\\Filament\\App\\Pages\\Terminal',
-    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Ticket.php' => 'App\\Filament\\App\\Pages\\Ticket',
+    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Tickets.php' => 'App\\Filament\\App\\Pages\\Tickets',
   ),
   'pageDirectories' => 
   array (

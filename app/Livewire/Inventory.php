@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\Tag;
 use App\Models\Classroom;
 use App\Models\AssetGroup;
+use App\Models\User;
+use Filament\Notifications\Notification;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
@@ -175,6 +177,29 @@ class Inventory extends Component
             // Reset deployment form
             $this->reset(['deployAssetId', 'selectedClassroom', 'deploymentName', 'deploymentCode']);
             $this->statusActive = true;
+
+            // Get all users
+            $users = \App\Models\User::all();
+
+            // Optionally notify all users after giving them admin roles
+            foreach ($users as $user) {
+                $user->notify(
+                    \Filament\Notifications\Notification::make()
+                        ->title('Assets Deployed')
+                        ->body('The selected assets have been successfully deployed.')
+                        ->success()
+                        ->icon('heroicon-m-computer-desktop')
+                        ->toDatabase()
+                );
+                $user->notify(
+                    \Filament\Notifications\Notification::make()
+                        ->title('Assets Deployed')
+                        ->body('The selected assets have been successfully deployed.')
+                        ->success()
+                        ->icon('heroicon-m-computer-desktop')
+                        ->send()
+                );
+            }
 
             return true;
         } catch (\Exception $e) {

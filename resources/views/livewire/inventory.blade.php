@@ -507,7 +507,11 @@
 
                                 <div class="mt-3 flex justify-end gap-2">
                                     <x-filament::button
-                                        @click="$dispatch('open-deploy-modal', { assetId: {{ $asset->id }}, assetName: '{{ $asset->name }}' })"
+                                        @click="$dispatch('open-deploy-modal', { 
+                                            assetId: {{ $asset->id }}, 
+                                            assetName: '{{ $asset->name }}',
+                                            assetCode: '{{ $asset->asset_code }}' 
+                                        })"
                                         class="text-sm hover:underline">
                                         Asset
                                     </x-filament::button>
@@ -638,7 +642,11 @@
                                 <x-filament-tables::cell
                                     class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <x-filament::button
-                                        @click="$dispatch('open-deploy-modal', { assetId: {{ $asset->id }}, assetName: '{{ $asset->name }}' })"
+                                        @click="$dispatch('open-deploy-modal', { 
+                                            assetId: {{ $asset->id }}, 
+                                            assetName: '{{ $asset->name }}',
+                                            assetCode: '{{ $asset->asset_code }}'
+                                        })"
                                         class="text-sm hover:underline">
                                         Deploy
                                     </x-filament::button>
@@ -696,6 +704,7 @@
         showDeployModal: false,
         assetId: null,
         assetName: '',
+        assetCode: '',
         deploymentSuccess: false,
         selectedClassroom: '',
         statusActive: true,
@@ -706,8 +715,9 @@
                 showDeployModal = true;
                 assetId = $event.detail.assetId;
                 assetName = $event.detail.assetName;
-                deploymentName = assetName + ' Deployment';
-                deploymentCode = 'DEP-' + assetId + '-' + Math.floor(Math.random() * 9000 + 1000);
+                assetCode = $event.detail.assetCode;
+                deploymentName = assetName;
+                deploymentCode = assetCode + '-' + assetId + '-' + Math.floor(Math.random() * 9000 + 1000);
              ">
 
         <!-- Deployment Success Message -->
@@ -743,33 +753,40 @@
                         <!-- Deployment Name -->
                         <div>
                             <label for="deploymentName" class="block text-sm font-medium">Deployment Name</label>
-                            <input type="text" id="deploymentName" wire:model="deploymentName"
-                                x-model="deploymentName"
-                                class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50">
+                            <x-filament::input.wrapper>
+                                <x-filament::input type="text" id="deploymentName" wire:model="deploymentName"
+                                    x-model="deploymentName" readonly
+                                    class="w-full mt-1 rounded-md  shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" />
+                            </x-filament::input.wrapper>
                         </div>
 
                         <!-- Deployment Code -->
                         <div>
                             <label for="deploymentCode" class="block text-sm font-medium">Deployment Code</label>
-                            <input type="text" id="deploymentCode" wire:model="deploymentCode"
-                                x-model="deploymentCode"
-                                class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50">
+                            <x-filament::input.wrapper>
+                                <x-filament::input type="text" id="deploymentCode" wire:model="deploymentCode"
+                                    x-model="deploymentCode" readonly
+                                    class="w-full mt-1 rounded-md  shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" />
+                            </x-filament::input.wrapper>
                         </div>
 
                         <!-- Classroom Selection -->
                         <div>
                             <label for="selectedClassroom" class="block text-sm font-medium">Select
                                 Classroom</label>
-                            <select id="selectedClassroom" wire:model="selectedClassroom" x-model="selectedClassroom"
-                                class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50">
-                                <option value="">-- Select a classroom --</option>
-                                @foreach ($classrooms as $classroom)
-                                    <option value="{{ $classroom->id }}">
-                                        {{ $classroom->building->name }} - {{ $classroom->name }} (Floor
-                                        {{ $classroom->floor }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-filament::input.wrapper>
+                                <x-filament::input.select id="selectedClassroom" wire:model="selectedClassroom"
+                                    x-model="selectedClassroom"
+                                    class="w-full mt-1 rounded-md shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50">
+                                    <option value="">-- Select a classroom --</option>
+                                    @foreach ($classrooms as $classroom)
+                                        <option value="{{ $classroom->id }}">
+                                            {{ $classroom->building->name }} - {{ $classroom->name }} (Floor
+                                            {{ $classroom->floor }})
+                                        </option>
+                                    @endforeach
+                                </x-filament::input.select>
+                            </x-filament::input.wrapper>
                         </div>
 
                         <!-- Status -->
@@ -782,7 +799,7 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex justify-end mt-6 space-x-3">
+                        <div class="flex justify-end mt-6 space-x-3 gap-2">
                             <x-filament::button type="button" color="gray" @click="showDeployModal = false">
                                 Cancel
                             </x-filament::button>

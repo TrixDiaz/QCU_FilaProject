@@ -1,449 +1,419 @@
 <div x-data="{
-    showImportModal: false,
-    showBulkEditModal: false,
-    confirmingBulkDelete: false,
-    toggleAllCheckboxes() {
-        if ($wire.selectAll) {
-            $wire.selected = [];
-            $wire.selectAll = false;
-        } else {
-            $wire.selectAll = true;
-        }
+    isOpen: false,
+    step: 1,
+    selectedType: null,
+    selectedSubType: null,
+    darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    openModal() {
+        this.isOpen = true;
+        this.step = 1;
+        this.selectedType = null;
+        this.selectedSubType = null;
+    },
+    closeModal() {
+        this.isOpen = false;
+        this.step = 1;
+        $wire.resetForm();
+    },
+    selectType(type) {
+        console.log('Selected type:', type);
+        this.selectedType = type;
+        $wire.selectIssueType(type);
+        this.step = 2;
+    },
+    selectSubType(subType) {
+        console.log('Selected subtype:', subType);
+        this.selectedSubType = subType;
+        $wire.selectSubType(subType);
+        this.step = 3;
+    },
+    toggleDarkMode() {
+        this.darkMode = !this.darkMode;
+        localStorage.setItem('darkMode', this.darkMode);
+    },
+    init() {
+        // Listen for system dark mode changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (!localStorage.getItem('darkMode')) {
+                this.darkMode = e.matches;
+            }
+        });
     }
-}">
-    <x-filament::section class="my-4">
-        <div class="grid grid-cols-1 gap-6 w-full">
-            <div x-data="{ isSearchOpen: false }" class="col-span-full">
-                <div x-show="!isSearchOpen" x-transition class="space-y-4 w-full">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h2 class="text-xl font-bold">Support Tickets</h2>
-                            <div class="text-sm capitalize">
-                                @if($filterType == 'all')
-                                    Showing all {{ $filteredCount }} tickets
-                                @elseif($filterType == 'status' && $ticketStatus)
-                                    Showing {{ $filteredCount }} {{ $ticketStatus }} tickets
-                                @elseif($filterType == 'priority' && $priority)
-                                    Showing {{ $filteredCount }} {{ $priority }} priority tickets
-                                @elseif($filterType == 'assigned' && $assignedTo)
-                                    Showing {{ $filteredCount }} tickets assigned to {{ $users[$assignedTo] ?? 'Unknown' }}
-                                @endif
+}" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()">
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .sizePadding {
+            padding: 4rem;
+        }
+
+        .fontSize {
+            font-size: 1.5rem;
+        }
+
+        .card-hover:hover {
+            transform: scale(1.02);
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+
+    <!-- Flash Messages -->
+    <div x-data="{
+        show: false,
+        message: '',
+        type: 'success',
+        showNotification(message, type = 'success') {
+            this.message = message;
+            this.type = type;
+            this.show = true;
+            setTimeout(() => this.show = false, 5000);
+        }
+    }" @notify.window="showNotification($event.detail.message, $event.detail.type)"
+        x-show="show" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform translate-x-full"
+        x-transition:enter-end="opacity-100 transform translate-x-0" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform translate-x-0"
+        x-transition:leave-end="opacity-0 transform translate-x-full" class="fixed top-4 right-4 z-50 max-w-sm"
+        style="display:none;">
+        <div :class="{
+            'bg-green-50 border-green-400 text-green-700': type === 'success',
+            'bg-red-50 border-red-400 text-red-700': type === 'error',
+            'bg-blue-50 border-blue-400 text-blue-700': type === 'info'
+        }"
+            class="p-4 rounded-md border-l-4 shadow-md dark:bg-opacity-20">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg x-show="type === 'success'" class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <svg x-show="type === 'error'" class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <svg x-show="type === 'info'" class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p x-text="message" class="text-sm"></p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <div class="-mx-1.5 -my-1.5">
+                        <button @click="show = false" class="inline-flex rounded-md p-1.5"
+                            :class="{
+                                'bg-green-50 text-green-500 hover:bg-green-100': type === 'success',
+                                'bg-red-50 text-red-500 hover:bg-red-100': type === 'error',
+                                'bg-blue-50 text-blue-500 hover:bg-blue-100': type === 'info'
+                            }">
+                            <span class="sr-only">Dismiss</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <button @click="openModal()"
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
+                <span class="text-2xl mb-2">⚠️</span>
+                Report Issue
+            </button>
+
+            <button
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
+                <span class="text-2xl mb-2">⚠️</span>
+                Request Asset
+            </button>
+
+            <button
+                class="sizePadding fontSize rounded-lg flex flex-col items-center justify-center bg-white dark:bg-gray-800 dark:text-white shadow-md border border-gray-200 dark:border-gray-700">
+                <span class="text-2xl mb-2">⚠️</span>
+                General Inquiry
+            </button>
+        </div>
+    </section>
+
+    <!-- Alpine.js Modal -->
+    <div x-show="isOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black dark:bg-gray-900 opacity-30"></div>
+
+        <!-- Modal Content -->
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="relative rounded-lg shadow-xl max-w-3xl w-full bg-gray-100 dark:bg-gray-800 dark:text-white">
+                <!-- Header -->
+                <div
+                    class="border-b px-4 py-3 flex items-center justify-between bg-gray-200 dark:bg-gray-700 dark:border-gray-600">
+                    <h2 class="text-xl font-bold">
+                        <span x-show="step === 1">Select Issue Type</span>
+                        <span x-show="step === 2 && selectedType === 'hardware'">Select Hardware Type</span>
+                        <span x-show="step === 2 && selectedType === 'internet'">Select Internet Connection Type</span>
+                        <span x-show="step === 2 && selectedType === 'application'">Select Application Type</span>
+                        <span x-show="step === 3">Submit Ticket</span>
+                    </h2>
+                    <div class="flex items-center space-x-2">
+                        <button x-show="step > 1" @click="step--" type="button" class="dark:text-white">
+                            ← Back
+                        </button>
+                        <button @click="closeModal()" type="button" class="dark:text-white">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 1: Issue Types -->
+                <div x-show="step === 1" class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
+                    <div @click="selectType('application')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">💻</div>
+                            <h3 class="mt-4 text-lg font-semibold">Application</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectType('internet')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🌐</div>
+                            <h3 class="mt-4 text-lg font-semibold">Internet</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectType('hardware')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🖥️</div>
+                            <h3 class="mt-4 text-lg font-semibold">Hardware</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Application Subtypes -->
+                <div x-show="step === 2 && selectedType === 'application'" x-cloak
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                    <div @click="selectSubType('word')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">📝</div>
+                            <h3 class="mt-4 text-lg font-semibold">Microsoft Word</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('chrome')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🌐</div>
+                            <h3 class="mt-4 text-lg font-semibold">Chrome</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('excel')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">📊</div>
+                            <h3 class="mt-4 text-lg font-semibold">Microsoft Excel</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('other_app')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">📦</div>
+                            <h3 class="mt-4 text-lg font-semibold">Other Application</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Hardware Subtypes -->
+                <div x-show="step === 2 && selectedType === 'hardware'" x-cloak
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                    <div @click="selectSubType('mouse')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🖱️</div>
+                            <h3 class="mt-4 text-lg font-semibold">Mouse</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('keyboard')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">⌨️</div>
+                            <h3 class="mt-4 text-lg font-semibold">Keyboard</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('monitor')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🖥️</div>
+                            <h3 class="mt-4 text-lg font-semibold">Monitor</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('other')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🔄</div>
+                            <h3 class="mt-4 text-lg font-semibold">Other</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Internet Subtypes -->
+                <div x-show="step === 2 && selectedType === 'internet'" x-cloak
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                    <div @click="selectSubType('lan')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">🔌</div>
+                            <h3 class="mt-4 text-lg font-semibold">LAN</h3>
+                        </div>
+                    </div>
+
+                    <div @click="selectSubType('wifi')" class="cursor-pointer card-hover">
+                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                            <div class="h-12 w-12 mx-auto">📶</div>
+                            <h3 class="mt-4 text-lg font-semibold">WiFi</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Ticket Form -->
+                <div x-show="step === 3" x-cloak class="p-4">
+                    <div class="border-l-4 border-blue-500 p-4 mb-4 bg-blue-50 dark:bg-blue-900 dark:border-blue-400">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                ℹ️
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm dark:text-gray-200">
+                                    You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
+                                    - <strong x-text="selectedSubType"></strong>
+                                </p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3">
-                            {{-- View Toggle and Filter --}}
-                            <div class="flex flex-wrap items-center gap-4">
-                                <div class="flex items-center gap-2 p-1 rounded-lg">
-                                    <x-filament::icon-button 
-                                        size="md" 
-                                        icon="heroicon-o-queue-list"
-                                        wire:click="setViewType('table')" 
-                                        :color="$viewType === 'table' ? 'primary' : 'gray'"
-                                    >
-                                        <span class="sr-only">Table View</span>
-                                    </x-filament::icon-button>
-                                    <x-filament::icon-button 
-                                        size="md" 
-                                        icon="heroicon-o-squares-2x2"
-                                        wire:click="setViewType('card')" 
-                                        :color="$viewType === 'card' ? 'primary' : 'gray'"
-                                    >
-                                        <span class="sr-only">Card View</span>
-                                    </x-filament::icon-button>
-                                </div>
+                    </div>
 
-                                <x-filament::input.wrapper>
-                                    <x-filament::input.select 
-                                        wire:model.live="filterType"
-                                        class="rounded border-gray-300 shadow-sm"
-                                    >
-                                        <option value="all">All Filters</option>
-                                        <option value="status">Filter by Status</option>
-                                        <option value="priority">Filter by Priority</option>
-                                        <option value="assigned">Filter by Assigned To</option>
-                                        <option value="status-priority">Filter by Status & Priority</option>
-                                        <option value="status-assigned">Filter by Status & Assigned</option>
-                                    </x-filament::input.select>
-                                </x-filament::input.wrapper>
+                    <div
+                        class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 dark:bg-yellow-900 dark:border-yellow-500">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                ⚠️
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm dark:text-gray-200">
+                                    We've pre-filled the form based on your selection. Please review and edit the
+                                    details to match your specific issue before submitting.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-                                @if($filterType === 'status' || $filterType === 'status-priority' || $filterType === 'status-assigned')
-                                    <x-filament::input.wrapper>
-                                        <x-filament::input.select
-                                            wire:model.live="ticketStatus"
-                                            class="rounded border-gray-300 shadow-sm"
-                                        >
-                                            <option value="">Select Status</option>
-                                            <option value="open">Open</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="resolved">Resolved</option>
-                                            <option value="closed">Closed</option>
-                                        </x-filament::input.select>
-                                    </x-filament::input.wrapper>
-                                @endif
+                    <form class="space-y-4" wire:submit.prevent="submitTicket">
+                        <div>
+                            <label for="title"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issue Title</label>
+                            <input type="text" id="title" wire:model.defer="title"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            @error('title')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="description"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                            <textarea id="description" wire:model.defer="description" rows="4"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Replace any [bracketed text] with your specific details.
+                            </div>
+                            @error('description')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                                @if($filterType === 'priority' || $filterType === 'status-priority')
-                                    <x-filament::input.wrapper>
-                                        <x-filament::input.select
-                                            wire:model.live="priority"
-                                            class="rounded border-gray-300 shadow-sm"
-                                        >
-                                            <option value="">Select Priority</option>
-                                            <option value="low">Low</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="high">High</option>
-                                        </x-filament::input.select>
-                                    </x-filament::input.wrapper>
-                                @endif
-
-                                @if($filterType === 'assigned' || $filterType === 'status-assigned')
-                                    <x-filament::input.wrapper>
-                                        <x-filament::input.select
-                                            wire:model.live="assignedTo"
-                                            class="rounded border-gray-300 shadow-sm"
-                                        >
-                                            <option value="">Select User</option>
-                                            @foreach($users as $id => $name)
-                                                <option value="{{ $id }}">{{ $name }}</option>
-                                            @endforeach
-                                        </x-filament::input.select>
-                                    </x-filament::input.wrapper>
-                                @endif
-
-                                @if($filterType !== 'all')
-                                    <x-filament::button
-                                        wire:click="resetFilters"
-                                        color="danger"
-                                        size="sm"
-                                        icon="heroicon-o-x-mark"
-                                        class="self-center"
-                                    >
-                                        Reset Filters
-                                    </x-filament::button>
+                        <!-- Asset Dropdown -->
+                        <div>
+                            <label for="asset_id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Related
+                                Asset</label>
+                            <select id="asset_id" wire:model.defer="asset_id"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">-- Select Asset (Optional) --</option>
+                                @forelse ($assets as $asset)
+                                    <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->asset_tag }})
+                                    </option>
+                                @empty
+                                    <option value="" disabled>No matching assets found</option>
+                                @endforelse
+                            </select>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                @if ($selectedType == 'hardware' && $selectedSubType)
+                                    Showing {{ ucfirst($selectedSubType) }} assets only
                                 @endif
                             </div>
+                            @error('asset_id')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                            {{-- Search and Create Buttons --}}
-                            <x-filament::icon-button 
-                                icon="heroicon-m-magnifying-glass" 
-                                @click="isSearchOpen = true"
-                                label="Search" 
-                                tooltip="Open Search" 
-                            />
+                        <!-- Assign to Technician -->
+                        <div>
+                            <label for="assigned_to"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign to
+                                Technician</label>
+                            <select id="assigned_to" wire:model.defer="assigned_to"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">-- Auto-assign --</option>
+                                @foreach ($technicians as $tech)
+                                    <option value="{{ $tech->id }}">{{ $tech->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('assigned_to')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                            <x-filament::button
-                                tag="a"
-                                href="{{ route('filament.app.resources.tickets.create') }}"
-                                icon="heroicon-m-plus"
-                                tooltip="Create New Ticket"
-                            >
-                                New
+                        <div>
+                            <label for="priority"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                            <select id="priority" wire:model.defer="priority"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                            @error('priority')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="flex justify-end space-x-3 gap-4">
+                            <x-filament::button outlined @click.prevent="step = 1" type="button"
+                                class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+                                Cancel
+                            </x-filament::button>
+                            <x-filament::button type="submit"
+                                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
+                                Submit Ticket
                             </x-filament::button>
                         </div>
-                    </div>
+                    </form>
                 </div>
-
-                {{-- Search Bar --}}
-                <div x-show="isSearchOpen" x-transition class="w-full">
-                    <div class="flex items-center gap-3">
-                        <x-filament::input.wrapper class="flex-1">
-                            <x-slot name="prefix">
-                                <span class="text-gray-500">Search by: Ticket Number, Title, Description</span>
-                            </x-slot>
-
-                            <x-filament::input
-                                type="text"
-                                wire:model.live.debounce.500ms="search"
-                                placeholder="Search tickets..."
-                                class="w-full"
-                                @keydown.escape.window="isSearchOpen = false"
-                            />
-
-                            <x-slot name="suffix">
-                                <button type="button" @click="isSearchOpen = false">
-                                    <x-heroicon-m-x-mark class="w-5 h-5" />
-                                </button>
-                            </x-slot>
-                        </x-filament::input.wrapper>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </x-filament::section>
-
-    @if($viewType === 'card')
-        {{-- Card View Implementation --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($tickets as $ticket)
-                <x-filament::section :class="in_array((string) $ticket->id, $selected) ? 'ring-2 ring-primary-500' : ''">
-                    <div class="p-4">
-                        <div class="absolute top-2 left-2">
-                            <x-filament::input.checkbox
-                                wire:model.live="selected"
-                                value="{{ $ticket->id }}"
-                                wire:key="card-checkbox-{{ $ticket->id }}"
-                            />
-                        </div>
-
-                        <div class="flex justify-between mb-2 mt-6">
-                            <x-filament::badge color="secondary">
-                                {{ $ticket->ticket_number }}
-                            </x-filament::badge>
-                            <x-filament::badge :color="match($ticket->ticket_status) {
-                                'open' => 'success',
-                                'in_progress' => 'warning',
-                                'resolved' => 'info',
-                                'closed' => 'secondary',
-                                default => 'gray'
-                            }">
-                                {{ ucfirst($ticket->ticket_status) }}
-                            </x-filament::badge>
-                        </div>
-
-                        <h4 class="text-lg font-semibold">{{ $ticket->title }}</h4>
-
-                        <div class="mt-2">
-                            <x-filament::badge :color="match($ticket->priority) {
-                                'high' => 'danger',
-                                'medium' => 'warning',
-                                'low' => 'success',
-                                default => 'gray'
-                            }">
-                                Priority: {{ ucfirst($ticket->priority) }}
-                            </x-filament::badge>
-                        </div>
-
-                        <div class="mt-3">
-                            <p class="text-sm text-gray-600">
-                                <span class="font-medium">Assigned To:</span>
-                                {{ $ticket->assignedUser?->name ?? 'Unassigned' }}
-                            </p>
-                            <p class="text-sm text-gray-600">
-                                <span class="font-medium">Created:</span>
-                                {{ $ticket->created_at->format('M d, Y H:i') }}
-                            </p>
-                        </div>
-
-                        <div class="mt-4 flex justify-end gap-2">
-                            @unless(auth()->user()->hasRole('professor'))
-                                <x-filament::button
-                                    wire:click="editTicket({{ $ticket->id }})"
-                                    size="sm"
-                                    color="warning"
-                                >
-                                    Edit
-                                </x-filament::button>
-                            @endunless
-                        </div>
-                    </div>
-                </x-filament::section>
-            @empty
-                <div class="col-span-full py-10 text-center">
-                    <p class="text-lg">No tickets found matching your filter criteria.</p>
-                    @if($filterType != 'all')
-                        <x-filament::button 
-                            wire:click="$set('filterType', 'all')"
-                            class="mt-2"
-                        >
-                            Show all tickets
-                        </x-filament::button>
-                    @endif
-                </div>
-            @endforelse
-        </div>
-    @else
-        {{-- Table View Implementation --}}
-        <div class="overflow-x-auto rounded-lg">
-            <x-filament-tables::table class="min-w-full divide-y col-span-full">
-                <thead class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
-                    <x-filament-tables::row>
-                        <x-filament-tables::header-cell scope="col" class="w-12 px-4 py-3">
-                            <x-filament::input.checkbox 
-                                wire:model.live="selectAll" 
-                                @click="toggleAllCheckboxes()"
-                                id="select-all-table" 
-                                class="rounded" 
-                            />
-                        </x-filament-tables::header-cell>
-
-                        @if(count($selected) >= 2)
-                            <x-filament-tables::header-cell scope="col" colspan="7" class="px-3 py-3">
-                                <div class="flex items-center gap-4">
-                                    <span class="font-medium text-sm">{{ count($selected) }} selected</span>
-
-                                    <x-filament::button wire:click="$set('selected', [])" size="sm" color="danger" outline>
-                                        Clear
-                                    </x-filament::button>
-
-                                    <x-filament::input.wrapper>
-                                        <x-filament::input.select wire:model.live="bulkAction" class="rounded border-gray-300 shadow-sm">
-                                            <option value="">Bulk Actions</option>
-                                            <option value="delete">Delete Selected</option>
-                                            <option value="edit">Edit Selected</option>
-                                            <option value="export">Export Selected</option>
-                                        </x-filament::input.select>
-                                    </x-filament::input.wrapper>
-
-                                    <x-filament::button wire:click="executeBulkAction" :disabled="empty($bulkAction)">
-                                        Apply
-                                    </x-filament::button>
-                                </div>
-                            </x-filament-tables::header-cell>
-                        @else
-                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Ticket Information
-                            </x-filament-tables::header-cell>
-                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Type
-                            </x-filament-tables::header-cell>
-                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Status
-                            </x-filament-tables::header-cell>
-                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Priority
-                            </x-filament-tables::header-cell>
-                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Assigned To
-                            </x-filament-tables::header-cell>
-                            <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Created At
-                            </x-filament-tables::header-cell>
-                        @endif
-
-                        <x-filament-tables::header-cell scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                            Actions
-                        </x-filament-tables::header-cell>
-                    </x-filament-tables::row>
-                </thead>
-                <tbody class="divide-y">
-                    @forelse($tickets as $ticket)
-                        <x-filament-tables::row :class="in_array((string) $ticket->id, $selected) ? 'bg-primary-50' : ''">
-                            <x-filament-tables::cell class="w-12 px-4 py-4 whitespace-nowrap">
-                                <x-filament::input.checkbox 
-                                    wire:model.live="selected"
-                                    value="{{ $ticket->id }}"
-                                    wire:key="table-checkbox-{{ $ticket->id }}"
-                                    :class="in_array((string) $ticket->id, $selected) ? 'bg-primary-500' : ''"
-                                />
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex flex-col">
-                                    <div class="text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</div>
-                                    <div class="text-sm text-gray-500">{{ $ticket->title }}</div>
-                                </div>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                <x-filament::badge color="secondary">
-                                    <span class="capitalize">{{ $ticket->ticket_type }}</span>
-                                </x-filament::badge>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                <x-filament::badge :color="match($ticket->ticket_status) {
-                                    'open' => 'success',
-                                    'in_progress' => 'warning',
-                                    'resolved' => 'info',
-                                    'closed' => 'secondary',
-                                    default => 'gray'
-                                }">
-                                    <span class="capitalize">{{ $ticket->ticket_status }}</span>
-                                </x-filament::badge>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                <x-filament::badge :color="match($ticket->priority) {
-                                    'high' => 'danger',
-                                    'medium' => 'warning',
-                                    'low' => 'success',
-                                    default => 'gray'
-                                }">
-                                    <span class="capitalize">{{ $ticket->priority }}</span>
-                                </x-filament::badge>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $ticket->assignedUser?->name ?? 'Unassigned' }}</div>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $ticket->created_at->format('M d, Y H:i') }}</div>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end gap-2">
-                                    @unless(auth()->user()->hasRole('professor'))
-                                        <x-filament::button
-                                            size="sm"
-                                            color="warning"
-                                            wire:click="editTicket({{ $ticket->id }})"
-                                            class="hover:underline"
-                                        >
-                                            Edit
-                                        </x-filament::button>
-
-                                        <x-filament::button
-                                            size="sm"
-                                            color="danger"
-                                            wire:click="confirmTicketDeletion({{ $ticket->id }})"
-                                            class="hover:underline"
-                                        >
-                                            Delete
-                                        </x-filament::button>
-                                    @endunless
-                                </div>
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
-                    @empty
-                        <tr>
-                            <x-filament-tables::cell colspan="8" class="px-6 py-10 text-center">
-                                <p class="text-lg">No tickets found matching your filter criteria.</p>
-                                @if($filterType != 'all')
-                                    <x-filament::button 
-                                        wire:click="$set('filterType', 'all')"
-                                        class="mt-2 text-primary-600 hover:text-primary-900 hover:underline"
-                                    >
-                                        Show all tickets
-                                    </x-filament::button>
-                                @endif
-                            </x-filament-tables::cell>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </x-filament-tables::table>
-        </div>
-    @endif
-
-    {{-- Pagination Controls --}}
-    <div class="mt-6">
-        <div class="flex justify-between items-center">
-            <div>
-                <x-filament::input.wrapper>
-                    <x-filament::input.select wire:model.live="perPage" class="rounded border-gray-300 shadow-sm">
-                        <option value="10">10 per page</option>
-                        <option value="25">25 per page</option>
-                        <option value="50">50 per page</option>
-                        <option value="100">100 per page</option>
-                    </x-filament::input.select>
-                </x-filament::input.wrapper>
-            </div>
-
-            <div class="fi-ta-pagination px-3 py-3 sm:px-6">
-                {{ $tickets->links() }}
             </div>
         </div>
     </div>
 
-    {{-- Custom Notification Component --}}
-    <div
-        x-data="{ show: false, message: '', type: '' }"
-        @notify.window="show = true; message = $event.detail.message; type = $event.detail.type; setTimeout(() => { show = false }, 3000)"
-        class="fixed bottom-4 right-4 z-50"
-    >
-        <div
-            x-show="show"
-            x-transition
-            :class="{
-                'bg-green-500': type === 'success',
-                'bg-red-500': type === 'error',
-                'bg-yellow-500': type === 'warning'
-            }"
-            class="rounded-lg p-4 text-white shadow-lg"
-        >
-            <p x-text="message"></p>
-        </div>
-    </div>
+    <section class="my-4">
+        {{ $this->table }}
+    </section>
 </div>

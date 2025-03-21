@@ -2,500 +2,285 @@
 
 namespace App\Livewire;
 
+use App\Models\Ticket;
+use App\Models\Asset;
+use App\Models\AssetTag;
 use App\Models\User;
-use App\Models\Ticket as TicketModel;
-use App\Models\Subject;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Illuminate\Support\Str;
-use League\Csv\Writer;
-use League\Csv\Reader;
-use SplTempFileObject;
+use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
 
-class Ticketing extends Component
+class Ticketing extends Component implements HasTable, HasForms
 {
-    use WithPagination;
-    use WithFileUploads;
+    use InteractsWithTable;
+    use InteractsWithForms;
 
-    // Update properties
-    public $filterType = 'all';
-    public $filterValue = '';
-    public $ticketStatus = '';
-    public $priority = '';
-    public $assignedTo = '';
-    public $search = '';
-    public $perPage = 10;
-    public $viewType = 'table';
-    public $filteredCount = 0;
-    public $totalTickets = 0; // Add this line
-
-    // Form properties
-    public $ticket_type = '';
+    // Form Fields
+    public $selectedType = null;
+    public $selectedSubType = null;
     public $title = '';
-    public $request_type = '';
-    public $classroom_id = '';
-    public $asset_id = '';
-    public $section_id = '';
-    public $subject_id = '';
-    public $starts_at;
-    public $ends_at;
     public $description = '';
-    public $attachments = [];
+    public $priority = 'medium';
+    public $asset_id = null; // Added for asset dropdown
+    public $assigned_to = null; // Added for technician assignment
 
-    // Bulk action properties
-    public $selected = [];
-    public $selectAll = false;
-    public $bulkAction = '';
-    public $confirmingBulkDelete = false;
-    public $importFile = null;
-    public $showImportModal = false;
-    public $showBulkEditModal = false;
-    public $bulkEditData = [
-        'ticket_status' => '',
-        'priority' => '',
-        'assigned_to' => '',
+    // Control variables
+    public $showTicketForm = false;
+    public $assets = []; // Will hold available assets
+    public $technicians = []; // Will hold technician users
+
+    protected $listeners = ['close-modal' => 'resetForm'];
+
+    protected $rules = [
+        'title' => 'required|min:5',
+        'description' => 'required|min:10',
+        'priority' => 'required|in:low,medium,high',
+        'asset_id' => 'nullable|exists:assets,id',
+        'assigned_to' => 'nullable|exists:users,id',
     ];
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'filterType' => ['except' => 'all'],
-        'ticketStatus' => ['except' => ''],
-        'priority' => ['except' => ''],
-        'assignedTo' => ['except' => ''],
-        'page' => ['except' => 1],
-    ];
-
-    protected $listeners = ['refreshTickets' => '$refresh'];
-
-    protected function rules()
-    {
-        return [
-            'ticket_type' => 'required|in:request,incident',
-            'title' => 'required|string|max:255',
-            'request_type' => 'required_if:ticket_type,request|in:asset,classroom',
-            'classroom_id' => 'required_if:request_type,classroom',
-            'asset_id' => 'required_if:request_type,asset',
-            'section_id' => 'required_if:request_type,classroom',
-            'subject_id' => 'required_if:request_type,classroom',
-            'priority' => 'required|in:low,medium,high',
-            'description' => 'required|string',
-            'attachments.*' => 'nullable|image|max:1024',
-        ];
-    }
 
     public function mount()
     {
-        $this->totalTickets = TicketModel::count();
-        $this->priority = 'low';
+        // Load assets and technicians when component is mounted
+        $this->loadAssets();
+        $this->loadTechnicians();
     }
 
-    // Reset filters
-    public function resetFilters()
+    protected function loadAssets()
     {
-        $this->filterType = 'all';
-        $this->filterValue = '';
-        $this->ticketStatus = '';
-        $this->priority = '';
-        $this->assignedTo = '';
-        $this->search = '';
-        $this->resetPage();
+        $this->assets = Asset::all();
     }
 
-    // View type toggle
-    public function setViewType($type)
+    protected function loadTechnicians()
     {
-        $this->viewType = $type;
+        $this->technicians = User::whereHas('roles', function ($query) {
+            $query->where('name', 'technician');
+        })->get();
     }
 
-    // Update ticket status
-    public function updateTicketStatus($status, $ticketId)
+    public function selectIssueType($type)
     {
-        $ticket = TicketModel::findOrFail($ticketId);
-        $ticket->ticket_status = $status;
-        $ticket->save();
-        
-        $this->dispatch('notify', [
-            'message' => 'Ticket updated successfully',
-            'type' => 'success'
-        ]);
-    }
-    
-    // Delete ticket
-    public function deleteTicket($ticketId)
-    {
-        $ticket = TicketModel::findOrFail($ticketId);
-        $ticket->delete();
-        
-        $this->dispatch('notify', [
-            'message' => 'Ticket deleted successfully',
-            'type' => 'success'
-        ]);
+        $this->selectedType = $type;
+        $this->selectedSubType = null;
+        $this->showTicketForm = false;
+        // All types now show a subtype selection before the form
+        // No special condition needed anymore as we've made all types behave the same
     }
 
-    // Bulk actions
-    public function confirmBulkDelete()
+    public function selectSubType($subType)
     {
-        if (empty($this->selected)) {
-            $this->addError('bulkAction', 'Please select at least one ticket');
-            return;
-        }
-        $this->confirmingBulkDelete = true;
+        $this->selectedSubType = $subType;
+        $this->showTicketForm = true;
+
+        // Auto-generate title and description based on selected type and subtype
+        $this->generateTicketContent();
+
+        // Filter assets based on selected subtype
+        $this->filterAssetsBySubtype($subType);
     }
 
-    public function doBulkDelete()
+    /**
+     * Filter assets based on the selected subtype
+     */
+    protected function filterAssetsBySubtype($subType)
     {
-        $count = count($this->selected);
-        TicketModel::whereIn('id', $this->selected)->delete();
-        $this->confirmingBulkDelete = false;
-        $this->selected = [];
-        $this->selectAll = false;
-        
-        $this->dispatch('notify', [
-            'message' => $count . ' tickets deleted successfully',
-            'type' => 'success'
-        ]);
-    }
-
-    public function openBulkEditModal()
-    {
-        if (empty($this->selected)) {
-            $this->addError('bulkAction', 'Please select at least one ticket');
-            return;
-        }
-        $this->showBulkEditModal = true;
-    }
-
-    public function doBulkEdit()
-    {
-        $data = array_filter($this->bulkEditData);
-
-        if (empty($data)) {
-            $this->dispatch('notify', [
-                'message' => 'Please select at least one field to update',
-                'type' => 'error'
-            ]);
-            return;
-        }
-
-        $count = count($this->selected);
-        TicketModel::whereIn('id', $this->selected)->update($data);
-
-        $this->showBulkEditModal = false;
-        $this->bulkEditData = [
-            'ticket_status' => '',
-            'priority' => '',
-            'assigned_to' => '',
-        ];
-        
-        $this->dispatch('notify', [
-            'message' => $count . ' tickets updated successfully',
-            'type' => 'success'
-        ]);
-    }
-
-    // Import/Export functions
-    public function openImportModal()
-    {
-        $this->showImportModal = true;
-    }
-
-    public function importTickets()
-    {
-        $this->validate([
-            'importFile' => 'required|file|mimes:csv,txt|max:1024',
-        ]);
-
-        try {
-            $csv = Reader::createFromPath($this->importFile->getRealPath(), 'r');
-            $csv->setHeaderOffset(0);
-
-            $records = $csv->getRecords();
-            $imported = 0;
-
-            DB::beginTransaction();
-
-            foreach ($records as $record) {
-                TicketModel::create([
-                    'ticket_number' => $record['ticket_number'] ?? 'TKT-' . uniqid(),
-                    'title' => $record['title'] ?? 'Imported Ticket',
-                    'ticket_status' => $record['status'] ?? 'open',
-                    'priority' => $record['priority'] ?? 'medium',
-                    'assigned_to' => $record['assigned_to'] ?? null,
-                ]);
-
-                $imported++;
+        // If hardware is selected, filter assets by the hardware type
+        if ($this->selectedType === 'hardware') {
+            // For 'other' hardware, show all hardware assets
+            if ($subType === 'other') {
+                $this->assets = Asset::whereHas('tags', function ($query) {
+                    $query->where('name', 'like', 'hardware%');
+                })->get();
+            } else {
+                // For specific hardware types (mouse, keyboard, monitor, etc.)
+                $this->assets = Asset::whereHas('tags', function ($query) use ($subType) {
+                    $query->where('name', $subType);
+                })->get();
             }
-
-            DB::commit();
-
-            $this->showImportModal = false;
-            $this->importFile = null;
-            
-            $this->dispatch('notify', [
-                'message' => $imported . ' tickets imported successfully',
-                'type' => 'success'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->addError('import', 'Error importing file: ' . $e->getMessage());
+        } else {
+            // For non-hardware issues, show all assets
+            $this->loadAssets();
         }
     }
 
-    public function exportTickets()
+    protected function generateTicketContent()
     {
-        $query = TicketModel::query();
-
-        // Apply all filters to the export
-        if ($this->search) {
-            $query->where(function($q) {
-                $q->where('ticket_number', 'like', "%{$this->search}%")
-                  ->orWhere('title', 'like', "%{$this->search}%");
-            });
-        }
-        
-        if ($this->ticketStatus) {
-            $query->where('ticket_status', $this->ticketStatus);
-        }
-        
-        if ($this->assignedTo) {
-            $query->where('assigned_to', $this->assignedTo);
-        }
-        
-        if ($this->priority) {
-            $query->where('priority', $this->priority);
-        }
-        
-        // If specific tickets are selected, only export those
-        if (!empty($this->selected)) {
-            $query->whereIn('id', $this->selected);
-        }
-
-        $tickets = $query->with(['assignedTo'])->get();
-
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
-
-        $csv->insertOne([
-            'Ticket Number',
-            'Title',
-            'Status',
-            'Priority',
-            'Assigned To'
-        ]);
-
-        foreach ($tickets as $ticket) {
-            $csv->insertOne([
-                $ticket->ticket_number,
-                $ticket->title,
-                $ticket->ticket_status,
-                $ticket->priority,
-                $ticket->assignedTo->name ?? 'Unassigned',
-            ]);
-        }
-
-        $filename = 'tickets-export-' . date('Y-m-d') . '.csv';
-
-        return response()->streamDownload(
-            function () use ($csv) {
-                echo $csv->getContent();
-            },
-            $filename,
-            ['Content-Type' => 'text/csv']
-        );
+        // Generate title based on type and subtype
+        $this->title = ucfirst($this->selectedType) . ' Issue: ' . $this->getReadableSubtype();
+        // Generate description based on type and subtype
+        $this->description = $this->generateDescription();
     }
 
-    public function executeBulkAction()
+    protected function getReadableSubtype()
     {
-        if (empty($this->selected)) {
-            $this->addError('bulkAction', 'Please select at least one ticket');
-            return;
-        }
+        $subtypeLabels = [
+            // Hardware
+            'mouse' => 'Mouse',
+            'keyboard' => 'Keyboard',
+            'monitor' => 'Monitor',
+            'other' => 'Other Hardware',
+            // Internet
+            'lan' => 'LAN Connection',
+            'wifi' => 'WiFi Connection',
+            // Application
+            'word' => 'Microsoft Word',
+            'chrome' => 'Google Chrome',
+            'excel' => 'Microsoft Excel',
+            'other_app' => 'Other Application'
+        ];
 
-        switch ($this->bulkAction) {
-            case 'delete':
-                $this->confirmBulkDelete();
-                break;
-            case 'edit':
-                $this->openBulkEditModal();
-                break;
-            case 'export':
-                return $this->exportTickets();
-            default:
-                $this->addError('bulkAction', 'Please select a valid action');
-        }
+        return $subtypeLabels[$this->selectedSubType] ?? ucfirst($this->selectedSubType);
     }
 
-    // Render the component
-    public function render()
+    protected function generateDescription()
     {
-        $query = TicketModel::query()
-            ->when(!auth()->user()->hasRole(['super_admin', 'admin', 'technician']), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('created_by', auth()->id())
-                        ->orWhere('assigned_to', auth()->id());
-                });
-            })
-            ->when($this->search, function ($query) {
-                $searchTerm = '%' . $this->search . '%';
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('ticket_number', 'like', $searchTerm)
-                        ->orWhere('title', 'like', $searchTerm)
-                        ->orWhere('description', 'like', $searchTerm);
-                });
-            })
-            ->when($this->filterType === 'status' && $this->ticketStatus, fn($q) => $q->where('ticket_status', $this->ticketStatus))
-            ->when($this->filterType === 'priority' && $this->priority, fn($q) => $q->where('priority', $this->priority))
-            ->when($this->filterType === 'assigned' && $this->assignedTo, fn($q) => $q->where('assigned_to', $this->assignedTo))
-            ->when($this->filterType === 'status-priority', function($q) {
-                $q->when($this->ticketStatus, fn($q) => $q->where('ticket_status', $this->ticketStatus))
-                    ->when($this->priority, fn($q) => $q->where('priority', $this->priority));
-            })
-            ->when($this->filterType === 'status-assigned', function($q) {
-                $q->when($this->ticketStatus, fn($q) => $q->where('ticket_status', $this->ticketStatus))
-                    ->when($this->assignedTo, fn($q) => $q->where('assigned_to', $this->assignedTo));
-            });
-
-        $tickets = $query->latest()->paginate($this->perPage);
-        $this->filteredCount = $tickets->total();
-
-        // Handle "Select All" checkboxes
-        if ($this->selectAll) {
-            $this->selected = $tickets->pluck('id')->map(fn($id) => (string) $id)->toArray();
-        }
-
-        $users = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['technician', 'admin']);
-        })->pluck('name', 'id');
-
-        return view('livewire.ticketing', [
-            'tickets' => $tickets,
-            'users' => $users,
-            'ticketCount' => [
-                'total' => $this->totalTickets,
-                'open' => TicketModel::where('ticket_status', 'open')->count(),
-                'in_progress' => TicketModel::where('ticket_status', 'in_progress')->count(),
-                'resolved' => TicketModel::where('ticket_status', 'resolved')->count(),
-                'closed' => TicketModel::where('ticket_status', 'closed')->count(),
+        $templates = [
+            'hardware' => [
+                'mouse' => "I'm experiencing an issue with my mouse. The problem started [when/after] and is affecting my ability to work efficiently. Details of the mouse: [brand/model if known]. The specific symptoms include: [cursor not moving/clicking issues/etc].",
+                'keyboard' => "I'm having trouble with my keyboard. The issue began [when/after] and is impacting my work. Details of the keyboard: [brand/model if known]. The specific symptoms include: [keys not responding/sticky keys/etc].",
+                'monitor' => "I'm facing problems with my monitor. The issue started [when/after] and is affecting my ability to work. Details of the monitor: [brand/model if known]. The specific symptoms include: [display issues/flickering/no signal/etc].",
+                'other' => "I'm experiencing an issue with a hardware component. The problem began [when/after] and is impacting my work. Hardware details: [specify the hardware]. The specific symptoms include: [describe the issues]."
+            ],
+            'internet' => [
+                'lan' => "I'm experiencing issues with my LAN connection. The problem started [when/after] and is affecting my ability to work online. The specific symptoms include: [no connectivity/slow speeds/intermittent connection/etc].",
+                'wifi' => "I'm having trouble with the WiFi connection. The issue began [when/after] and is impacting my online activities. The specific symptoms include: [no connectivity/slow speeds/dropping connection/etc]."
+            ],
+            'application' => [
+                'word' => "I'm experiencing problems with Microsoft Word. The issue started [when/after] and is affecting my document work. Version details: [Word version if known]. The specific symptoms include: [crashing/not saving/formatting issues/etc].",
+                'chrome' => "I'm having issues with Google Chrome. The problem began [when/after] and is impacting my browsing experience. Version details: [Chrome version if known]. The specific symptoms include: [crashing/slow performance/rendering issues/etc].",
+                'excel' => "I'm facing problems with Microsoft Excel. The issue started [when/after] and is affecting my spreadsheet work. Version details: [Excel version if known]. The specific symptoms include: [calculation errors/crashing/formatting issues/etc].",
+                'other_app' => "I'm experiencing issues with an application. The problem began [when/after] and is impacting my work. Application details: [name and version]. The specific symptoms include: [describe the issues]."
             ]
-        ]);
+        ];
+
+        // Return the template if available, otherwise a generic template
+        if (isset($templates[$this->selectedType][$this->selectedSubType])) {
+            return $templates[$this->selectedType][$this->selectedSubType];
+        }
+
+        return "I'm experiencing an issue with " . ucfirst($this->selectedType) . " - " . $this->getReadableSubtype() . ". The problem started [when/after] and is affecting my work. The specific symptoms include: [describe the issues].";
     }
 
-    public function createTicket()
+    public function resetForm()
+    {
+        $this->selectedType = null;
+        $this->selectedSubType = null;
+        $this->title = '';
+        $this->description = '';
+        $this->priority = 'medium';
+        $this->asset_id = null;
+        $this->assigned_to = null;
+        $this->showTicketForm = false;
+        $this->resetErrorBag();
+
+        // Reset the assets to show all assets
+        $this->loadAssets();
+    }
+
+    public function submitTicket()
     {
         $this->validate();
 
-        $ticket = new TicketModel();
-        $ticket->ticket_number = ($this->ticket_type === 'request' ? 'REQ' : 'INC') . '-' . strtoupper(Str::random(8));
-        $ticket->title = $this->title;
-        $ticket->ticket_type = $this->ticket_type;
-        $ticket->request_type = $this->request_type;
-        $ticket->classroom_id = $this->classroom_id;
-        $ticket->asset_id = $this->asset_id;
-        $ticket->section_id = $this->section_id;
-        $ticket->subject_id = $this->subject_id;
-        $ticket->starts_at = $this->starts_at;
-        $ticket->ends_at = $this->ends_at;
-        $ticket->description = $this->description;
-        $ticket->priority = $this->priority;
-        $ticket->created_by = auth()->id();
-        $ticket->ticket_status = 'open';
-        
-        // Assign to random technician
-        $technician = User::whereHas('roles', function ($query) {
-            $query->where('name', 'technician');
-        })->inRandomOrder()->first();
-        
-        $ticket->assigned_to = $technician?->id;
+        try {
+            // Generate a unique ticket number
+            $ticketNumber = $this->generateTicketNumber();
 
-        $ticket->save();
+            // Create ticket
+            Ticket::create([
+                'ticket_number' => $ticketNumber,
+                'title' => $this->title,
+                'description' => $this->description,
+                'priority' => $this->priority,
+                'type' => $this->selectedType,
+                'subtype' => $this->selectedSubType,
+                'asset_id' => $this->asset_id,
+                'assigned_to' => $this->assigned_to,
+                'user_id' => Auth::id(),
+                'created_by' => Auth::id(),
+                'ticket_type' => 'incident',
+                'ticket_status' => 'open',
+                'option' => 'asset',
+            ]);
 
-        if ($this->attachments) {
-            foreach ($this->attachments as $attachment) {
-                $ticket->addMedia($attachment)->toMediaCollection('attachments');
-            }
-        }
+            // Reset form
+            $this->resetForm();
 
-        $this->reset();
-        $this->dispatch('notify', [
-            'message' => 'Ticket created successfully',
-            'type' => 'success'
-        ]);
-    }
+            // Close the modal with Alpine.js
+            $this->dispatch('close-ticket-modal');
 
-    public function updatedFilterType()
-    {
-        $this->filterValue = '';
-        $this->resetPage();
-    }
+            // Dispatch both notification types for flexibility
+            $this->dispatch('notify', [
+                'message' => "Ticket {$ticketNumber} has been created successfully.",
+                'type' => 'success'
+            ]);
 
-    public function updatedSearch()
-    {
-        $this->resetPage();
-    }
+            // Show Filament notification
+            Notification::make()
+                ->title('Ticket Created')
+                ->body("Ticket {$ticketNumber} has been created successfully.")
+                ->success()
+                ->send();
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'message' => 'Error creating ticket: ' . $e->getMessage(),
+                'type' => 'error'
+            ]);
 
-    public function updatedFilterValue()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedPerPage()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedSelectAll($value)
-    {
-        if (!$value) {
-            $this->selected = [];
+            Notification::make()
+                ->title('Error')
+                ->body('Error creating ticket: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
-    public function updatedTicketStatus()
+    /**
+     * Generate a unique ticket number in the format INC-xxxxxx
+     */
+    protected function generateTicketNumber()
     {
-        $this->resetPage();
+        $prefix = 'INC-';
+        $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        $ticketNumber = $prefix . $randomPart;
+
+        // Check if this ticket number already exists
+        while (Ticket::where('ticket_number', $ticketNumber)->exists()) {
+            $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            $ticketNumber = $prefix . $randomPart;
+        }
+
+        return $ticketNumber;
     }
 
-    public function updatedPriority()
+    public function table(Table $table): Table
     {
-        $this->resetPage();
+        return $table
+            ->query(Ticket::query())
+            ->columns([
+                TextColumn::make('id'),
+                TextColumn::make('title'),
+                TextColumn::make('ticket_type'),
+                TextColumn::make('subtype')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ticket_status'),
+                TextColumn::make('priority'),
+                TextColumn::make('created_at')
+                    ->dateTime(),
+            ])
+            ->filters([
+                //
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
-    public function updatedAssignedTo()
+    public function render()
     {
-        $this->resetPage();
-    }
-
-    public function editTicket($ticketId)
-    {
-        return redirect()->route('filament.app.resources.tickets.edit', ['record' => $ticketId]);
-    }
-
-    public function confirmTicketDeletion($ticketId)
-    {
-        $this->dispatch('notify', [
-            'type' => 'warning',
-            'message' => 'Are you sure you want to delete this ticket?',
-            'actions' => [
-                [
-                    'label' => 'Yes, Delete',
-                    'method' => 'deleteTicket',
-                    'parameters' => [$ticketId],
-                ],
-                [
-                    'label' => 'Cancel',
-                    'method' => 'cancelDeletion',
-                ],
-            ],
-        ]);
-    }
-
-    public function cancelDeletion()
-    {
-        $this->dispatch('notify', [
-            'type' => 'info',
-            'message' => 'Deletion cancelled',
-        ]);
+        return view('livewire.ticketing');
     }
 }

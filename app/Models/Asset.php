@@ -65,4 +65,10 @@ class Asset extends Model
     {
         return $this->hasMany(\App\Models\Asset::class);
     }
+
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'asset_tags', 'asset_id', 'asset_tag_id');
+    }
 }

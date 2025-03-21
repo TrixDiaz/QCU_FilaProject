@@ -76,8 +76,36 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $this->selectedSubType = $subType;
         $this->showTicketForm = true;
+
         // Auto-generate title and description based on selected type and subtype
         $this->generateTicketContent();
+
+        // Filter assets based on selected subtype
+        $this->filterAssetsBySubtype($subType);
+    }
+
+    /**
+     * Filter assets based on the selected subtype
+     */
+    protected function filterAssetsBySubtype($subType)
+    {
+        // If hardware is selected, filter assets by the hardware type
+        if ($this->selectedType === 'hardware') {
+            // For 'other' hardware, show all hardware assets
+            if ($subType === 'other') {
+                $this->assets = Asset::whereHas('tags', function ($query) {
+                    $query->where('name', 'like', 'hardware%');
+                })->get();
+            } else {
+                // For specific hardware types (mouse, keyboard, monitor, etc.)
+                $this->assets = Asset::whereHas('tags', function ($query) use ($subType) {
+                    $query->where('name', $subType);
+                })->get();
+            }
+        } else {
+            // For non-hardware issues, show all assets
+            $this->loadAssets();
+        }
     }
 
     protected function generateTicketContent()
@@ -149,6 +177,9 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->assigned_to = null;
         $this->showTicketForm = false;
         $this->resetErrorBag();
+
+        // Reset the assets to show all assets
+        $this->loadAssets();
     }
 
     public function submitTicket()

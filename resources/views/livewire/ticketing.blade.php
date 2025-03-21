@@ -350,11 +350,18 @@
                             <select id="asset_id" wire:model.defer="asset_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">-- Select Asset (Optional) --</option>
-                                @foreach ($assets as $asset)
+                                @forelse ($assets as $asset)
                                     <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->asset_tag }})
                                     </option>
-                                @endforeach
+                                @empty
+                                    <option value="" disabled>No matching assets found</option>
+                                @endforelse
                             </select>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                @if ($selectedType == 'hardware' && $selectedSubType)
+                                    Showing {{ ucfirst($selectedSubType) }} assets only
+                                @endif
+                            </div>
                             @error('asset_id')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror

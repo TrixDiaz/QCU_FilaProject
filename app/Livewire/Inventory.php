@@ -16,13 +16,12 @@ use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
 use Illuminate\Support\Facades\Storage;
+use Filament\Notifications\Notification;
 
 class Inventory extends Component
 {
     use WithPagination;
     use WithFileUploads;
-
-    protected $paginationTheme = 'tailwind';
 
     public $filterType = 'all';
     public $filterValue = '';
@@ -177,7 +176,12 @@ class Inventory extends Component
 
             DB::commit();
 
-            $this->dispatch('notify', ['message' => 'Asset deployed successfully', 'type' => 'success']);
+            // Use Filament Notification instead of dispatching a custom event
+            Notification::make()
+                ->title('Asset Deployed')
+                ->body('Asset has been successfully deployed to the classroom.')
+                ->success()
+                ->send();
 
             // Reset deployment form
             $this->reset(['deployAssetId', 'selectedClassroom', 'deploymentName', 'deploymentCode']);
@@ -186,7 +190,13 @@ class Inventory extends Component
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('notify', ['message' => 'Error deploying asset: ' . $e->getMessage(), 'type' => 'error']);
+
+            Notification::make()
+                ->title('Deployment Failed')
+                ->body('Error deploying asset: ' . $e->getMessage())
+                ->danger()
+                ->send();
+
             return false;
         }
     }

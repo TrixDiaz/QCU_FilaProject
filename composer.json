@@ -15,6 +15,7 @@
         "eightynine/filament-reports": "^3.0",
         "filament/filament": "^3.2",
         "filament/notifications": "^3.3",
+        "filament/tables": "^3.3",
         "guava/calendar": "*",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",

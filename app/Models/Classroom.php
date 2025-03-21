@@ -16,13 +16,10 @@ class Classroom extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'building_id',
         'name',
-        'slug',
+        'capacity',
+        'building',
         'floor',
-        'is_active',
-        'created_at',
-        'updated_at',
     ];
 
     public function building(): BelongsTo
@@ -37,12 +34,12 @@ class Classroom extends Model
 
     public function schedules(): HasMany
     {
-        return $this->hasMany(Subject::class);
+        return $this->hasMany(Schedule::class);
     }
 
-    public function asset(): HasMany
+    public function assets()
     {
-        return $this->HasMany(Asset::class);
+        return $this->hasMany(Asset::class);
     }
 
     public function assetGroups(): HasMany

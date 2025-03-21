@@ -132,10 +132,11 @@ class Inventory extends Component
             }
         }
 
-        // Order by both created_at and updated_at in descending order
-        // This will show newest items first and prioritize recently updated items
-        $query->orderBy('created_at', 'desc')
-            ->orderBy('updated_at', 'desc');
+        // Fix ordering by making it more explicit
+        // Order first by updated_at, then by created_at (both descending)
+        // This shows most recently modified assets first, then newest created assets
+        $query->orderByDesc('updated_at')
+            ->orderByDesc('created_at');
 
         $assets = $query->paginate($this->perPage);
         $this->filteredCount = $assets->total();

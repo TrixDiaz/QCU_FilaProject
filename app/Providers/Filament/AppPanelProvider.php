@@ -145,6 +145,7 @@ class AppPanelProvider extends PanelProvider
                     ->plugins(['dayGrid', 'timeGrid'])
                     ->config([])
             ])
+            ->breadcrumbs(false)
             ->resources([
                 config('filament-logger.activity_resource')
             ]);

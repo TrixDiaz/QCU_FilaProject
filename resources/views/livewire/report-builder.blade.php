@@ -3,7 +3,8 @@
 
     <!-- Flash Messages -->
     @if (session()->has('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:border-red-700 dark:text-red-200" role="alert">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:border-red-700 dark:text-red-200"
+            role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
@@ -14,12 +15,12 @@
     </form>
 
     <!-- Buttons -->
-    <div class="mt-4 flex justify-end space-x-2 screen-only">
+    <div class="my-4 flex justify-end space-x-2 screen-only gap-4">
         <x-filament::button wire:click="runReport">
             Run Report
         </x-filament::button>
-        
-        @if($reportGenerated)
+
+        @if ($reportGenerated)
             <x-filament::button wire:click="printReport">
                 Print Report
             </x-filament::button>
@@ -27,14 +28,14 @@
     </div>
 
     <!-- Results section -->
-    @if($reportGenerated && $displayData->isNotEmpty())
+    @if ($reportGenerated && $displayData->isNotEmpty())
         <!-- Screen display version -->
         <div class="mt-6 screen-only">
             <x-filament::section>
                 <x-slot name="heading">
                     {{ $reportTitle }}
                 </x-slot>
-        
+
                 <div id="report-content" class="overflow-x-auto">
                     <table class="fi-ta-table w-full border-collapse">
                         <thead>
@@ -42,55 +43,37 @@
                                 <th class="fi-ta-cell p-3 text-left bg-gray-50 dark:bg-gray-800">
                                     #
                                 </th>
-                                @foreach($selectedFields as $field)
+                                @foreach ($selectedFields as $field)
                                     <th class="fi-ta-cell p-3 text-left bg-gray-50 dark:bg-gray-800">
                                         {{ ucfirst(str_replace('_', ' ', $field)) }}
                                     </th>
                                 @endforeach
                             </tr>
                         </thead>
-                        
+
                         <tbody>
-                            @foreach($displayData as $index => $item)
-                                <tr class="fi-ta-row border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900' }}">
+                            @foreach ($displayData as $index => $item)
+                                <tr
+                                    class="fi-ta-row border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900' }}">
                                     <td class="fi-ta-cell p-3">
                                         {{ $index + 1 }}
                                     </td>
-                                    
-                                    @foreach($selectedFields as $field)
+
+                                    @foreach ($selectedFields as $field)
                                         <td class="fi-ta-cell p-3">
-                                            @if($field == 'classroom_id' && isset($item->classroom))
+                                            @if ($field == 'classroom_id' && isset($item->classroom))
                                                 {{ $item->classroom->name ?? 'N/A' }}
                                             @elseif($field == 'category_id' && isset($item->category))
                                                 {{ $item->category->name ?? 'N/A' }}
                                             @elseif($field == 'brand_id' && isset($item->brand))
                                                 {{ $item->brand->name ?? 'N/A' }}
                                             @elseif($field == 'status' && isset($item->status))
-                                                <x-filament::badge 
-                                                    :color="match($item->status ?? '') {
-                                                        'available' => 'success',
-                                                        'in-use' => 'warning',
-                                                        'repair' => 'danger',
-                                                        'maintenance' => 'info',
-                                                        default => 'gray',
-                                                    }"
-                                                >
-                                                    {{ ucfirst($item->status ?? 'N/A') }}
-                                                </x-filament::badge>
+                                                {{ ucfirst($item->status ?? 'N/A') }}
                                             @elseif($field == 'approval_status' && isset($item->approval_status))
-                                                <x-filament::badge 
-                                                    :color="match($item->approval_status ?? '') {
-                                                        'approved' => 'success',
-                                                        'pending' => 'warning',
-                                                        'rejected' => 'danger',
-                                                        default => 'gray',
-                                                    }"
-                                                >
-                                                    {{ ucfirst($item->approval_status ?? 'N/A') }}
-                                                </x-filament::badge>
+                                                {{ $item->approval_status == 1 ? 'Approved' : 'Pending' }}
                                             @elseif(is_object($item))
-                                                @if(property_exists($item, $field) || isset($item->$field))
-                                                    @if($field == 'created_at' || $field == 'updated_at' || $field == 'expiry_date')
+                                                @if (property_exists($item, $field) || isset($item->$field))
+                                                    @if ($field == 'created_at' || $field == 'updated_at' || $field == 'expiry_date')
                                                         {{ $item->$field ? \Carbon\Carbon::parse($item->$field)->format('M d, Y H:i') : 'N/A' }}
                                                     @else
                                                         {{ $item->$field ?? 'N/A' }}
@@ -121,27 +104,32 @@
                 <p class="text-sm text-gray-600">Date: {{ now()->format('F d, Y h:i A') }}</p>
                 <hr class="my-2">
             </div>
-            
-            <table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+
+            <table border="1" cellspacing="0" cellpadding="8"
+                style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                 <thead>
                     <tr>
-                        <th style="border: 1px solid #000; background-color: #f2f2f2; text-align: left; padding: 8px;">#</th>
-                        @foreach($selectedFields as $field)
-                            <th style="border: 1px solid #000; background-color: #f2f2f2; text-align: left; padding: 8px;">
+                        <th style="border: 1px solid #000; background-color: #f2f2f2; text-align: left; padding: 8px;">#
+                        </th>
+                        @foreach ($selectedFields as $field)
+                            <th
+                                style="border: 1px solid #000; background-color: #f2f2f2; text-align: left; padding: 8px;">
                                 {{ ucfirst(str_replace('_', ' ', $field)) }}
                             </th>
                         @endforeach
                     </tr>
                 </thead>
-                
+
                 <tbody>
-                    @foreach($displayData as $index => $item)
-                        <tr style="{{ $index % 2 === 0 ? 'background-color: #ffffff;' : 'background-color: #f9f9f9;' }}">
-                            <td style="border: 1px solid #000; padding: 8px; text-align: left;">{{ $index + 1 }}</td>
-                            
-                            @foreach($selectedFields as $field)
+                    @foreach ($displayData as $index => $item)
+                        <tr
+                            style="{{ $index % 2 === 0 ? 'background-color: #ffffff;' : 'background-color: #f9f9f9;' }}">
+                            <td style="border: 1px solid #000; padding: 8px; text-align: left;">{{ $index + 1 }}
+                            </td>
+
+                            @foreach ($selectedFields as $field)
                                 <td style="border: 1px solid #000; padding: 8px; text-align: left;">
-                                    @if($field == 'classroom_id' && isset($item->classroom))
+                                    @if ($field == 'classroom_id' && isset($item->classroom))
                                         {{ $item->classroom->name ?? 'N/A' }}
                                     @elseif($field == 'category_id' && isset($item->category))
                                         {{ $item->category->name ?? 'N/A' }}
@@ -150,10 +138,10 @@
                                     @elseif($field == 'status' && isset($item->status))
                                         {{ ucfirst($item->status ?? 'N/A') }}
                                     @elseif($field == 'approval_status' && isset($item->approval_status))
-                                        {{ ucfirst($item->approval_status ?? 'N/A') }}
+                                        {{ $item->approval_status == 1 ? 'Approved' : 'Pending' }}
                                     @elseif(is_object($item))
-                                        @if(property_exists($item, $field) || isset($item->$field))
-                                            @if($field == 'created_at' || $field == 'updated_at' || $field == 'expiry_date')
+                                        @if (property_exists($item, $field) || isset($item->$field))
+                                            @if ($field == 'created_at' || $field == 'updated_at' || $field == 'expiry_date')
                                                 {{ $item->$field ? \Carbon\Carbon::parse($item->$field)->format('M d, Y H:i') : 'N/A' }}
                                             @else
                                                 {{ $item->$field ?? 'N/A' }}
@@ -185,20 +173,21 @@
                 display: none;
             }
         }
-        
+
         @media print {
             body * {
                 visibility: hidden;
             }
-            
+
             .screen-only {
                 display: none !important;
             }
-            
-            #printable-report, #printable-report * {
+
+            #printable-report,
+            #printable-report * {
                 visibility: visible !important;
             }
-            
+
             #printable-report {
                 position: absolute;
                 left: 0;
@@ -206,33 +195,33 @@
                 width: 100%;
                 padding: 20px;
             }
-            
+
             #printable-report table {
                 border-collapse: collapse;
                 width: 100%;
                 margin-top: 20px;
                 page-break-inside: auto;
             }
-            
+
             #printable-report th,
             #printable-report td {
                 border: none !important;
                 padding: 8px;
                 text-align: left;
             }
-            
+
             #printable-report th {
                 background-color: #f2f2f2;
             }
-            
+
             #printable-report tr:nth-child(even) {
                 background-color: #f9f9f9;
             }
-            
+
             #printable-report tr {
                 page-break-inside: avoid;
             }
-            
+
             @page {
                 size: portrait;
                 margin: 1cm;
@@ -244,9 +233,11 @@
         document.addEventListener('livewire:initialized', function() {
             @this.on('reportGenerated', function() {
                 // Scroll to the report section
-                document.querySelector('.fi-section-header-heading')?.scrollIntoView({ behavior: 'smooth' });
+                document.querySelector('.fi-section-header-heading')?.scrollIntoView({
+                    behavior: 'smooth'
+                });
             });
-            
+
             @this.on('openPrintPreview', function() {
                 window.print();
             });

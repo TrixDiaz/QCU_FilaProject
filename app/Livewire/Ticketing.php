@@ -2,18 +2,28 @@
 
 namespace App\Livewire;
 
-use App\Models\Ticket;
 use App\Models\Asset;
+use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Classroom;
+use App\Models\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Ticketing extends Component implements HasTable, HasForms
 {
@@ -26,23 +36,25 @@ class Ticketing extends Component implements HasTable, HasForms
     public $title = '';
     public $description = '';
     public $priority = 'medium';
-    public $asset_id = null; // Added for asset dropdown
-    public $assigned_to = null; // Added for technician assignment
+    public $asset_id = null;
+    public $assigned_to = null;
     public $classroom_id = null;
     public $section_id = null;
+    
+    // Data Collections
     public $classrooms = [];
     public $sections = [];
-
-    // Control variables
+    public $assets = [];
+    public $technicians = [];
+    
+    // Control Variables
     public $showTicketForm = false;
-    public $assets = []; // Will hold available assets
-    public $technicians = []; // Will hold technician users
-
+    
     protected $listeners = ['close-modal' => 'resetForm'];
 
     protected $rules = [
-        'title' => 'required|min:5',
-        'description' => 'required|min:10',
+        'title' => 'required|min:5|max:255',
+        'description' => 'required|min:10|max:65535',
         'priority' => 'required|in:low,medium,high',
         'asset_id' => 'nullable|exists:assets,id',
         'assigned_to' => 'nullable|exists:users,id',
@@ -52,7 +64,11 @@ class Ticketing extends Component implements HasTable, HasForms
 
     public function mount()
     {
-        // Load assets and technicians when component is mounted
+        $this->loadInitialData();
+    }
+
+    protected function loadInitialData()
+    {
         $this->loadAssets();
         $this->loadTechnicians();
         $this->loadClassroomsAndSections();
@@ -65,15 +81,15 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function loadTechnicians()
     {
-        $this->technicians = User::whereHas('roles', function ($query) {
-            $query->where('name', 'technician');
-        })->get();
+        $this->technicians = User::whereHas('roles', fn($query) => 
+            $query->where('name', 'technician')
+        )->get();
     }
 
     protected function loadClassroomsAndSections()
     {
-        $this->classrooms = \App\Models\Classroom::all();
-        $this->sections = \App\Models\Section::all();
+        $this->classrooms = Classroom::all();
+        $this->sections = Section::all();
     }
 
     public function selectIssueType($type)
@@ -81,18 +97,13 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->selectedType = $type;
         $this->selectedSubType = null;
         $this->showTicketForm = false;
-        // All types now show a subtype selection before the form
-        // No special condition needed anymore as we've made all types behave the same
     }
 
     public function selectSubType($subType)
     {
         $this->selectedSubType = $subType;
         $this->showTicketForm = true;
-        // Auto-generate title and description based on selected type and subtype
         $this->generateTicketContent();
-
-        // Filter assets based on selected subtype
         $this->filterAssetsBySubtype($subType);
     }
 
@@ -179,6 +190,19 @@ class Ticketing extends Component implements HasTable, HasForms
         return "I'm experiencing an issue with " . ucfirst($this->selectedType) . " - " . $this->getReadableSubtype() . ". The problem started [when/after] and is affecting my work. The specific symptoms include: [describe the issues].";
     }
 
+    protected function formatDescription($description)
+    {
+        if (empty($description)) {
+            return '';
+        }
+        
+        if (is_array($description)) {
+            return implode("\n", $description);
+        }
+        
+        return trim($description);
+    }
+
     public function resetForm()
     {
         $this->selectedType = null;
@@ -197,64 +221,47 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->loadAssets();
     }
 
+    // Update the submitTicket method
     public function submitTicket()
     {
         $this->validate();
 
         try {
-            // Generate a unique ticket number
             $ticketNumber = $this->generateTicketNumber();
-
-            // Determine ticket type based on selectedType
             $ticketType = match ($this->selectedType) {
-                'classroom_request' => 'classroom',
-                'asset_request' => 'asset',
-                'general_inquiry' => 'inquiry',
+                'asset_request', 'classroom_request', 'general_inquiry' => 'request',
                 default => 'incident'
             };
 
-            // Create ticket
-            Ticket::create([
+            // For professors, ticket starts with no assignment
+            $isTeacherRole = auth()->user()->hasRole('professor');
+            
+            $ticket = Ticket::create([
                 'ticket_number' => $ticketNumber,
                 'title' => $this->title,
-                'description' => $this->description,
+                'description' => $this->formatDescription($this->description),
                 'priority' => $this->priority,
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
                 'asset_id' => $this->asset_id,
-                'assigned_to' => $this->assigned_to,
-                'user_id' => Auth::id(),
+                'assigned_to' => $isTeacherRole ? null : $this->assigned_to, // No assignment for professors
                 'created_by' => Auth::id(),
                 'ticket_type' => $ticketType,
-                'ticket_status' => 'open',
+                'ticket_status' => 'open', // Always starts as open
                 'classroom_id' => $this->classroom_id,
                 'section_id' => $this->section_id,
             ]);
 
-            // Reset form
             $this->resetForm();
-
-            // Close the modal with Alpine.js
             $this->dispatch('close-ticket-modal');
 
-            // Dispatch both notification types for flexibility
-            $this->dispatch('notify', [
-                'message' => "Ticket {$ticketNumber} has been created successfully.",
-                'type' => 'success'
-            ]);
-
-            // Show Filament notification
             Notification::make()
                 ->title('Ticket Created')
                 ->body("Ticket {$ticketNumber} has been created successfully.")
                 ->success()
                 ->send();
-        } catch (\Exception $e) {
-            $this->dispatch('notify', [
-                'message' => 'Error creating ticket: ' . $e->getMessage(),
-                'type' => 'error'
-            ]);
 
+        } catch (\Exception $e) {
             Notification::make()
                 ->title('Error')
                 ->body('Error creating ticket: ' . $e->getMessage())
@@ -264,48 +271,222 @@ class Ticketing extends Component implements HasTable, HasForms
     }
 
     /**
-     * Generate a unique ticket number in the format INC-xxxxxx
+     * Generate a unique ticket number in the format INC-XXXXXXXX or REQ-XXXXXXXX
      */
     protected function generateTicketNumber()
     {
-        $prefix = match ($this->selectedType) {
+        $isRequest = in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']);
+        $basePrefix = $isRequest ? 'REQ-' : 'INC-';
+        
+        $subPrefix = match ($this->selectedType) {
             'classroom_request' => 'CLS-',
             'asset_request' => 'AST-',
             'general_inquiry' => 'INQ-',
-            default => 'INC-'
+            'hardware' => 'HW-',
+            'internet' => 'NET-',
+            'application' => 'APP-',
+            default => ''
         };
 
-        $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-        $ticketNumber = $prefix . $randomPart;
-
-        // Check if this ticket number already exists
-        while (Ticket::where('ticket_number', $ticketNumber)->exists()) {
-            $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-            $ticketNumber = $prefix . $randomPart;
-        }
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $randomPart = '';
+        
+        do {
+            $randomPart = '';
+            for ($i = 0; $i < 8; $i++) {
+                $randomPart .= $characters[random_int(0, strlen($characters) - 1)];
+            }
+            $ticketNumber = $basePrefix . $subPrefix . $randomPart;
+        } while (Ticket::where('ticket_number', $ticketNumber)->exists());
 
         return $ticketNumber;
     }
 
+    // Update the assign action in the table configuration
     public function table(Table $table): Table
     {
         return $table
-            ->query(Ticket::query())
+            ->query(Ticket::query()->latest()) // Add latest() to sort by created_at in descending order
             ->columns([
-                TextColumn::make('id'),
-                TextColumn::make('title'),
-                TextColumn::make('ticket_type'),
-                TextColumn::make('subtype')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('ticket_status'),
-                TextColumn::make('priority'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
+                TextColumn::make('ticket_number')->searchable()->sortable(),
+                TextColumn::make('title')->searchable()->sortable(),
+                TextColumn::make('priority')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'high' => 'danger',
+                        'medium' => 'warning',
+                        'low' => 'success',
+                    }),
+                TextColumn::make('ticket_status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'open' => 'info',
+                        'in_progress' => 'warning',
+                        'closed' => 'success',
+                        'archived' => 'gray',
+                    }),
+                TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->options([
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'closed' => 'Closed',
+                        'archived' => 'Archived',
+                    ])
             ])
-            ->defaultSort('created_at', 'desc');
+            ->actions([
+                ViewAction::make()
+                    ->icon('heroicon-m-eye')
+                    ->modalContent(fn (Ticket $record) => view(
+                        'tickets.view',
+                        ['ticket' => $record]
+                    )),
+                EditAction::make()
+                    ->icon('heroicon-m-pencil-square')
+                    ->modalContent(fn (Ticket $record) => view(
+                        'tickets.edit',
+                        [
+                            'ticket' => $record,
+                            'technicians' => User::whereHas('roles', function ($query) {
+                                $query->where('name', 'technician');
+                            })->get()
+                        ]
+                    )),
+                Action::make('assign')
+                    ->icon('heroicon-m-user-plus')
+                    ->color('success')
+                    ->button()
+                    ->label(fn (Ticket $record) => 
+                        is_null($record->assigned_to) ? 
+                            (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign') : 
+                            'Reassign'
+                    )
+                    ->modalHeading(fn (Ticket $record) => 
+                        is_null($record->assigned_to) ? 
+                            (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign Ticket') : 
+                            'Reassign Ticket'
+                    )
+                    ->modalDescription(fn (Ticket $record) => "Ticket #{$record->ticket_number}")
+                    ->form(function (Ticket $record) {
+                        // Only show assignment type for admins and supervisors
+                        if (auth()->user()->hasRole(['admin', 'supervisor'])) {
+                            return [
+                                Select::make('assign_type')
+                                    ->label('Assignment Type')
+                                    ->options([
+                                        'self' => 'Assign to myself',
+                                        'auto' => 'Auto-assign to available technician',
+                                        'specific' => 'Select specific technician'
+                                    ])
+                                    ->required()
+                                    ->reactive(),
+                                Select::make('technician_id')
+                                    ->label('Select Technician')
+                                    ->options(fn () => User::whereHas('roles', fn($query) => 
+                                        $query->where('name', 'technician')
+                                    )->pluck('name', 'id'))
+                                    ->visible(fn (Get $get) => $get('assign_type') === 'specific')
+                                    ->required(fn (Get $get) => $get('assign_type') === 'specific')
+                            ];
+                        }
+                        return []; // Empty form for technician claim action
+                    })
+                    ->action(function (array $data, Ticket $record): void {
+                        try {
+                            // For technician claim action
+                            if (auth()->user()->hasRole('technician') && empty($data)) {
+                                $record->update([
+                                    'assigned_to' => auth()->id(),
+                                    'ticket_status' => 'in_progress'
+                                ]);
+
+                                Notification::make()
+                                    ->title('Ticket Claimed')
+                                    ->body("You have claimed ticket #{$record->ticket_number}")
+                                    ->success()
+                                    ->send();
+                                return;
+                            }
+
+                            // For admin/supervisor assign action
+                            $assignee_id = match($data['assign_type']) {
+                                'self' => auth()->id(),
+                                'auto' => User::whereHas('roles', fn($query) => 
+                                    $query->where('name', 'technician')
+                                )
+                                ->withCount(['assignedTickets' => fn($query) => 
+                                    $query->whereIn('ticket_status', ['open', 'in_progress'])
+                                ])
+                                ->orderBy('assigned_tickets_count')
+                                ->first()?->id,
+                                'specific' => $data['technician_id'],
+                            };
+
+                            if (!$assignee_id) {
+                                throw new \Exception('No available technician found');
+                            }
+
+                            $technician = User::findOrFail($assignee_id);
+                            $record->update([
+                                'assigned_to' => $assignee_id,
+                                'ticket_status' => 'in_progress'
+                            ]);
+                            
+                            Notification::make()
+                                ->title('Ticket Assigned')
+                                ->body("Ticket #{$record->ticket_number} assigned to {$technician->name}")
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Error')
+                                ->body('Failed to assign ticket: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn (Ticket $record) => 
+                        auth()->user()->hasRole(['admin', 'supervisor']) || 
+                        (auth()->user()->hasRole('technician') && $record->ticket_status === 'open')
+                    ),
+            ])
+            ->bulkActions([
+                BulkAction::make('archive')
+                    ->label('Archive Selected')
+                    ->icon('heroicon-m-archive-box') // Changed from o-archive to m-archive-box
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Archive Selected Tickets')
+                    ->modalDescription('Are you sure you want to archive the selected tickets? This action can be reversed.')
+                    ->modalSubmitActionLabel('Yes, archive them')
+                    ->action(function (Collection $records) {
+                        $records->each(function ($record) {
+                            $record->update(['ticket_status' => 'archived']);
+                        });
+                        Notification::make()
+                            ->title('Tickets Archived Successfully')
+                            ->success()
+                            ->send();
+                    }),
+                BulkAction::make('delete')
+                    ->label('Delete Selected')
+                    ->icon('heroicon-m-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Selected Tickets')
+                    ->modalDescription('Are you sure you want to delete the selected tickets? This cannot be undone.')
+                    ->modalSubmitActionLabel('Yes, delete them')
+                    ->action(function (Collection $records) {
+                        $records->each->delete();
+                        Notification::make()
+                            ->title('Tickets Deleted Successfully')
+                            ->success()
+                            ->send();
+                    }),
+            ]);
     }
 
     public function render()

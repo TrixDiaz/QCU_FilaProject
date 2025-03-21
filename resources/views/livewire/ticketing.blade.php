@@ -94,7 +94,64 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+
+        /* Dark mode styles for SimpleMDE */
+        .dark .CodeMirror {
+            background-color: #374151;
+            color: #fff;
+            border-color: #4B5563;
+        }
+        
+        .dark .editor-toolbar {
+            background-color: #374151;
+            border-color: #4B5563;
+        }
+        
+        .dark .editor-toolbar button {
+            color: #fff !important;
+        }
+        
+        .dark .editor-toolbar button:hover {
+            background-color: #4B5563;
+        }
+        
+        .dark .editor-preview {
+            background-color: #374151;
+            color: #fff;
+        }
+
+        /* Custom SimpleMDE styles */
+        .CodeMirror {
+            max-height: 200px !important;
+            min-height: 100px !important;
+            border-radius: 0.375rem;
+        }
+
+        .editor-toolbar {
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+        }
+
+        .dark .CodeMirror-cursor {
+            border-left-color: #fff;
+        }
+
+        .dark .CodeMirror-selected {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dark .CodeMirror-line {
+            color: #fff;
+        }
+
+        .dark .editor-toolbar a {
+            color: #fff !important;
+        }
     </style>
+
+    <!-- Add these lines at the very top of your blade file, right after the opening div -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 
     <!-- Flash Messages -->
     <div x-data="{
@@ -367,7 +424,7 @@
                         </div>
                     </div>
 
-                    <div
+                    <div x-show="selectedType !== 'asset_request' && selectedType !== 'general_inquiry' && selectedType !== 'classroom_request'"
                         class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 dark:bg-yellow-900 dark:border-yellow-500">
                         <div class="flex">
                             <div class="flex-shrink-0">
@@ -385,24 +442,69 @@
                     <form class="space-y-4" wire:submit.prevent="submitTicket">
                         <div>
                             <label for="title"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issue Title</label>
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <span x-show="selectedType === 'asset_request'">Request Title</span>
+                                <span x-show="selectedType === 'general_inquiry'">Inquiry Title</span>
+                                <span x-show="selectedType === 'classroom_request'">Request Title</span>
+                                <span x-show="!['asset_request', 'general_inquiry', 'classroom_request'].includes(selectedType)">Issue Title</span>
+                            </label>
                             <input type="text" id="title" wire:model.defer="title"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                :placeholder="
+                                    selectedType === 'asset_request' ? 'Enter request title...' :
+                                    selectedType === 'general_inquiry' ? 'Enter inquiry title...' :
+                                    selectedType === 'classroom_request' ? 'Enter request title...' :
+                                    'Enter issue title...'
+                                ">
                             @error('title')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
-                            <label for="description"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                            <textarea id="description" wire:model.defer="description" rows="4"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Replace any [bracketed text] with your specific details.
+                            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                            <div wire:ignore x-data="{ 
+                                editor: null,
+                                init() {
+                                    this.$nextTick(() => {
+                                        this.editor = new SimpleMDE({
+                                            element: this.$refs.description,
+                                            spellChecker: false,
+                                            status: false,
+                                            toolbar: ['bold', 'italic', '|', 'unordered-list', 'ordered-list', '|', 'preview'],
+                                            minHeight: '100px', // Reduced height
+                                            maxHeight: '200px', // Maximum height
+                                            placeholder: 'Describe your issue here...',
+                                            forceSync: true,
+                                            autoRefresh: true
+                                        });
+                                        
+                                        // Set initial value if exists
+                                        if ($wire.get('description')) {
+                                            this.editor.value($wire.get('description'));
+                                        }
+                                        
+                                        // Update Livewire when content changes
+                                        this.editor.codemirror.on('change', () => {
+                                            $wire.set('description', this.editor.value());
+                                        });
+
+                                        // Apply dark mode styles
+                                        if (document.querySelector('html').classList.contains('dark')) {
+                                            this.editor.codemirror.setOption('theme', 'darkmode');
+                                        }
+                                    });
+                                }
+                            }">
+                                <textarea x-ref="description" wire:model.defer="description" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm 
+                                    dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                             </div>
                             @error('description')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                You can use markdown formatting to style your description
+                            </div>
                         </div>
 
                         <!-- Asset Dropdown -->

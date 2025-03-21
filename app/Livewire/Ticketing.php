@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Ticket;
 use App\Models\Asset;
-use App\Models\AssetTag;
 use App\Models\User;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -29,6 +28,10 @@ class Ticketing extends Component implements HasTable, HasForms
     public $priority = 'medium';
     public $asset_id = null; // Added for asset dropdown
     public $assigned_to = null; // Added for technician assignment
+    public $classroom_id = null;
+    public $section_id = null;
+    public $classrooms = [];
+    public $sections = [];
 
     // Control variables
     public $showTicketForm = false;
@@ -43,6 +46,8 @@ class Ticketing extends Component implements HasTable, HasForms
         'priority' => 'required|in:low,medium,high',
         'asset_id' => 'nullable|exists:assets,id',
         'assigned_to' => 'nullable|exists:users,id',
+        'classroom_id' => 'nullable|required_if:selectedType,classroom_request|exists:classrooms,id',
+        'section_id' => 'nullable|required_if:selectedType,classroom_request|exists:sections,id',
     ];
 
     public function mount()
@@ -50,6 +55,7 @@ class Ticketing extends Component implements HasTable, HasForms
         // Load assets and technicians when component is mounted
         $this->loadAssets();
         $this->loadTechnicians();
+        $this->loadClassroomsAndSections();
     }
 
     protected function loadAssets()
@@ -62,6 +68,12 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->technicians = User::whereHas('roles', function ($query) {
             $query->where('name', 'technician');
         })->get();
+    }
+
+    protected function loadClassroomsAndSections()
+    {
+        $this->classrooms = \App\Models\Classroom::all();
+        $this->sections = \App\Models\Section::all();
     }
 
     public function selectIssueType($type)
@@ -77,36 +89,8 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $this->selectedSubType = $subType;
         $this->showTicketForm = true;
-
         // Auto-generate title and description based on selected type and subtype
         $this->generateTicketContent();
-
-        // Filter assets based on selected subtype
-        $this->filterAssetsBySubtype($subType);
-    }
-
-    /**
-     * Filter assets based on the selected subtype
-     */
-    protected function filterAssetsBySubtype($subType)
-    {
-        // If hardware is selected, filter assets by the hardware type
-        if ($this->selectedType === 'hardware') {
-            // For 'other' hardware, show all hardware assets
-            if ($subType === 'other') {
-                $this->assets = Asset::whereHas('tags', function ($query) {
-                    $query->where('name', 'like', 'hardware%');
-                })->get();
-            } else {
-                // For specific hardware types (mouse, keyboard, monitor, etc.)
-                $this->assets = Asset::whereHas('tags', function ($query) use ($subType) {
-                    $query->where('name', $subType);
-                })->get();
-            }
-        } else {
-            // For non-hardware issues, show all assets
-            $this->loadAssets();
-        }
     }
 
     protected function generateTicketContent()
@@ -176,11 +160,10 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->priority = 'medium';
         $this->asset_id = null;
         $this->assigned_to = null;
+        $this->classroom_id = null;
+        $this->section_id = null;
         $this->showTicketForm = false;
         $this->resetErrorBag();
-
-        // Reset the assets to show all assets
-        $this->loadAssets();
     }
 
     public function submitTicket()
@@ -190,6 +173,14 @@ class Ticketing extends Component implements HasTable, HasForms
         try {
             // Generate a unique ticket number
             $ticketNumber = $this->generateTicketNumber();
+
+            // Determine ticket type based on selectedType
+            $ticketType = match ($this->selectedType) {
+                'classroom_request' => 'classroom',
+                'asset_request' => 'asset',
+                'general_inquiry' => 'inquiry',
+                default => 'incident'
+            };
 
             // Create ticket
             Ticket::create([
@@ -203,9 +194,10 @@ class Ticketing extends Component implements HasTable, HasForms
                 'assigned_to' => $this->assigned_to,
                 'user_id' => Auth::id(),
                 'created_by' => Auth::id(),
-                'ticket_type' => 'incident',
+                'ticket_type' => $ticketType,
                 'ticket_status' => 'open',
-                'option' => 'asset',
+                'classroom_id' => $this->classroom_id,
+                'section_id' => $this->section_id,
             ]);
 
             // Reset form
@@ -245,7 +237,13 @@ class Ticketing extends Component implements HasTable, HasForms
      */
     protected function generateTicketNumber()
     {
-        $prefix = 'INC-';
+        $prefix = match ($this->selectedType) {
+            'classroom_request' => 'CLS-',
+            'asset_request' => 'AST-',
+            'general_inquiry' => 'INQ-',
+            default => 'INC-'
+        };
+
         $randomPart = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
         $ticketNumber = $prefix . $randomPart;
 

@@ -6,7 +6,7 @@
     @if ($ticket->updated_at)
         Resolved on: {{ $ticket->updated_at->format('Y-m-d H:i:s') }}
     @else
-        Not available
+        Resolved on: Not available
     @endif
 
 

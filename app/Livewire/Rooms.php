@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Livewire;
 
+use App\Models\Asset;
 use App\Models\Classroom;
 use App\Models\Building;
 use App\Models\Subject;
@@ -26,11 +28,11 @@ class Rooms extends Component
     public $currentClassroom = null;
     public $schedulesByDay = [];
     public $expiry_date = [];
-    
+
     // New properties for modal filters
     public $modalSelectedSchoolYear = '';
     public $modalSelectedSemester = '';
-    
+
     // Asset-related properties
     public $showingAssetDetails = false;
     public $assetSearch = '';
@@ -38,7 +40,7 @@ class Rooms extends Component
     public $classroomAssets = [];
     public $assetCategories = [];
     public $showingClassroomAssets = false;
-    
+
     // Add query string parameters
     protected $queryString = [
         'search' => ['except' => ''],
@@ -129,7 +131,7 @@ class Rooms extends Component
     {
         $this->currentClassroom = Classroom::with(['building', 'sections.subject'])
             ->find($classroomId);
-            
+
         // Sync the modal filters with the main filters initially
         $this->modalSelectedSchoolYear = $this->selectedSchoolYear;
         $this->modalSelectedSemester = $this->selectedSemester;
@@ -139,13 +141,13 @@ class Rooms extends Component
             $this->showingClassroomDetails = true;
         }
     }
-    
+
     public function loadClassroomSchedules()
     {
         if (!$this->currentClassroom) {
             return;
         }
-        
+
         // Initialize days of the week
         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         $this->schedulesByDay = array_fill_keys($days, []);
@@ -154,7 +156,7 @@ class Rooms extends Component
         $sections = $this->currentClassroom->sections()->with(['subject'])->get();
 
         // Filter subjects based on modal filters
-        $subjectQuery = function($query) {
+        $subjectQuery = function ($query) {
             if ($this->modalSelectedSchoolYear) {
                 $query->where('school_year', $this->modalSelectedSchoolYear);
             }
@@ -167,7 +169,7 @@ class Rooms extends Component
         // Collect all subjects from these sections
         foreach ($sections as $section) {
             $filteredSubjects = $section->subject()->where($subjectQuery)->get();
-            
+
             foreach ($filteredSubjects as $subject) {
                 // Make sure we have a day value
                 if ($subject->day) {
@@ -190,12 +192,12 @@ class Rooms extends Component
             }
         }
     }
-    
+
     public function updatedModalSelectedSchoolYear()
     {
         $this->loadClassroomSchedules();
     }
-    
+
     public function updatedModalSelectedSemester()
     {
         $this->loadClassroomSchedules();
@@ -213,14 +215,14 @@ class Rooms extends Component
     public function viewAssets($classroomId)
     {
         $this->currentClassroom = Classroom::find($classroomId);
-        
+
         if ($this->currentClassroom) {
             // Load asset categories for filtering
             $this->assetCategories = \App\Models\Category::all();
-            
+
             // Load assets for this classroom
             $this->loadClassroomAssets();
-            
+
             $this->showingAssetDetails = true;
         }
     }
@@ -229,26 +231,26 @@ class Rooms extends Component
     {
         $query = AssetGroup::where('classroom_id', $this->currentClassroom->id)
             ->with(['assets.category', 'assets.brand']);
-        
+
         // Apply search filter
         if (!empty($this->assetSearch)) {
             $search = '%' . $this->assetSearch . '%';
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', $search)
-                  ->orWhere('code', 'like', $search)
-                  ->orWhereHas('assets', function($subQ) use ($search) {
-                      $subQ->where('serial_number', 'like', $search);
-                  });
+                    ->orWhere('code', 'like', $search)
+                    ->orWhereHas('assets', function ($subQ) use ($search) {
+                        $subQ->where('serial_number', 'like', $search);
+                    });
             });
         }
-        
+
         // Apply category filter
         if (!empty($this->assetCategoryFilter)) {
-            $query->whereHas('assets', function($q) {
+            $query->whereHas('assets', function ($q) {
                 $q->where('category_id', $this->assetCategoryFilter);
             });
         }
-        
+
         $this->classroomAssets = $query->get();
     }
 
@@ -297,10 +299,10 @@ class Rooms extends Component
     }
 
     // In your AssetGroup model
-public function assets()
-{
-    return $this->belongsTo(Asset::class, 'asset_id');
-}
+    public function assets()
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
+    }
 
     public function render()
     {

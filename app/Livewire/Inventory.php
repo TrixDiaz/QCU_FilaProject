@@ -16,6 +16,7 @@ use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
 use Illuminate\Support\Facades\Storage;
+use Filament\Notifications\Notification;
 
 class Inventory extends Component
 {
@@ -131,6 +132,12 @@ class Inventory extends Component
             }
         }
 
+        // Fix ordering by making it more explicit
+        // Order first by updated_at, then by created_at (both descending)
+        // This shows most recently modified assets first, then newest created assets
+        $query->orderByDesc('updated_at')
+            ->orderByDesc('created_at');
+
         $assets = $query->paginate($this->perPage);
         $this->filteredCount = $assets->total();
 
@@ -170,7 +177,12 @@ class Inventory extends Component
 
             DB::commit();
 
-            $this->dispatch('notify', ['message' => 'Asset deployed successfully', 'type' => 'success']);
+            // Use Filament Notification instead of dispatching a custom event
+            Notification::make()
+                ->title('Asset Deployed')
+                ->body('Asset has been successfully deployed to the classroom.')
+                ->success()
+                ->send();
 
             // Reset deployment form
             $this->reset(['deployAssetId', 'selectedClassroom', 'deploymentName', 'deploymentCode']);
@@ -179,7 +191,13 @@ class Inventory extends Component
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('notify', ['message' => 'Error deploying asset: ' . $e->getMessage(), 'type' => 'error']);
+
+            Notification::make()
+                ->title('Deployment Failed')
+                ->body('Error deploying asset: ' . $e->getMessage())
+                ->danger()
+                ->send();
+
             return false;
         }
     }
@@ -242,12 +260,14 @@ class Inventory extends Component
     // Reset filters
     public function resetFilters()
     {
-        $this->filterType = 'all';
-        $this->filterValue = '';
-        $this->filterBrand = '';
-        $this->filterCategory = '';
-        $this->filterTag = '';
-        $this->search = '';
+        $this->reset([
+            'filterType',
+            'filterValue',
+            'filterBrand',
+            'filterCategory',
+            'filterTag',
+            'search'
+        ]);
         $this->resetPage();
     }
 
@@ -359,6 +379,42 @@ class Inventory extends Component
         }
     }
 
+    public function exportAssets()
+    {
+        try {
+            $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+            // Add headers
+            $csv->insertOne(['Name', 'Serial Number', 'Asset Code', 'Status', 'Brand', 'Category']);
+
+            // Get selected assets
+            $assets = Asset::with(['brand', 'category'])
+                ->whereIn('id', $this->selected)
+                ->get();
+
+            foreach ($assets as $asset) {
+                $csv->insertOne([
+                    $asset->name,
+                    $asset->serial_number,
+                    $asset->asset_code,
+                    $asset->status,
+                    $asset->brand->name,
+                    $asset->category->name,
+                ]);
+            }
+
+            $this->dispatch('notify', ['message' => 'Assets exported successfully', 'type' => 'success']);
+
+            return response()->streamDownload(
+                function () use ($csv) {
+                    echo $csv->getContent();
+                },
+                'assets-export-' . now()->format('Y-m-d') . '.csv'
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['message' => 'Error exporting assets: ' . $e->getMessage(), 'type' => 'error']);
+        }
+    }
 
     public function executeBulkAction()
     {

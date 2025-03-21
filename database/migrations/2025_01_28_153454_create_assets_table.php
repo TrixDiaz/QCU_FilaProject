@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('serial_number')->unique();
             $table->string('asset_code')->unique();
             $table->dateTime('expiry_date')->nullable();
-            $table->string('status')->default('active');
+            $table->string('status')->default('available');
             $table->timestamps();
         });
     }

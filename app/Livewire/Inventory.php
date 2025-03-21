@@ -33,7 +33,7 @@ class Inventory extends Component
     public $totalAssets = 0;
     public $filteredCount = 0;
     public $perPage = 12;
-    public $viewType = 'card';
+    public $viewType = 'table';
     public $search = '';
 
     // New properties for bulk actions

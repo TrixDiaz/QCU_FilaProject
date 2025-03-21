@@ -93,7 +93,6 @@ class AssetResource extends Resource implements HasShieldPermissions
                             }),
                         Forms\Components\Select::make('asset_tag_id')
                             ->relationship('assetTags', 'name')
-                            ->required()
                             ->searchable()
                             ->preload()
                             ->multiple()

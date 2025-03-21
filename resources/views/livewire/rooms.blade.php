@@ -33,6 +33,11 @@
             max-height: 200px;
             overflow-y: auto;
         }
+
+        .table-container-new {
+            max-height: 400px;
+            overflow-y: auto;
+        }
     </style>
     {{-- Create New Schedule --}}
     <div class="flex justify-end items-center gap-2 my-4">
@@ -83,30 +88,6 @@
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
                 </div>
-
-                {{-- <div>
-                    <label for="schoolYear" class="block text-sm font-medium mb-2">School Year</label>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select id="schoolYear" wire:model.live="selectedSchoolYear">
-                            <option value="">All School Years</option>
-                            @foreach ($schoolYears as $schoolYear)
-                                <option value="{{ $schoolYear }}">{{ $schoolYear }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <label for="semester" class="block text-sm font-medium mb-2">Semester</label>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select id="semester" wire:model.live="selectedSemester">
-                            <option value="">All Semesters</option>
-                            @foreach ($semesters as $semester)
-                                <option value="{{ $semester }}">{{ $semester }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div> --}}
             </div>
         </div>
     </x-filament::section>
@@ -292,12 +273,12 @@
                                     <p class="text-gray-500 dark:text-gray-400 italic">No assets found for this
                                         classroom.</p>
                                 @else
-                                    <div
-                                        class="rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
-                                        <table class="min-w-full">
-                                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                    <div style=""
+                                        class="overflow-y-auto h-[400px] table-container-new rounded-md border border-gray-200 dark:border-gray-600 col-span-full">
+                                        <table
+                                            class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 table-container">
+                                            <thead class="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                                                 <tr>
-
                                                     <th scope="col"
                                                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                         Name
@@ -310,12 +291,10 @@
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                         Brand
                                                     </th>
-
                                                     <th scope="col"
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                         Serial No.
                                                     </th>
-
                                                     <th scope="col"
                                                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                         Status
@@ -326,10 +305,10 @@
                                                     </th>
                                                 </tr>
                                             </thead>
-                                            <tbody class="bg-white dark:bg-gray-900">
+                                            <tbody
+                                                class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                                                 @foreach ($currentClassroom->assetGroups as $assetGroup)
-                                                    <tr
-                                                        class=" dark:hover:bg-gray-600 border-t border-gray-200 dark:border-gray-700">
+                                                    <tr class="">
                                                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                                                             {{ $assetGroup->name }}
                                                         </td>
@@ -345,7 +324,7 @@
                                                         <td class="px-4 py-3 text-sm">
                                                             <span
                                                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    {{ $assetGroup->status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100' }}">
+                                                                {{ $assetGroup->status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100' }}">
                                                                 {{ ucfirst($assetGroup->status ?? 'N/A') }}
                                                             </span>
                                                         </td>
@@ -353,281 +332,283 @@
                                                             {{ $assetGroup->expiry_date ? \Carbon\Carbon::parse($assetGroup->expiry_date)->format('M d, Y') : 'N/A' }}
                                                         </td>
                                                     </tr>
-
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
-                                @endforeach
+                                @endif
+                            </div>
+                        </div>
+                    </div>
 
-                                </tbody>
-                                </table>
+                    <!-- Footer - Sticky -->
+                    <div x-show="show" x-transition:enter="transition ease-out delay-450 duration-300"
+                        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                        class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
+                        <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomAssets(), 200)"
+                            tag="button"
+                            class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
+                            Close
+                        </x-filament::button>
+                    </div>
+                </div>
+            </div>
+        </x-filament::section>
     @endif
-</div>
-</div>
-</div>
+    <!-- Classroom Details Modal -->
+    @if ($showingClassroomDetails && $currentClassroom)
+        <x-filament::section class="dark:bg-gray-900">
+            <div x-data="{
+                show: false,
+                scheduleExpanded: {}
+            }" x-init="setTimeout(() => show = true, 50);
+            @foreach($schedulesByDay as $day => $schedules)
+            scheduleExpanded['{{ $day }}'] = false;
+            @endforeach" x-show="show"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 transform scale-95"
+                x-transition:enter-end="opacity-100 transform scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 transform scale-100"
+                x-transition:leave-end="opacity-0 transform scale-95"
+                class="fixed inset-0 transition-opacity z-50 flex items-center justify-center bg-gray-900 bg-opacity-50"
+                style="display: none;">
+                <div
+                    class="rounded-lg shadow-xl transform transition-all w-full max-w-4xl max-h-[90vh] overflow-hidden dark:bg-gray-800 bg-white flex flex-col">
+                    <!-- Header - Sticky -->
+                    {{-- <div
+                        class="px-4 py-3 sm:px-6 flex justify-between items-center sticky top-0 z-10 bg-white dark:bg-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+                            {{ $currentClassroom->name }} Details
+                        </h3>
+                        <button @click="show = false; setTimeout(() => $wire.closeClassroomDetails(), 200)"
+                            class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-colors duration-200">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div> --}}
 
-<!-- Footer - Sticky -->
-<div x-show="show" x-transition:enter="transition ease-out delay-450 duration-300"
-    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
-    <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomAssets(), 200)" tag="button"
-        class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
-        Close
-    </x-filament::button>
-</div>
-</div>
-</div>
-</x-filament::section>
-@endif
-<!-- Classroom Details Modal -->
-@if ($showingClassroomDetails && $currentClassroom)
-    <x-filament::section class="dark:bg-gray-900">
-        <div x-data="{
-            show: false,
-            scheduleExpanded: {}
-        }" x-init="setTimeout(() => show = true, 50);
-        @foreach($schedulesByDay as $day => $schedules)
-        scheduleExpanded['{{ $day }}'] = false;
-        @endforeach" x-show="show"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 transform scale-95"
-            x-transition:enter-end="opacity-100 transform scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 transform scale-100"
-            x-transition:leave-end="opacity-0 transform scale-95"
-            class="fixed inset-0 transition-opacity z-50 flex items-center justify-center bg-gray-900 bg-opacity-50"
-            style="display: none;">
-            <div
-                class="rounded-lg shadow-xl transform transition-all w-full max-w-4xl max-h-[90vh] overflow-hidden dark:bg-gray-800 bg-white flex flex-col">
-                <!-- Header - Sticky -->
-                {{-- <div
-                    class="px-4 py-3 sm:px-6 flex justify-between items-center sticky top-0 z-10 bg-white dark:bg-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
-                        {{ $currentClassroom->name }} Details
-                    </h3>
-                    <button @click="show = false; setTimeout(() => $wire.closeClassroomDetails(), 200)"
-                        class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-colors duration-200">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div> --}}
-
-                <!-- Main Content - Scrollable -->
-                <div class="flex-1 overflow-y-auto relative">
-                    <div class="px-4 py-4 sm:px-6 dark:bg-gray-800">
-                        <!-- Classroom Info Card -->
-                        <div x-show="show" x-transition:enter="transition ease-out delay-150 duration-300"
-                            x-transition:enter-start="opacity-0 transform translate-y-4"
-                            x-transition:enter-end="opacity-100 transform translate-y-0"
-                            class="p-4 rounded-lg shadow-sm mb-4 bg-white dark:bg-gray-700 dark:text-gray-100">
-                            <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Classroom Information</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p class="mb-1"><span class="font-medium dark:text-gray-200">Building:</span>
-                                        <span
-                                            class="dark:text-gray-300">{{ $currentClassroom->building->name ?? 'N/A' }}</span>
-                                    </p>
-                                    <p class="mb-1"><span class="font-medium dark:text-gray-200">Floor:</span>
-                                        <span
-                                            class="dark:text-gray-300">{{ $currentClassroom->floor ?? 'N/A' }}</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="mb-1"><span class="font-medium dark:text-gray-200">Room: </span>
-                                        <span class="dark:text-gray-300">{{ $currentClassroom->name ?? 'N/A' }}</span>
-                                    </p>
-                                    <p class="mb-1"><span class="font-medium dark:text-gray-200">Status:</span>
-                                        <span
-                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $currentClassroom->is_active ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100' }}">
-                                            {{ $currentClassroom->is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </p>
+                    <!-- Main Content - Scrollable -->
+                    <div class="flex-1 overflow-y-auto relative">
+                        <div class="px-4 py-4 sm:px-6 dark:bg-gray-800">
+                            <!-- Classroom Info Card -->
+                            <div x-show="show" x-transition:enter="transition ease-out delay-150 duration-300"
+                                x-transition:enter-start="opacity-0 transform translate-y-4"
+                                x-transition:enter-end="opacity-100 transform translate-y-0"
+                                class="p-4 rounded-lg shadow-sm mb-4 bg-white dark:bg-gray-700 dark:text-gray-100">
+                                <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Classroom Information</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p class="mb-1"><span
+                                                class="font-medium dark:text-gray-200">Building:</span>
+                                            <span
+                                                class="dark:text-gray-300">{{ $currentClassroom->building->name ?? 'N/A' }}</span>
+                                        </p>
+                                        <p class="mb-1"><span class="font-medium dark:text-gray-200">Floor:</span>
+                                            <span
+                                                class="dark:text-gray-300">{{ $currentClassroom->floor ?? 'N/A' }}</span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="mb-1"><span class="font-medium dark:text-gray-200">Room: </span>
+                                            <span
+                                                class="dark:text-gray-300">{{ $currentClassroom->name ?? 'N/A' }}</span>
+                                        </p>
+                                        <p class="mb-1"><span class="font-medium dark:text-gray-200">Status:</span>
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $currentClassroom->is_active ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100' }}">
+                                                {{ $currentClassroom->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Schedule Filters (New) -->
-                        <!-- Schedule Filters (Fixed) -->
-                        <div x-show="show" x-transition:enter="transition ease-out delay-200 duration-300"
-                            x-transition:enter-start="opacity-0 transform translate-y-4"
-                            x-transition:enter-end="opacity-100 transform translate-y-0"
-                            class="p-4 rounded-lg shadow-sm mb-4 bg-white dark:bg-gray-700 dark:text-gray-100">
-                            <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Schedule Filters</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="modalSchoolYear"
-                                        class="block text-sm font-medium mb-2 dark:text-gray-200">School Year</label>
-                                    <x-filament::input.wrapper>
-                                        <x-filament::input.select id="modalSchoolYear"
-                                            wire:model.live="modalSelectedSchoolYear">
-                                            <option value="">All School Years</option>
-                                            @foreach ($schoolYears as $year)
-                                                <option value="{{ $year }}">{{ $year }}</option>
-                                            @endforeach
-                                        </x-filament::input.select>
-                                    </x-filament::input.wrapper>
-                                </div>
-                                <div>
-                                    <label for="modalSemester"
-                                        class="block text-sm font-medium mb-2 dark:text-gray-200">Semester</label>
-                                    <x-filament::input.wrapper>
-                                        <x-filament::input.select id="modalSemester"
-                                            wire:model.live="modalSelectedSemester">
-                                            <option value="">All Semesters</option>
-                                            @foreach ($semesters as $sem)
-                                                <option value="{{ $sem }}">{{ $sem }}</option>
-                                            @endforeach
-                                        </x-filament::input.select>
-                                    </x-filament::input.wrapper>
+                            <!-- Schedule Filters (New) -->
+                            <div x-show="show" x-transition:enter="transition ease-out delay-200 duration-300"
+                                x-transition:enter-start="opacity-0 transform translate-y-4"
+                                x-transition:enter-end="opacity-100 transform translate-y-0"
+                                class="p-4 rounded-lg shadow-sm mb-4 bg-white dark:bg-gray-700 dark:text-gray-100">
+                                <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Schedule Filters</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="modalSchoolYear"
+                                            class="block text-sm font-medium mb-2 dark:text-gray-200">School
+                                            Year</label>
+                                        <x-filament::input.wrapper>
+                                            <x-filament::input.select id="modalSchoolYear"
+                                                wire:model.live="modalSelectedSchoolYear">
+                                                <option value="">All School Years</option>
+                                                @foreach ($schoolYears as $year)
+                                                    <option value="{{ $year }}">{{ $year }}</option>
+                                                @endforeach
+                                            </x-filament::input.select>
+                                        </x-filament::input.wrapper>
+                                    </div>
+                                    <div>
+                                        <label for="modalSemester"
+                                            class="block text-sm font-medium mb-2 dark:text-gray-200">Semester</label>
+                                        <x-filament::input.wrapper>
+                                            <x-filament::input.select id="modalSemester"
+                                                wire:model.live="modalSelectedSemester">
+                                                <option value="">All Semesters</option>
+                                                @foreach ($semesters as $sem)
+                                                    <option value="{{ $sem }}">{{ $sem }}</option>
+                                                @endforeach
+                                            </x-filament::input.select>
+                                        </x-filament::input.wrapper>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Schedule Card -->
-                        <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
-                            x-transition:enter-start="opacity-0 transform translate-y-4"
-                            x-transition:enter-end="opacity-100 transform translate-y-0"
-                            class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
-                            <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Schedule</h4>
+                            <!-- Schedule Card -->
+                            <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
+                                x-transition:enter-start="opacity-0 transform translate-y-4"
+                                x-transition:enter-end="opacity-100 transform translate-y-0"
+                                class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
+                                <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Schedule</h4>
 
-                            @php
-                                $hasSchedules = false;
-                                foreach ($schedulesByDay as $day => $schedules) {
-                                    if (count($schedules) > 0) {
-                                        $hasSchedules = true;
-                                        break;
+                                @php
+                                    $hasSchedules = false;
+                                    foreach ($schedulesByDay as $day => $schedules) {
+                                        if (count($schedules) > 0) {
+                                            $hasSchedules = true;
+                                            break;
+                                        }
                                     }
-                                }
-                            @endphp
+                                @endphp
 
-                            @if (!$hasSchedules)
-                                <p class="text-gray-500 dark:text-gray-400 italic">No schedules found for this
-                                    classroom.</p>
-                            @else
-                                <div class="modal-schedule-container">
-                                    @foreach ($schedulesByDay as $day => $schedules)
-                                        @if (count($schedules) > 0)
-                                            <div>
-                                                <!-- Day Header - Clickable to expand/collapse -->
-                                                <h5 @click="scheduleExpanded['{{ $day }}'] = !scheduleExpanded['{{ $day }}']"
-                                                    class="text-md font-medium mb-2 bg-gray-50 dark:bg-gray-600 p-2 rounded day-header-sticky dark:text-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors">
-                                                    <span>{{ $day }}</span>
-                                                    <svg :class="scheduleExpanded['{{ $day }}'] ?
-                                                        'transform rotate-180' : ''"
-                                                        class="w-5 h-5 transition-transform duration-200"
-                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg>
-                                                </h5>
+                                @if (!$hasSchedules)
+                                    <p class="text-gray-500 dark:text-gray-400 italic">No schedules found for this
+                                        classroom.</p>
+                                @else
+                                    <div class="modal-schedule-container">
+                                        @foreach ($schedulesByDay as $day => $schedules)
+                                            @if (count($schedules) > 0)
+                                                <div>
+                                                    <!-- Day Header - Clickable to expand/collapse -->
+                                                    <h5 @click="scheduleExpanded['{{ $day }}'] = !scheduleExpanded['{{ $day }}']"
+                                                        class="text-md font-medium mb-2 bg-gray-50 dark:bg-gray-600 p-2 rounded day-header-sticky dark:text-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors">
+                                                        <span>{{ $day }}</span>
+                                                        <svg :class="scheduleExpanded['{{ $day }}'] ?
+                                                            'transform rotate-180' : ''"
+                                                            class="w-5 h-5 transition-transform duration-200"
+                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                        </svg>
+                                                    </h5>
 
-                                                <!-- Table container with fixed height -->
-                                                <div x-show="scheduleExpanded['{{ $day }}']"
-                                                    x-transition:enter="transition ease-out duration-200"
-                                                    x-transition:enter-start="opacity-0 transform -translate-y-2"
-                                                    x-transition:enter-end="opacity-100 transform translate-y-0"
-                                                    x-transition:leave="transition ease-in duration-150"
-                                                    x-transition:leave-start="opacity-100 transform translate-y-0"
-                                                    x-transition:leave-end="opacity-0 transform -translate-y-2"
-                                                    class="relative mt-2">
-                                                    <div
-                                                        class="rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
-                                                        <!-- Fixed width table structure for consistent layout -->
-                                                        <div class="w-full">
-                                                            <!-- Header with full width -->
-                                                            <div
-                                                                class="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10 w-full">
-                                                                <table
-                                                                    class="w-full divide-y divide-gray-200 dark:divide-gray-600">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th
-                                                                                class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                                                Time
-                                                                            </th>
-                                                                            <th
-                                                                                class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                                                Section
-                                                                            </th>
-                                                                            <th class="w-1/5 px-3 py-2class="w-1/5 px-3
-                                                                                py-2 text-left text-xs font-medium
-                                                                                text-gray-500 dark:text-gray-300
-                                                                                uppercase tracking-wider">
-                                                                                Subject
-                                                                            </th>
-                                                                            <th
-                                                                                class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                                                School Year
-                                                                            </th>
-                                                                            <th
-                                                                                class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                                                Semester
-                                                                            </th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                </table>
-                                                            </div>
-
-                                                            <!-- Table Body with same width as header -->
+                                                    <!-- Table container with fixed height -->
+                                                    <div x-show="scheduleExpanded['{{ $day }}']"
+                                                        x-transition:enter="transition ease-out duration-200"
+                                                        x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                                                        x-transition:leave="transition ease-in duration-150"
+                                                        x-transition:leave-start="opacity-100 transform translate-y-0"
+                                                        x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                                        class="relative mt-2">
+                                                        <div
+                                                            class="rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
+                                                            <!-- Fixed width table structure for consistent layout -->
                                                             <div class="w-full">
-                                                                <table
-                                                                    class="w-full divide-y divide-gray-200 dark:divide-gray-600">
-                                                                    <tbody
-                                                                        class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                                                                        @foreach ($schedules as $schedule)
-                                                                            <tr
-                                                                                class="dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                                                                <td
-                                                                                    class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
-                                                                                    {{ date('h:i A', strtotime($schedule->start_time)) }}
-                                                                                    -
-                                                                                    {{ date('h:i A', strtotime($schedule->end_time)) }}
-                                                                                </td>
-                                                                                <td
-                                                                                    class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
-                                                                                    {{ $schedule->section->name ?? 'N/A' }}
-                                                                                </td>
-                                                                                <td
-                                                                                    class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
-                                                                                    {{ $schedule->subject ?? 'N/A' }}
-                                                                                </td>
-                                                                                <td
-                                                                                    class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
-                                                                                    {{ $schedule->school_year ?? 'N/A' }}
-                                                                                </td>
-                                                                                <td
-                                                                                    class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
-                                                                                    {{ $schedule->semester ?? 'N/A' }}
-                                                                                </td>
+                                                                <!-- Header with full width -->
+                                                                <div
+                                                                    class="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10 w-full">
+                                                                    <table
+                                                                        class="w-full divide-y divide-gray-200 dark:divide-gray-600">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th
+                                                                                    class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                                                    Time
+                                                                                </th>
+                                                                                <th
+                                                                                    class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                                                    Section
+                                                                                </th>
+                                                                                <th class="w-1/5 px-3 py-2class="w-1/5
+                                                                                    px-3 py-2 text-left text-xs
+                                                                                    font-medium text-gray-500
+                                                                                    dark:text-gray-300 uppercase
+                                                                                    tracking-wider">
+                                                                                    Subject
+                                                                                </th>
+                                                                                <th
+                                                                                    class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                                                    School Year
+                                                                                </th>
+                                                                                <th
+                                                                                    class="w-1/5 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                                                    Semester
+                                                                                </th>
                                                                             </tr>
-                                                                        @endforeach
-                                                                    </tbody>
-                                                                </table>
+                                                                        </thead>
+                                                                    </table>
+                                                                </div>
+
+                                                                <!-- Table Body with same width as header -->
+                                                                <div class="w-full">
+                                                                    <table
+                                                                        class="w-full divide-y divide-gray-200 dark:divide-gray-600">
+                                                                        <tbody
+                                                                            class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                                                                            @foreach ($schedules as $schedule)
+                                                                                <tr
+                                                                                    class="dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                                                                    <td
+                                                                                        class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
+                                                                                        {{ date('h:i A', strtotime($schedule->start_time)) }}
+                                                                                        -
+                                                                                        {{ date('h:i A', strtotime($schedule->end_time)) }}
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
+                                                                                        {{ $schedule->section->name ?? 'N/A' }}
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
+                                                                                        {{ $schedule->subject ?? 'N/A' }}
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
+                                                                                        {{ $schedule->school_year ?? 'N/A' }}
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="w-1/5 px-3 py-2 whitespace-nowrap text-sm dark:text-gray-300">
+                                                                                        {{ $schedule->semester ?? 'N/A' }}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            @endif
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Footer - Sticky -->
-                <div x-show="show" x-transition:enter="transition ease-out delay-450 duration-300"
-                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                    class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
-                    <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomDetails(), 200)"
-                        tag="button"
-                        class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
-                        Close
-                    </x-filament::button>
+                    <!-- Footer - Sticky -->
+                    <div x-show="show" x-transition:enter="transition ease-out delay-450 duration-300"
+                        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                        class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
+                        <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomDetails(), 200)"
+                            tag="button"
+                            class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
+                            Close
+                        </x-filament::button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </x-filament::section>
-@endif
+        </x-filament::section>
+    @endif
 </div>

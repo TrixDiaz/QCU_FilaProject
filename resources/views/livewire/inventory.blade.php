@@ -370,10 +370,6 @@
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
             </div>
-
-            <div>
-                {{ $assets->links() }}
-            </div>
         </div>
 
         @if ($viewType === 'card')
@@ -678,7 +674,7 @@
                 </x-filament::input.wrapper>
             </div>
 
-            <div class="fi-ta-pagination px-3 py-3 sm:px-6">
+            <div>
                 {{ $assets->links() }}
             </div>
         </div>

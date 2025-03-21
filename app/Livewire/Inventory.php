@@ -22,6 +22,8 @@ class Inventory extends Component
     use WithPagination;
     use WithFileUploads;
 
+    protected $paginationTheme = 'tailwind';
+
     public $filterType = 'all';
     public $filterValue = '';
     public $filterBrand = '';
@@ -130,6 +132,11 @@ class Inventory extends Component
                 });
             }
         }
+
+        // Order by both created_at and updated_at in descending order
+        // This will show newest items first and prioritize recently updated items
+        $query->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', 'desc');
 
         $assets = $query->paginate($this->perPage);
         $this->filteredCount = $assets->total();
@@ -242,12 +249,14 @@ class Inventory extends Component
     // Reset filters
     public function resetFilters()
     {
-        $this->filterType = 'all';
-        $this->filterValue = '';
-        $this->filterBrand = '';
-        $this->filterCategory = '';
-        $this->filterTag = '';
-        $this->search = '';
+        $this->reset([
+            'filterType',
+            'filterValue',
+            'filterBrand',
+            'filterCategory',
+            'filterTag',
+            'search'
+        ]);
         $this->resetPage();
     }
 
@@ -359,6 +368,42 @@ class Inventory extends Component
         }
     }
 
+    public function exportAssets()
+    {
+        try {
+            $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+            // Add headers
+            $csv->insertOne(['Name', 'Serial Number', 'Asset Code', 'Status', 'Brand', 'Category']);
+
+            // Get selected assets
+            $assets = Asset::with(['brand', 'category'])
+                ->whereIn('id', $this->selected)
+                ->get();
+
+            foreach ($assets as $asset) {
+                $csv->insertOne([
+                    $asset->name,
+                    $asset->serial_number,
+                    $asset->asset_code,
+                    $asset->status,
+                    $asset->brand->name,
+                    $asset->category->name,
+                ]);
+            }
+
+            $this->dispatch('notify', ['message' => 'Assets exported successfully', 'type' => 'success']);
+
+            return response()->streamDownload(
+                function () use ($csv) {
+                    echo $csv->getContent();
+                },
+                'assets-export-' . now()->format('Y-m-d') . '.csv'
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['message' => 'Error exporting assets: ' . $e->getMessage(), 'type' => 'error']);
+        }
+    }
 
     public function executeBulkAction()
     {

@@ -38,7 +38,7 @@ class Ticket extends Model
         'attachments' => 'array',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
-        'description' => 'array'
+        'ticket_status' => 'string',
     ];
 
     public function asset(): BelongsTo

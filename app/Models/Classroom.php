@@ -18,7 +18,9 @@ class Classroom extends Model
     protected $fillable = [
         'name',
         'capacity',
-        'building',
+        'slug',
+        'floor',
+        'building_id',
         'floor',
     ];
 
@@ -34,7 +36,7 @@ class Classroom extends Model
 
     public function schedules(): HasMany
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasMany(Subject::class);
     }
 
     public function assets()

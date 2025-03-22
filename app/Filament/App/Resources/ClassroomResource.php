@@ -61,6 +61,22 @@ class ClassroomResource extends Resource implements HasShieldPermissions
                             ->schema(\App\Services\DynamicForm::schema(\App\Models\Classroom::class))->columns(2),
                         Forms\Components\Section::make()
                             ->schema([
+                                Forms\Components\Select::make('floor')
+                                    ->required()
+                                    ->options([
+                                        '1' => '1st Floor',
+                                        '2' => '2nd Floor',
+                                        '3' => '3rd Floor',
+                                        '4' => '4th Floor',
+                                        '5' => '5th Floor',
+                                        '6' => '6th Floor',
+                                        '7' => '7th Floor',
+                                        '8' => '8th Floor',
+                                    ])
+                                    ->native(false),
+                            ]),
+                        Forms\Components\Section::make()
+                            ->schema([
                                 Forms\Components\Select::make('building_id')
                                     ->relationship(
                                         name: 'building',

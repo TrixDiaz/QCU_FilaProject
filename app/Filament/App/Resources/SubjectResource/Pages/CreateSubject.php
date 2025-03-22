@@ -14,4 +14,18 @@ class CreateSubject extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('classroom')
+                ->label('Create New Classroom')
+                ->button()
+                ->url(route('filament.app.resources.classrooms.create')),
+            Actions\Action::make('classroom')
+                ->label('Create New Sections')
+                ->button()
+                ->url(route('filament.app.resources.sections.create')),
+        ];
+    }
 }

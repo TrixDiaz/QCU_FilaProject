@@ -19,6 +19,14 @@ class EditSubject extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('classroom')
+                ->label('View All Classroom')
+                ->button()
+                ->url(route('filament.app.resources.classrooms.index')),
+            Actions\Action::make('sections')
+                ->label('View All Sections')
+                ->button()
+                ->url(route('filament.app.resources.sections.index')),
             Actions\DeleteAction::make(),
         ];
     }

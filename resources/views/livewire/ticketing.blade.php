@@ -97,27 +97,48 @@
 
         /* Dark mode styles for SimpleMDE */
         .dark .CodeMirror {
-            background-color: #374151;
-            color: #fff;
-            border-color: #4B5563;
+            background-color: #1f2937;
+            color: #f3f4f6;
+            border-color: #374151;
         }
-        
+
+        .dark .CodeMirror-cursor {
+            border-left-color: #f3f4f6;
+        }
+
         .dark .editor-toolbar {
-            background-color: #374151;
-            border-color: #4B5563;
+            background-color: #1f2937;
+            border-color: #374151;
         }
-        
+
         .dark .editor-toolbar button {
-            color: #fff !important;
+            color: #f3f4f6 !important;
         }
-        
+
         .dark .editor-toolbar button:hover {
-            background-color: #4B5563;
-        }
-        
-        .dark .editor-preview {
             background-color: #374151;
-            color: #fff;
+        }
+
+        .dark .editor-preview {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+
+        .dark .editor-preview-side {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+
+        /* Additional SimpleMDE customizations */
+        .CodeMirror {
+            min-height: 200px;
+            border-radius: 0.375rem;
+        }
+
+        .editor-toolbar {
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+            opacity: 1;
         }
 
         /* Custom SimpleMDE styles */
@@ -146,6 +167,140 @@
 
         .dark .editor-toolbar a {
             color: #fff !important;
+        }
+
+        /* Base styles */
+        .light-mode {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --hover-bg: #f9fafb;
+        }
+
+        .dark-mode {
+            --bg-primary: #1f2937;
+            --bg-secondary: #111827;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --hover-bg: #374151;
+        }
+
+        /* SimpleMDE Light Mode */
+        .CodeMirror {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+            border-radius: 0.375rem;
+            min-height: 100px !important;
+            max-height: 200px !important;
+        }
+
+        .editor-toolbar {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+            opacity: 1;
+        }
+
+        .editor-toolbar button {
+            color: var(--text-primary) !important;
+        }
+
+        .editor-toolbar button:hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* SimpleMDE Dark Mode */
+        .dark .CodeMirror {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        .dark .CodeMirror-cursor {
+            border-left-color: var(--text-primary);
+        }
+
+        .dark .editor-toolbar {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        .dark .editor-toolbar button {
+            color: var(--text-primary) !important;
+        }
+
+        .dark .editor-toolbar button:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .dark .editor-preview,
+        .dark .editor-preview-side {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Card and Button Styles */
+        .card-hover:hover {
+            transform: scale(1.02);
+            transition: transform 0.2s ease-in-out;
+            background-color: var(--hover-bg);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .sizePadding {
+            padding: 1.5rem;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Selected Text Color */
+        .dark .CodeMirror-selected {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dark .CodeMirror-line {
+            color: var(--text-primary);
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Form Elements */
+        input, select, textarea {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #3b82f6;
+            ring-color: rgba(59, 130, 246, 0.5);
         }
     </style>
 
@@ -182,19 +337,19 @@
                     <svg x-show="type === 'success'" class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 00-1.414 1.414l2 2a1 1 001.414 0l4-4z"
+                            d="M10 18a8 8 0 100-16 8 8 000 16zm3.707-9.293a1 1 00-1.414-1.414L9 10.586 7.707 9.293a1 1 00-1.414 1.414l2 2a1 1 001.414 0l4-4z"
                             clip-rule="evenodd" />
                     </svg>
                     <svg x-show="type === 'error'" class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293 1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            d="M10 18a8 8 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293 1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z"
                             clip-rule="evenodd" />
                     </svg>
                     <svg x-show="type === 'info'" class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 11-2 0 1 1 012 0zM9 9a1 1 000 2v3a1 1 001 1h1a1 1 100-2h-1V9a1 1 00-1-1z"
+                            d="M18 10a8 8 0 11-16 0 8 8 0116 0zm-7-4a1 1 11-2 0 1 1 012 0zM9 9a1 1 000 2v3a1 1 001 1h1a1 1 100-2h-1V9a1 1 00-1-1z"
                             clip-rule="evenodd" />
                     </svg>
                 </div>
@@ -462,7 +617,7 @@
                         </div>
                         <div>
                             <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                            <div wire:ignore x-data="{ 
+                            <div x-data="{ 
                                 editor: null,
                                 init() {
                                     this.$nextTick(() => {
@@ -478,10 +633,17 @@
                                             autoRefresh: true
                                         });
                                         
+                                        // Listen for template updates from Livewire
+                                        $wire.on('updateTemplate', (template) => {
+                                            if (this.editor) {
+                                                this.editor.value(template);
+                                            }
+                                        });
+                                        
                                         // Set initial value if exists
                                         if ($wire.get('description')) {
                                             this.editor.value($wire.get('description'));
-                                        }
+                                        });
                                         
                                         // Update Livewire when content changes
                                         this.editor.codemirror.on('change', () => {
@@ -494,7 +656,7 @@
                                         }
                                     });
                                 }
-                            }">
+                            }" wire:ignore>
                                 <textarea x-ref="description" wire:model.defer="description" 
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm 
                                     dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
@@ -575,8 +737,7 @@
                                     @foreach ($classrooms as $classroom)
                                         <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
                                     @endforeach
-                                </select>
-                                @error('classroom_id')
+                                </select                                @error('classroom_id')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>

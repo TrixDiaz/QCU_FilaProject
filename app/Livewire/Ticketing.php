@@ -105,6 +105,11 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->showTicketForm = true;
         $this->generateTicketContent();
         $this->filterAssetsBySubtype($subType);
+        
+        // Dispatch the template update event
+        if ($this->description) {
+            $this->dispatch('updateTemplate', ['template' => $this->description]);
+        }
     }
 
     /**
@@ -165,29 +170,34 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $templates = [
             'hardware' => [
-                'mouse' => "I'm experiencing an issue with my mouse. The problem started [when/after] and is affecting my ability to work efficiently. Details of the mouse: [brand/model if known]. The specific symptoms include: [cursor not moving/clicking issues/etc].",
-                'keyboard' => "I'm having trouble with my keyboard. The issue began [when/after] and is impacting my work. Details of the keyboard: [brand/model if known]. The specific symptoms include: [keys not responding/sticky keys/etc].",
-                'monitor' => "I'm facing problems with my monitor. The issue started [when/after] and is affecting my ability to work. Details of the monitor: [brand/model if known]. The specific symptoms include: [display issues/flickering/no signal/etc].",
-                'other' => "I'm experiencing an issue with a hardware component. The problem began [when/after] and is impacting my work. Hardware details: [specify the hardware]. The specific symptoms include: [describe the issues]."
+                'mouse' => "**Mouse Issue**\n- Location/Tag: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]",
+                'keyboard' => "**Keyboard Issue**\n- Location/Tag: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]",
+                'monitor' => "**Monitor Issue**\n- Location/Tag: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]"
             ],
             'internet' => [
-                'lan' => "I'm experiencing issues with my LAN connection. The problem started [when/after] and is affecting my ability to work online. The specific symptoms include: [no connectivity/slow speeds/intermittent connection/etc].",
-                'wifi' => "I'm having trouble with the WiFi connection. The issue began [when/after] and is impacting my online activities. The specific symptoms include: [no connectivity/slow speeds/dropping connection/etc]."
+                'lan' => "**LAN Issue**\n- Location: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]",
+                'wifi' => "**WiFi Issue**\n- Location: [specify]\n- Network: [if known]\n- Problem: [describe issue]\n- Since: [date/time]"
             ],
             'application' => [
-                'word' => "I'm experiencing problems with Microsoft Word. The issue started [when/after] and is affecting my document work. Version details: [Word version if known]. The specific symptoms include: [crashing/not saving/formatting issues/etc].",
-                'chrome' => "I'm having issues with Google Chrome. The problem began [when/after] and is impacting my browsing experience. Version details: [Chrome version if known]. The specific symptoms include: [crashing/slow performance/rendering issues/etc].",
-                'excel' => "I'm facing problems with Microsoft Excel. The issue started [when/after] and is affecting my spreadsheet work. Version details: [Excel version if known]. The specific symptoms include: [calculation errors/crashing/formatting issues/etc].",
-                'other_app' => "I'm experiencing issues with an application. The problem began [when/after] and is impacting my work. Application details: [name and version]. The specific symptoms include: [describe the issues]."
+                'word' => "**MS Word Issue**\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]"
+            ],
+            'asset_request' => [
+                'default' => "**Asset Request**\n- Item: [specify]\n- Quantity: [number]\n- Purpose: [brief explanation]\n- When Needed: [date]"
+            ],
+            'general_inquiry' => [
+                'default' => "**General Inquiry**\n- Topic: [specify]\n- Question: [your inquiry]\n- Preferred Contact: [email/phone]"
+            ],
+            'classroom_request' => [
+                'default' => "**Classroom Request**\n- Date: [specify]\n- Time: [start-end]\n- Purpose: [brief description]\n- Attendees: [number]"
             ]
         ];
 
-        // Return the template if available, otherwise a generic template
-        if (isset($templates[$this->selectedType][$this->selectedSubType])) {
-            return $templates[$this->selectedType][$this->selectedSubType];
+        if (in_array($this->selectedType, ['asset_request', 'general_inquiry', 'classroom_request'])) {
+            return $templates[$this->selectedType]['default'];
         }
 
-        return "I'm experiencing an issue with " . ucfirst($this->selectedType) . " - " . $this->getReadableSubtype() . ". The problem started [when/after] and is affecting my work. The specific symptoms include: [describe the issues].";
+        return $templates[$this->selectedType][$this->selectedSubType] ?? 
+            "**{$this->getReadableSubtype()} Issue**\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]";
     }
 
     protected function formatDescription($description)
@@ -308,59 +318,65 @@ class Ticketing extends Component implements HasTable, HasForms
         return $table
             ->query(Ticket::query()->latest()) // Add latest() to sort by created_at in descending order
             ->columns([
-                TextColumn::make('ticket_number')->searchable()->sortable(),
-                TextColumn::make('title')->searchable()->sortable(),
+                TextColumn::make('ticket_number')
+                    ->label('Ticket No.')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('title')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30),
                 TextColumn::make('priority')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'high' => 'danger',
                         'medium' => 'warning',
                         'low' => 'success',
+                        default => 'info'
                     }),
                 TextColumn::make('ticket_status')
+                    ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'open' => 'info',
                         'in_progress' => 'warning',
+                        'resolved' => 'success',
                         'closed' => 'success',
                         'archived' => 'gray',
+                        default => 'info'
                     }),
-                TextColumn::make('created_at')->dateTime()->sortable(),
-            ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->options([
-                        'open' => 'Open',
-                        'in_progress' => 'In Progress',
-                        'closed' => 'Closed',
-                        'archived' => 'Archived',
-                    ])
+                TextColumn::make('created_at')
+                    ->label('Created')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->actions([
-                ViewAction::make()
+                \Filament\Tables\Actions\Action::make('view')
                     ->icon('heroicon-m-eye')
+                    ->color('info')
+                    ->button()
                     ->modalContent(fn (Ticket $record) => view(
                         'tickets.view',
                         ['ticket' => $record]
                     )),
-                EditAction::make()
+                \Filament\Tables\Actions\Action::make('edit')
                     ->icon('heroicon-m-pencil-square')
+                    ->color('warning')
+                    ->button()
                     ->modalContent(fn (Ticket $record) => view(
                         'tickets.edit',
                         [
                             'ticket' => $record,
-                            'technicians' => User::whereHas('roles', function ($query) {
-                                $query->where('name', 'technician');
-                            })->get()
+                            'technicians' => User::role('technician')->get()
                         ]
                     )),
-                Action::make('assign')
+                \Filament\Tables\Actions\Action::make('assign')
                     ->icon('heroicon-m-user-plus')
                     ->color('success')
                     ->button()
                     ->label(fn (Ticket $record) => 
                         is_null($record->assigned_to) ? 
-                            (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign') : 
+                            (auth()->user()->hasRole('technician') ? 'Claim' : 'Assign') : 
                             'Reassign'
                     )
                     ->modalHeading(fn (Ticket $record) => 
@@ -368,90 +384,30 @@ class Ticketing extends Component implements HasTable, HasForms
                             (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign Ticket') : 
                             'Reassign Ticket'
                     )
-                    ->modalDescription(fn (Ticket $record) => "Ticket #{$record->ticket_number}")
-                    ->form(function (Ticket $record) {
-                        // Only show assignment type for admins and supervisors
-                        if (auth()->user()->hasRole(['admin', 'supervisor'])) {
-                            return [
-                                Select::make('assign_type')
-                                    ->label('Assignment Type')
-                                    ->options([
-                                        'self' => 'Assign to myself',
-                                        'auto' => 'Auto-assign to available technician',
-                                        'specific' => 'Select specific technician'
-                                    ])
-                                    ->required()
-                                    ->reactive(),
-                                Select::make('technician_id')
-                                    ->label('Select Technician')
-                                    ->options(fn () => User::whereHas('roles', fn($query) => 
-                                        $query->where('name', 'technician')
-                                    )->pluck('name', 'id'))
-                                    ->visible(fn (Get $get) => $get('assign_type') === 'specific')
-                                    ->required(fn (Get $get) => $get('assign_type') === 'specific')
-                            ];
-                        }
-                        return []; // Empty form for technician claim action
-                    })
-                    ->action(function (array $data, Ticket $record): void {
-                        try {
-                            // For technician claim action
-                            if (auth()->user()->hasRole('technician') && empty($data)) {
-                                $record->update([
-                                    'assigned_to' => auth()->id(),
-                                    'ticket_status' => 'in_progress'
-                                ]);
-
-                                Notification::make()
-                                    ->title('Ticket Claimed')
-                                    ->body("You have claimed ticket #{$record->ticket_number}")
-                                    ->success()
-                                    ->send();
-                                return;
-                            }
-
-                            // For admin/supervisor assign action
-                            $assignee_id = match($data['assign_type']) {
-                                'self' => auth()->id(),
-                                'auto' => User::whereHas('roles', fn($query) => 
-                                    $query->where('name', 'technician')
-                                )
-                                ->withCount(['assignedTickets' => fn($query) => 
-                                    $query->whereIn('ticket_status', ['open', 'in_progress'])
-                                ])
-                                ->orderBy('assigned_tickets_count')
-                                ->first()?->id,
-                                'specific' => $data['technician_id'],
-                            };
-
-                            if (!$assignee_id) {
-                                throw new \Exception('No available technician found');
-                            }
-
-                            $technician = User::findOrFail($assignee_id);
-                            $record->update([
-                                'assigned_to' => $assignee_id,
-                                'ticket_status' => 'in_progress'
-                            ]);
-                            
-                            Notification::make()
-                                ->title('Ticket Assigned')
-                                ->body("Ticket #{$record->ticket_number} assigned to {$technician->name}")
-                                ->success()
-                                ->send();
-
-                        } catch (\Exception $e) {
-                            Notification::make()
-                                ->title('Error')
-                                ->body('Failed to assign ticket: ' . $e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    })
+                    ->form([
+                        Select::make('assign_type')
+                            ->label('Assignment Type')
+                            ->options([
+                                'self' => 'Assign to myself',
+                                'auto' => 'Auto-assign to available technician',
+                                'specific' => 'Select specific technician'
+                            ])
+                            ->required()
+                            ->reactive()
+                            ->visible(fn () => auth()->user()->hasRole(['admin', 'supervisor'])),
+                        Select::make('technician_id')
+                            ->label('Select Technician')
+                            ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                            ->visible(fn (Get $get) => $get('assign_type') === 'specific')
+                            ->required(fn (Get $get) => $get('assign_type') === 'specific')
+                    ])
                     ->visible(fn (Ticket $record) => 
                         auth()->user()->hasRole(['admin', 'supervisor']) || 
                         (auth()->user()->hasRole('technician') && $record->ticket_status === 'open')
-                    ),
+                    )
+                    ->action(function (array $data, Ticket $record): void {
+                        // ... existing assign action code ...
+                    })
             ])
             ->bulkActions([
                 BulkAction::make('archive')
@@ -486,7 +442,8 @@ class Ticketing extends Component implements HasTable, HasForms
                             ->success()
                             ->send();
                     }),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public function render()

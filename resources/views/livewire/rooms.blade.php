@@ -209,6 +209,10 @@
                                         wire:click="viewClassroomDetails({{ $classroom->id }})" tag="button">
                                         View Details
                                     </x-filament::button>
+                                    <x-filament::button size="sm"
+                                        wire:click="viewClassroomAssets({{ $classroom->id }})" tag="button">
+                                        View Assets
+                                    </x-filament::button>
                                     <x-filament::button size="xs"
                                         href="{{ route('filament.app.resources.subjects.edit', $classroom) }}"
                                         tag="a">
@@ -243,7 +247,7 @@
                 class="fixed inset-0 transition-opacity z-50 flex items-center justify-center bg-gray-900 bg-opacity-50"
                 style="display: none;">
                 <div
-                    class="rounded-lg shadow-xl transform transition-all w-full max-w-4xl max-h-[90vh] overflow-hidden dark:bg-gray-800 bg-white flex flex-col">
+                    class="rounded-lg shadow-xl transform transition-all w-full max-w-6xl max-h-[90vh] overflow-hidden dark:bg-gray-800 bg-white flex flex-col">
                     <!-- Header - Sticky -->
                     <div
                         class="px-4 py-3 sm:px-6 flex justify-between items-center sticky top-0 z-10 bg-white dark:bg-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
@@ -273,10 +277,9 @@
                                     <p class="text-gray-500 dark:text-gray-400 italic">No assets found for this
                                         classroom.</p>
                                 @else
-                                    <div style=""
-                                        class="overflow-y-auto h-[400px] table-container-new rounded-md border border-gray-200 dark:border-gray-600 col-span-full">
-                                        <table
-                                            class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 table-container">
+                                    <div
+                                        class="overflow-y-auto h-[400px] rounded-md border border-gray-200 dark:border-gray-600 w-full">
+                                        <table class="w-full divide-y divide-gray-200 dark:divide-gray-600">
                                             <thead class="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                                                 <tr>
                                                     <th scope="col"
@@ -308,7 +311,7 @@
                                             <tbody
                                                 class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                                                 @foreach ($currentClassroom->assetGroups as $assetGroup)
-                                                    <tr class="">
+                                                    <tr>
                                                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                                                             {{ $assetGroup->name }}
                                                         </td>
@@ -344,7 +347,11 @@
                     <!-- Footer - Sticky -->
                     <div x-show="show" x-transition:enter="transition ease-out delay-450 duration-300"
                         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                        class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
+                        class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-700 sticky bottom-0 gap-2">
+                        <x-filament::button href="{{ route('publicAssetsGroups', $currentClassroom->id) }}"
+                            tag="a" target="_blank" color="secondary" class="mr-2">
+                            View on page
+                        </x-filament::button>
                         <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomAssets(), 200)"
                             tag="button"
                             class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">

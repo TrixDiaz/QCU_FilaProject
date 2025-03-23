@@ -1,4 +1,4 @@
-<div class="container mx-auto py-6 px-4">
+<div class="container mx-auto pb-6 px-4">
     @if (!$classroom)
         <div class="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:text-red-200 dark:border-red-700 px-4 py-3 rounded relative"
             role="alert">
@@ -7,7 +7,8 @@
         </div>
     @else
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Assets in {{ $classroom->name ?? 'Classroom' }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Assets in {{ $classroom->name ?? 'Classroom' }}
+            </h1>
 
             <!-- QR Code Button -->
             <button onclick="generateQR('{{ url()->current() }}')"
@@ -27,7 +28,7 @@
                             d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                     </svg>
                 </div>
-                <input type="text" wire:model.live.debounce.300ms="search"
+                <input type="text" wire:model.live="search"
                     class="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Search assets by name or code..." />
             </div>
@@ -41,7 +42,7 @@
                 <p class="text-4xl font-bold text-gray-700 dark:text-gray-300">{{ $assetGroupsCount }}</p>
             </div>
 
-            {{-- <!-- Active Assets -->
+            <!-- Active Assets -->
             <div
                 class="bg-green-100 dark:bg-green-900 p-6 rounded-lg shadow-md border border-green-300 dark:border-green-700">
                 <h3 class="text-lg font-semibold text-green-700 dark:text-green-300 mb-2">Active Assets</h3>
@@ -52,7 +53,7 @@
             <div class="bg-red-100 dark:bg-red-900 p-6 rounded-lg shadow-md border border-red-300 dark:border-red-700">
                 <h3 class="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Inactive Assets</h3>
                 <p class="text-4xl font-bold text-red-800 dark:text-red-100">{{ $inactiveAssetsCount }}</p>
-            </div> --}}
+            </div>
         </div>
 
         @if ($assetGroups && $assetGroups->count() > 0)

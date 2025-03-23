@@ -65,112 +65,10 @@
     }
 }" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()">
     <style>
-        [x-cloak] {
-            display: none !important;
-        }
+        [x-cloak] { display: none !important; }
 
-        .sizePadding {
-            padding: 1.5rem;
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .fontSize {
-            font-size: 1rem;
-        }
-
-        .card-hover:hover {
-            transform: scale(1.02);
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Dark mode styles for SimpleMDE */
-        .dark .CodeMirror {
-            background-color: #1f2937;
-            color: #f3f4f6;
-            border-color: #374151;
-        }
-
-        .dark .CodeMirror-cursor {
-            border-left-color: #f3f4f6;
-        }
-
-        .dark .editor-toolbar {
-            background-color: #1f2937;
-            border-color: #374151;
-        }
-
-        .dark .editor-toolbar button {
-            color: #f3f4f6 !important;
-        }
-
-        .dark .editor-toolbar button:hover {
-            background-color: #374151;
-        }
-
-        .dark .editor-preview {
-            background-color: #1f2937;
-            color: #f3f4f6;
-        }
-
-        .dark .editor-preview-side {
-            background-color: #1f2937;
-            color: #f3f4f6;
-        }
-
-        /* Additional SimpleMDE customizations */
-        .CodeMirror {
-            min-height: 200px;
-            border-radius: 0.375rem;
-        }
-
-        .editor-toolbar {
-            border-top-left-radius: 0.375rem;
-            border-top-right-radius: 0.375rem;
-            opacity: 1;
-        }
-
-        /* Custom SimpleMDE styles */
-        .CodeMirror {
-            max-height: 200px !important;
-            min-height: 100px !important;
-            border-radius: 0.375rem;
-        }
-
-        .editor-toolbar {
-            border-top-left-radius: 0.375rem;
-            border-top-right-radius: 0.375rem;
-        }
-
-        .dark .CodeMirror-cursor {
-            border-left-color: #fff;
-        }
-
-        .dark .CodeMirror-selected {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .dark .CodeMirror-line {
-            color: #fff;
-        }
-
-        .dark .editor-toolbar a {
-            color: #fff !important;
-        }
-
-        /* Base styles */
-        .light-mode {
+        /* Theme Variables */
+        :root {
             --bg-primary: #ffffff;
             --bg-secondary: #f3f4f6;
             --text-primary: #111827;
@@ -179,7 +77,7 @@
             --hover-bg: #f9fafb;
         }
 
-        .dark-mode {
+        .dark {
             --bg-primary: #1f2937;
             --bg-secondary: #111827;
             --text-primary: #f9fafb;
@@ -188,96 +86,16 @@
             --hover-bg: #374151;
         }
 
-        /* SimpleMDE Light Mode */
-        .CodeMirror {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            border-color: var(--border-color);
-            border-radius: 0.375rem;
-            min-height: 100px !important;
-            max-height: 200px !important;
-        }
-
-        .editor-toolbar {
-            background-color: var(--bg-secondary);
-            border-color: var(--border-color);
-            border-top-left-radius: 0.375rem;
-            border-top-right-radius: 0.375rem;
-            opacity: 1;
-        }
-
-        .editor-toolbar button {
-            color: var(--text-primary) !important;
-        }
-
-        .editor-toolbar button:hover {
-            background-color: var(--hover-bg);
-        }
-
-        /* SimpleMDE Dark Mode */
-        .dark .CodeMirror {
+        /* Form Elements */
+        input, select, textarea {
             background-color: var(--bg-primary);
             color: var(--text-primary);
             border-color: var(--border-color);
         }
 
-        .dark .CodeMirror-cursor {
-            border-left-color: var(--text-primary);
-        }
-
-        .dark .editor-toolbar {
-            background-color: var(--bg-secondary);
-            border-color: var(--border-color);
-        }
-
-        .dark .editor-toolbar button {
-            color: var(--text-primary) !important;
-        }
-
-        .dark .editor-toolbar button:hover {
-            background-color: var(--hover-bg);
-        }
-
-        .dark .editor-preview,
-        .dark .editor-preview-side {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
-
-        /* Card and Button Styles */
-        .card-hover:hover {
-            transform: scale(1.02);
-            transition: transform 0.2s ease-in-out;
-            background-color: var(--hover-bg);
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .sizePadding {
-            padding: 1.5rem;
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        /* Selected Text Color */
-        .dark .CodeMirror-selected {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .dark .CodeMirror-line {
-            color: var(--text-primary);
+        input:focus, select:focus, textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
         }
 
         /* Modal Styles */
@@ -291,22 +109,75 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        /* Form Elements */
-        input, select, textarea {
+        /* Card Styles */
+        .card-hover {
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        }
+
+        .card-hover:hover {
+            transform: scale(1.02);
+            background-color: var(--hover-bg);
+        }
+
+        /* Button Grid */
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Size Padding */
+        .sizePadding {
+            padding: 1.5rem;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            border-color: var(--border-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
         }
 
-        input:focus, select:focus, textarea:focus {
-            border-color: #3b82f6;
-            ring-color: rgba(59, 130, 246, 0.5);
+        /* Notification Styles */
+        .notification {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .dark .notification {
+            background-color: var(--bg-secondary);
+        }
+
+        /* Table Styles */
+        .filament-tables-container {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .dark .filament-tables-container {
+            background-color: var(--bg-secondary);
+        }
+
+        .filament-tables-container {
+            @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm;
+        }
+        
+        .filament-tables-row {
+            @apply hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200;
+        }
+        
+        .filament-tables-header-cell {
+            @apply bg-gray-50 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider;
+        }
+        
+        .filament-tables-cell {
+            @apply text-sm text-gray-600 dark:text-gray-300;
         }
     </style>
-
-    <!-- Add these lines at the very top of your blade file, right after the opening div -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
-<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 
     <!-- Flash Messages -->
     <div x-data="{
@@ -326,12 +197,11 @@
         x-transition:leave-start="opacity-100 transform translate-x-0"
         x-transition:leave-end="opacity-0 transform translate-x-full" class="fixed top-4 right-4 z-50 max-w-sm"
         style="display:none;">
-        <div :class="{
-            'bg-green-50 border-green-400 text-green-700': type === 'success',
-            'bg-red-50 border-red-400 text-red-700': type === 'error',
-            'bg-blue-50 border-blue-400 text-blue-700': type === 'info'
-        }"
-            class="p-4 rounded-md border-l-4 shadow-md dark:bg-opacity-20">
+        <div class="notification p-4 rounded-md shadow-md" :class="{
+            'bg-green-50 dark:bg-green-900 border-green-400 text-green-700 dark:text-green-100': type === 'success',
+            'bg-red-50 dark:bg-red-900 border-red-400 text-red-700 dark:text-red-100': type === 'error',
+            'bg-blue-50 dark:bg-blue-900 border-blue-400 text-blue-700 dark:text-blue-100': type === 'info'
+        }">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
                     <svg x-show="type === 'success'" class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg"
@@ -368,7 +238,7 @@
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                 fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 010-1.414z"
+                                    d="M4.293 4.293a1 1 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L8.586 10 4.293 5.707a1 1 010-1.414z"
                                     clip-rule="evenodd" />
                             </svg>
                         </button>
@@ -604,7 +474,7 @@
                                 <span x-show="!['asset_request', 'general_inquiry', 'classroom_request'].includes(selectedType)">Issue Title</span>
                             </label>
                             <input type="text" id="title" wire:model.defer="title"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500"
                                 :placeholder="
                                     selectedType === 'asset_request' ? 'Enter request title...' :
                                     selectedType === 'general_inquiry' ? 'Enter inquiry title...' :
@@ -617,56 +487,15 @@
                         </div>
                         <div>
                             <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                            <div x-data="{ 
-                                editor: null,
-                                init() {
-                                    this.$nextTick(() => {
-                                        this.editor = new SimpleMDE({
-                                            element: this.$refs.description,
-                                            spellChecker: false,
-                                            status: false,
-                                            toolbar: ['bold', 'italic', '|', 'unordered-list', 'ordered-list', '|', 'preview'],
-                                            minHeight: '100px', // Reduced height
-                                            maxHeight: '200px', // Maximum height
-                                            placeholder: 'Describe your issue here...',
-                                            forceSync: true,
-                                            autoRefresh: true
-                                        });
-                                        
-                                        // Listen for template updates from Livewire
-                                        $wire.on('updateTemplate', (template) => {
-                                            if (this.editor) {
-                                                this.editor.value(template);
-                                            }
-                                        });
-                                        
-                                        // Set initial value if exists
-                                        if ($wire.get('description')) {
-                                            this.editor.value($wire.get('description'));
-                                        });
-                                        
-                                        // Update Livewire when content changes
-                                        this.editor.codemirror.on('change', () => {
-                                            $wire.set('description', this.editor.value());
-                                        });
-
-                                        // Apply dark mode styles
-                                        if (document.querySelector('html').classList.contains('dark')) {
-                                            this.editor.codemirror.setOption('theme', 'darkmode');
-                                        }
-                                    });
-                                }
-                            }" wire:ignore>
-                                <textarea x-ref="description" wire:model.defer="description" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm 
-                                    dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                            </div>
+                            <textarea 
+                                id="description" 
+                                wire:model.defer="description"
+                                rows="4" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500"
+                                placeholder="Describe your issue here..."></textarea>
                             @error('description')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
-                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                You can use markdown formatting to style your description
-                            </div>
                         </div>
 
                         <!-- Asset Dropdown -->
@@ -675,7 +504,7 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Related
                                 Asset</label>
                             <select id="asset_id" wire:model.defer="asset_id"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="">-- Select Asset (Optional) --</option>
                                 @forelse ($assets as $asset)
                                     <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->asset_tag }})
@@ -700,7 +529,7 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign to
                                 Technician</label>
                             <select id="assigned_to" wire:model.defer="assigned_to"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="">-- Auto-assign --</option>
                                 @foreach ($technicians as $tech)
                                     <option value="{{ $tech->id }}">{{ $tech->name }}</option>
@@ -715,7 +544,7 @@
                             <label for="priority"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
                             <select id="priority" wire:model.defer="priority"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
@@ -727,37 +556,74 @@
 
                         <!-- Classroom-specific fields -->
                         <div x-show="selectedType === 'classroom_request'" class="space-y-4">
-                            <div>
-                                <label for="classroom"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select
-                                    Classroom</label>
-                                <select id="classroom" wire:model.defer="classroom_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    <option value="">-- Select Classroom --</option>
-                                    @foreach ($classrooms as $classroom)
-                                        <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
-                                    @endforeach
-                                </select                                @error('classroom_id')
-                                    <span class="text-red-500 text-xs">{{ $message }}</span>
-                                @enderror
-                            </div>
+                        <div>
+        <label for="classroom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Classroom</label>
+        <select id="classroom" wire:model="classroom_id"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+            <option value="">-- Select Classroom --</option>
+            @foreach ($classrooms as $classroom)
+                <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
+            @endforeach
+        </select>
+        @error('classroom_id')
+            <span class="text-red-500 text-xs">{{ $message }}</span>
+        @enderror
+    </div>
 
-                            <div>
-                                <label for="section"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select
-                                    Section</label>
-                                <select id="section" wire:model.defer="section_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    <option value="">-- Select Section --</option>
-                                    @foreach ($sections as $section)
-                                        <option value="{{ $section->id }}">{{ $section->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('section_id')
-                                    <span class="text-red-500 text-xs">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
+    <div>
+        <label for="section" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Section</label>
+        <select id="section" wire:model="section_id"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+            <option value="">-- Select Section --</option>
+            @foreach ($sections as $section)
+                <option value="{{ $section->id }}">{{ $section->name }}</option>
+            @endforeach
+        </select>
+        @error('section_id')
+            <span class="text-red-500 text-xs">{{ $message }}</span>
+        @enderror
+    </div>
+    
+    <!-- Time selection fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="start_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
+            <input type="datetime-local" id="start_time" wire:model="start_time"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+            @error('start_time')
+                <span class="text-red-500 text-xs">{{ $message }}</span>
+            @enderror
+        </div>
+        
+        <div>
+            <label for="end_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
+            <input type="datetime-local" id="end_time" wire:model="end_time"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+            @error('end_time')
+                <span class="text-red-500 text-xs">{{ $message }}</span>
+            @enderror
+        </div>
+    </div>
+    
+    <!-- Time conflict warning -->
+    @if($timeConflictExists)
+    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                ❌
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700 dark:text-red-200 font-medium">
+                    Time Conflict Detected!
+                </p>
+                <p class="text-sm text-red-700 dark:text-red-200 mt-1">
+                    The selected classroom is already booked during this time period. Please select a different time or classroom.
+                </p>
+            </div>
+        </div>
+    </div>
+    @endif
+</div>
 
                         <div class="flex justify-end space-x-3 gap-4">
                             <x-filament::button outlined @click.prevent="step = 1" type="button"

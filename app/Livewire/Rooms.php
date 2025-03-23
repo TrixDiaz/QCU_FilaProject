@@ -316,8 +316,9 @@ class Rooms extends Component
     {
         $this->resetDeployForm();
 
-        // Get available computer assets that are not yet assigned to any group
+        // Get available computer assets that are not yet assigned to any group and have an 'available' status
         $this->availableAssets = Asset::whereDoesntHave('assetGroup')
+            ->where('status', 'available')  // Only show available assets
             ->whereHas('category', function ($query) {
                 $query->where('name', 'like', '%computer%');
             })
@@ -349,10 +350,13 @@ class Rooms extends Component
             'assetId' => 'required|exists:assets,id',
             'groupName' => 'required|string|max:255',
             'groupCode' => 'required|string|max:255|unique:assets_group,code',
-            'status' => 'required|in:available,in-use,maintenance,inactive',
+            'status' => 'required|in:active,maintenance,inactive,broken',
         ]);
 
         try {
+            // Start a database transaction
+            \DB::beginTransaction();
+
             // Create the asset group
             AssetGroup::create([
                 'asset_id' => $this->assetId,
@@ -361,6 +365,16 @@ class Rooms extends Component
                 'code' => $this->groupCode,
                 'status' => $this->status,
             ]);
+
+            // Update the asset status to 'deployed'
+            $asset = Asset::find($this->assetId);
+            if ($asset) {
+                $asset->status = 'deployed';
+                $asset->save();
+            }
+
+            // Commit the transaction
+            \DB::commit();
 
             // Show success notification
             session()->flash('message', 'Computer set deployed successfully!');
@@ -373,6 +387,8 @@ class Rooms extends Component
                 $this->viewClassroomAssets($this->currentClassroom->id);
             }
         } catch (\Exception $e) {
+            // Rollback the transaction if something goes wrong
+            \DB::rollBack();
             session()->flash('error', 'Error deploying computer set: ' . $e->getMessage());
         }
     }

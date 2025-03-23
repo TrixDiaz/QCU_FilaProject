@@ -1,7 +1,7 @@
 <div x-data="{
     showImportModal: false,
     showBulkEditModal: false,
-    confirmingBulkDelete: false,
+    confirmingBulkDelete: @entangle('confirmingBulkDelete'),
     toggleAllCheckboxes() {
         if ($wire.selectAll) {
             $wire.selected = [];
@@ -11,6 +11,24 @@
         }
     }
 }">
+
+ <!-- Bulk Delete Confirmation Modal -->
+ <div x-show="confirmingBulkDelete" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
+        <h3 class="text-lg font-medium mb-4">Confirm Bulk Archive</h3>
+        <p>Are you sure you want to archive the selected {{ count($selected) }} assets? This action cannot be undone.</p>
+        <div class="mt-6 flex justify-end space-x-3">
+            <x-filament::button type="button" color="gray" @click="confirmingBulkDelete = false">
+                Cancel
+            </x-filament::button>
+            <x-filament::button type="button" color="danger" wire:click="doBulkDelete">
+                Archive Assets
+            </x-filament::button>
+        </div>
+    </div>
+</div>
+
+
     <x-filament::section class="my-4">
         {{-- Search and Create Asset --}}
         <div class="grid grid-cols-1 gap-6 w-full">
@@ -440,19 +458,21 @@
                                 @endif
 
                                 <div class="mt-3 flex justify-end gap-2">
-                                    <x-filament::button
-                                        @click="$dispatch('open-deploy-modal', { 
-                                            assetId: {{ $asset->id }}, 
-                                            assetName: '{{ $asset->name }}',
-                                            assetCode: '{{ $asset->asset_code }}'
-                                        })"
-                                        class="text-sm hover:underline">
-                                        Deploy Asset
-                                    </x-filament::button>
-                                    <x-filament::button
-                                        href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
-                                        tag="a" class="text-sm hover:underline">Edit
-                                        Asset</x-filament::button>
+                                    @if(count($selected) < 2)
+                                        <x-filament::button
+                                            @click="$dispatch('open-deploy-modal', { 
+                                                assetId: {{ $asset->id }}, 
+                                                assetName: '{{ $asset->name }}',
+                                                assetCode: '{{ $asset->asset_code }}'
+                                            })"
+                                            class="text-sm hover:underline">
+                                            Deploy Asset
+                                        </x-filament::button>
+                                        <x-filament::button
+                                            href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
+                                            tag="a" class="text-sm hover:underline">Edit Asset
+                                        </x-filament::button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -478,17 +498,17 @@
                                 <x-filament::input.checkbox wire:model.live="selectAll" @click="toggleAllCheckboxes()"
                                     id="select-all-table" class="rounded" />
                             </x-filament-tables::header-cell>
-
+                    
                             @if (count($selected) >= 2)
                                 <x-filament-tables::header-cell scope="col" colspan="7" class="px-3 py-3">
                                     <div class="flex items-center gap-4">
                                         <span class="font-medium text-sm">{{ count($selected) }} selected</span>
-
+                    
                                         <x-filament::button wire:click="$set('selected', [])" size="sm"
                                             color="danger" outline>
                                             Clear
                                         </x-filament::button>
-
+                    
                                         <x-filament::input.wrapper>
                                             <x-filament::input.select wire:model.live="bulkAction"
                                                 class="rounded border-gray-300 shadow-sm">
@@ -498,11 +518,11 @@
                                                 <option value="export">Export Selected</option>
                                             </x-filament::input.select>
                                         </x-filament::input.wrapper>
-
+                    
                                         <x-filament::button wire:click="executeBulkAction" :disabled="empty($bulkAction)">
                                             Apply
                                         </x-filament::button>
-
+                    
                                         @error('bulkAction')
                                             <span
                                                 class="text-danger-500">{{ $message ?? 'Please select an action' }}</span>
@@ -522,14 +542,13 @@
                                 <x-filament-tables::header-cell scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     S/N</x-filament-tables::header-cell>
+                                <x-filament-tables::header-cell scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                    Tags</x-filament-tables::header-cell>
+                                <x-filament-tables::header-cell scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                    Action</x-filament-tables::header-cell>
                             @endif
-
-                            <x-filament-tables::header-cell scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Tags</x-filament-tables::header-cell>
-                            <x-filament-tables::header-cell scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                Action</x-filament-tables::header-cell>
                         </x-filament-tables::row>
                     </thead>
                     <tbody class="divide-y">
@@ -556,31 +575,33 @@
                                 <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ $asset->serial_number }}</div>
                                 </x-filament-tables::cell>
-                                <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex flex-wrap gap-1">
-                                        @foreach ($asset->assetTags as $tag)
-                                            <x-filament::badge>
-                                                <span class="text-xs">{{ $tag->name }}</span>
-                                            </x-filament::badge>
-                                        @endforeach
-                                    </div>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell
-                                    class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <x-filament::button
-                                        @click="$dispatch('open-deploy-modal', { 
-                                            assetId: {{ $asset->id }}, 
-                                            assetName: '{{ $asset->name }}',
-                                            assetCode: '{{ $asset->asset_code }}'
-                                        })"
-                                        class="text-sm hover:underline">
-                                        Deploy Asset
-                                    </x-filament::button>
-                                    <x-filament::button
-                                        href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
-                                        tag="a" class="text-sm hover:underline">Edit
-                                        Asset</x-filament::button>
-                                </x-filament-tables::cell>
+                                @if(count($selected) < 2)
+                                    <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach ($asset->assetTags as $tag)
+                                                <x-filament::badge>
+                                                    <span class="text-xs">{{ $tag->name }}</span>
+                                                </x-filament::badge>
+                                            @endforeach
+                                        </div>
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell
+                                        class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <x-filament::button
+                                            @click="$dispatch('open-deploy-modal', { 
+                                                assetId: {{ $asset->id }}, 
+                                                assetName: '{{ $asset->name }}',
+                                                assetCode: '{{ $asset->asset_code }}'
+                                            })"
+                                            class="text-sm hover:underline">
+                                            Deploy Asset
+                                        </x-filament::button>
+                                        <x-filament::button
+                                            href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
+                                            tag="a" class="text-sm hover:underline">Edit
+                                            Asset</x-filament::button>
+                                    </x-filament-tables::cell>
+                                @endif
                             </x-filament-tables::row>
                         @empty
                             <tr>

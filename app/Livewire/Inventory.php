@@ -284,11 +284,22 @@ class Inventory extends Component
 
     public function doBulkDelete()
     {
-        Asset::whereIn('id', $this->selected)->delete();
+        // Ensure selected assets are not empty
+        if (empty($this->selected)) {
+            $this->addError('bulkAction', 'Please select at least one asset');
+            return;
+        }
+    
+        // Perform the archiving by updating the status
+        Asset::whereIn('id', $this->selected)->update(['status' => 'archived']);
+    
+        // Reset the state
         $this->confirmingBulkDelete = false;
         $this->selected = [];
         $this->selectAll = false;
-        $this->dispatch('notify', ['message' => count($this->selected) . ' assets deleted successfully', 'type' => 'success']);
+    
+        // Notify the user
+        $this->dispatch('notify', ['message' => count($this->selected) . ' assets archived successfully', 'type' => 'success']);
     }
 
     public function openBulkEditModal()

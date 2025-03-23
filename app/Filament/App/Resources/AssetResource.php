@@ -97,6 +97,15 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->preload()
                             ->multiple()
                             ->native(false)
+                            ->visible(function (Forms\Get $get) {
+                                $categoryId = $get('category_id');
+                                if (!$categoryId) {
+                                    return true;
+                                }
+
+                                $category = \App\Models\Category::find($categoryId);
+                                return !($category && strtolower($category->name) === 'computer set');
+                            })
                             ->createOptionForm(\App\Services\DynamicForm::schema(\App\Models\AssetTag::class))
                             ->editOptionForm(function ($record) {
                                 // Always return the form schema, even for inactive/deleted records
@@ -104,7 +113,16 @@ class AssetResource extends Resource implements HasShieldPermissions
                             }),
                         Forms\Components\Toggle::make('show_expiry_date')
                             ->label('Add Expiry Date')
-                            ->reactive(),
+                            ->reactive()
+                            ->visible(function (Forms\Get $get) {
+                                $categoryId = $get('category_id');
+                                if (!$categoryId) {
+                                    return false;
+                                }
+
+                                $category = \App\Models\Category::find($categoryId);
+                                return $category && strtolower($category->name) === 'software';
+                            }),
                     ])->columns(2),
                 Forms\Components\Section::make()
                     ->schema([

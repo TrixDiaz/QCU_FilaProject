@@ -41,6 +41,14 @@ class Rooms extends Component
     public $assetCategories = [];
     public $showingClassroomAssets = false;
 
+    // Add these properties to your class
+    public $showingDeployComputerModal = false;
+    public $assetId = '';
+    public $groupName = '';
+    public $groupCode = '';
+    public $status = 'available';
+    public $availableAssets = [];
+
     // Add query string parameters
     protected $queryString = [
         'search' => ['except' => ''],
@@ -302,6 +310,88 @@ class Rooms extends Component
     public function assets()
     {
         return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    public function showDeployComputerModal()
+    {
+        $this->resetDeployForm();
+
+        // Get available computer assets that are not yet assigned to any group
+        $this->availableAssets = Asset::whereDoesntHave('assetGroup')
+            ->whereHas('category', function ($query) {
+                $query->where('name', 'like', '%computer%');
+            })
+            ->with(['category', 'brand'])
+            ->get();
+
+        $this->showingDeployComputerModal = true;
+    }
+
+    public function closeDeployComputerModal()
+    {
+        $this->showingDeployComputerModal = false;
+        $this->resetDeployForm();
+    }
+
+    public function resetDeployForm()
+    {
+        $this->assetId = '';
+        $this->groupName = '';
+        $this->groupCode = '';
+        $this->status = 'available';
+        $this->resetErrorBag();
+    }
+
+    public function deployComputerSet()
+    {
+        // Validate the form
+        $this->validate([
+            'assetId' => 'required|exists:assets,id',
+            'groupName' => 'required|string|max:255',
+            'groupCode' => 'required|string|max:255|unique:assets_group,code',
+            'status' => 'required|in:available,in-use,maintenance,inactive',
+        ]);
+
+        try {
+            // Create the asset group
+            AssetGroup::create([
+                'asset_id' => $this->assetId,
+                'classroom_id' => $this->currentClassroom->id,
+                'name' => $this->groupName,
+                'code' => $this->groupCode,
+                'status' => $this->status,
+            ]);
+
+            // Show success notification
+            session()->flash('message', 'Computer set deployed successfully!');
+
+            // Close modal and reset form
+            $this->closeDeployComputerModal();
+
+            // Refresh the classroom assets view if it's open
+            if ($this->showingClassroomAssets) {
+                $this->viewClassroomAssets($this->currentClassroom->id);
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error deploying computer set: ' . $e->getMessage());
+        }
+    }
+
+    public function updatedAssetId($value)
+    {
+        if (!empty($value)) {
+            // Find the selected asset
+            $asset = Asset::find($value);
+            if ($asset) {
+                // Generate a default group name based on asset name
+                $this->groupName = $asset->name . ' Set';
+
+                // Generate a default group code based on asset code/name
+                $code = $asset->code ?? substr(strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $asset->name)), 0, 4);
+                $randomNum = str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+                $this->groupCode = $code . '-' . $randomNum;
+            }
+        }
     }
 
     public function render()

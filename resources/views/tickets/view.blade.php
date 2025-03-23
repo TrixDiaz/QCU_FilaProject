@@ -26,9 +26,27 @@
 
         <div>
             <span class="font-medium">Status:</span>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ match($ticket->ticket_status) {
+                'open' => 'bg-blue-100 text-blue-800',
+                'in_progress' => 'bg-yellow-100 text-yellow-800',
+                'closed' => 'bg-green-100 text-green-800',
+                'archived' => 'bg-gray-100 text-gray-800',
+                default => 'bg-blue-100 text-blue-800'
+            } }}">
                 {{ ucfirst($ticket->ticket_status) }}
             </span>
+        </div>
+
+        <div>
+            <span class="font-medium">Created:</span>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{{ $ticket->created_at->format('M d, Y H:i') }}</p>
+        </div>
+
+        <div>
+            <span class="font-medium">Assigned To:</span>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+                {{ $ticket->assignedTo?->name ?? 'Unassigned' }}
+            </p>
         </div>
     </div>
 </div>

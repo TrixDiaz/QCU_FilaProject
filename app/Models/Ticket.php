@@ -13,31 +13,26 @@ class Ticket extends Model
 
     protected $fillable = [
         'ticket_number',
-        'asset_id',
-        'created_by',
-        'assigned_to',
-        'section_id',
         'title',
         'description',
-        'ticket_type',
-        'request_type',
         'priority',
-        'due_date',
-        'date_finished',
-        'attachments',
+        'type',
+        'subtype',
+        'asset_id',
+        'assigned_to',
+        'created_by',
+        'ticket_type',
         'ticket_status',
-        'created_at',
-        'updated_at',
-        'subject_id',
-        'starts_at',
-        'ends_at',
+        'classroom_id',
+        'section_id',
+        'start_time',
+        'end_time',
     ];
-
 
     protected $casts = [
         'attachments' => 'array',
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
         'ticket_status' => 'string',
     ];
 
@@ -56,6 +51,13 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    /**
+     * Get the technician assigned to this ticket
+     */
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
 
     public function section(): BelongsTo
     {

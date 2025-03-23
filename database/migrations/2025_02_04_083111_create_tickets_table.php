@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('subject_id')->nullable()->constrained('subjects')->onDelete('cascade');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('classroom_id')->nullable()->constrained('classrooms')->onDelete('cascade');
             $table->string('title');
             $table->json('description')->nullable();
             $table->enum('ticket_type', [
@@ -31,8 +32,8 @@ return new class extends Migration
             $table->string('priority')->default('low');
             $table->string('ticket_status')->default('open');
             $table->json('attachments')->nullable();
-            $table->dateTime('starts_at')->nullable();
-            $table->dateTime('ends_at')->nullable();
+            $table->dateTime('start_time')->nullable();
+            $table->dateTime('end_time')->nullable();
             $table->timestamps();
         });
     }

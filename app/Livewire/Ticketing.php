@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Classroom;
 use App\Models\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Get;
@@ -24,6 +26,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\Indicator;
+use Carbon\Carbon;
 
 class Ticketing extends Component implements HasTable, HasForms
 {
@@ -40,6 +47,9 @@ class Ticketing extends Component implements HasTable, HasForms
     public $assigned_to = null;
     public $classroom_id = null;
     public $section_id = null;
+    public $start_time;
+    public $end_time;
+    public $timeConflictExists = false;
     
     // Data Collections
     public $classrooms = [];
@@ -112,6 +122,64 @@ class Ticketing extends Component implements HasTable, HasForms
         }
     }
 
+    public function updatedClassroomId()
+    {
+        $this->checkTimeConflict();
+    }
+    
+    public function updatedStartTime()
+    {
+        $this->checkTimeConflict();
+    }
+    
+    public function updatedEndTime()
+    {
+        $this->checkTimeConflict();
+    }
+    
+    protected function checkTimeConflict()
+    {
+        // Reset conflict flag
+        $this->timeConflictExists = false;
+        
+        // Only check if we have all required values
+        if (!$this->classroom_id || !$this->start_time || !$this->end_time) {
+            return;
+        }
+        
+        // Parse times
+        $start = Carbon::parse($this->start_time);
+        $end = Carbon::parse($this->end_time);
+        
+        // Validate end is after start
+        if ($end->lte($start)) {
+            return;
+        }
+        
+        // Check for existing bookings
+        $existingBookings = Ticket::where('classroom_id', $this->classroom_id)
+            ->where('ticket_type', 'classroom_request')
+            ->where(function ($query) use ($start, $end) {
+                // Find any booking where:
+                // 1. The existing booking starts during our time slot
+                // 2. The existing booking ends during our time slot
+                // 3. The existing booking completely encompasses our time slot
+                $query->where(function ($q) use ($start, $end) {
+                    $q->where('start_time', '>=', $start)
+                      ->where('start_time', '<', $end);
+                })->orWhere(function ($q) use ($start, $end) {
+                    $q->where('end_time', '>', $start)
+                      ->where('end_time', '<=', $end);
+                })->orWhere(function ($q) use ($start, $end) {
+                    $q->where('start_time', '<=', $start)
+                      ->where('end_time', '>=', $end);
+                });
+            })
+            ->get();
+        
+        $this->timeConflictExists = $existingBookings->count() > 0;
+    }
+
     /**
      * Filter assets based on the selected subtype
      */
@@ -135,7 +203,6 @@ class Ticketing extends Component implements HasTable, HasForms
             $this->loadAssets();
         }
     }
-
 
     protected function generateTicketContent()
     {
@@ -224,6 +291,9 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->assigned_to = null;
         $this->classroom_id = null;
         $this->section_id = null;
+        $this->start_time = null;
+        $this->end_time = null;
+        $this->timeConflictExists = false;
         $this->showTicketForm = false;
         $this->resetErrorBag();
 
@@ -234,17 +304,30 @@ class Ticketing extends Component implements HasTable, HasForms
     // Update the submitTicket method
     public function submitTicket()
     {
-        $this->validate();
+        $rules = [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+        ];
+
+        if ($this->selectedType === 'classroom_request') {
+            $rules['classroom_id'] = 'required|exists:classrooms,id';
+            $rules['section_id'] = 'required|exists:sections,id';
+            $rules['start_time'] = 'required|date';
+            $rules['end_time'] = 'required|date|after:start_time';
+            
+            $this->checkTimeConflict();
+            
+            if ($this->timeConflictExists) {
+                session()->flash('error', 'Cannot book the classroom due to a time conflict.');
+                return;
+            }
+        }
+
+        $this->validate($rules);
 
         try {
             $ticketNumber = $this->generateTicketNumber();
-            $ticketType = match ($this->selectedType) {
-                'asset_request', 'classroom_request', 'general_inquiry' => 'request',
-                default => 'incident'
-            };
-
-            // For professors, ticket starts with no assignment
-            $isTeacherRole = auth()->user()->hasRole('professor');
             
             $ticket = Ticket::create([
                 'ticket_number' => $ticketNumber,
@@ -253,13 +336,15 @@ class Ticketing extends Component implements HasTable, HasForms
                 'priority' => $this->priority,
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
+                'ticket_type' => in_array($this->selectedType, ['asset_request', 'classroom_request', 'general_inquiry']) ? 'request' : 'incident',
+                'ticket_status' => 'open',
                 'asset_id' => $this->asset_id,
-                'assigned_to' => $isTeacherRole ? null : $this->assigned_to, // No assignment for professors
-                'created_by' => Auth::id(),
-                'ticket_type' => $ticketType,
-                'ticket_status' => 'open', // Always starts as open
+                'assigned_to' => auth()->user()->hasRole('professor') ? null : $this->assigned_to,
+                'created_by' => auth()->id(),
                 'classroom_id' => $this->classroom_id,
                 'section_id' => $this->section_id,
+                'start_time' => $this->start_time,
+                'end_time' => $this->end_time,
             ]);
 
             $this->resetForm();
@@ -316,27 +401,36 @@ class Ticketing extends Component implements HasTable, HasForms
     public function table(Table $table): Table
     {
         return $table
-            ->query(Ticket::query()->latest()) // Add latest() to sort by created_at in descending order
+            ->query(Ticket::query()->with('assignedTo')->latest())
             ->columns([
                 TextColumn::make('ticket_number')
                     ->label('Ticket No.')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->size('sm')
+                    ->color('primary'),
+                    
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
-                    ->limit(30),
+                    ->limit(30)
+                    ->size('sm')
+                    ->wrap(),
+                    
                 TextColumn::make('priority')
                     ->badge()
+                    ->size('sm')
                     ->color(fn (string $state): string => match ($state) {
                         'high' => 'danger',
                         'medium' => 'warning',
                         'low' => 'success',
                         default => 'info'
                     }),
+                    
                 TextColumn::make('ticket_status')
                     ->label('Status')
                     ->badge()
+                    ->size('sm')
                     ->color(fn (string $state): string => match ($state) {
                         'open' => 'info',
                         'in_progress' => 'warning',
@@ -345,11 +439,106 @@ class Ticketing extends Component implements HasTable, HasForms
                         'archived' => 'gray',
                         default => 'info'
                     }),
+                    
+                TextColumn::make('assignedTo.name')
+                    ->label('Assigned To')
+                    ->formatStateUsing(fn ($record) => $record->assigned_to ? $record->assignedTo?->name : 'Unassigned')
+                    ->searchable(query: function ($query, $search) {
+                        return $query->whereHas('assignedTo', fn ($q) => 
+                            $q->where('name', 'like', "%{$search}%")
+                        );
+                    })
+                    ->sortable()
+                    ->size('sm'),
+                    
                 TextColumn::make('created_at')
                     ->label('Created')
-                    ->dateTime()
-                    ->sortable(),
+                    ->dateTime('M d, Y H:i')
+                    ->sortable()
+                    ->size('sm')
             ])
+            ->striped()
+            ->defaultSort('created_at', 'desc')
+            ->paginated([10, 25, 50, 100])
+            ->filters([
+                SelectFilter::make('priority')
+                    ->options([
+                        'high' => 'High',
+                        'medium' => 'Medium',
+                        'low' => 'Low',
+                    ])
+                    ->placeholder('All Priorities')
+                    ->label('Priority')
+                    ->indicator('Priority'),
+
+                SelectFilter::make('ticket_status')
+                    ->options([
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'resolved' => 'Resolved',
+                        'closed' => 'Closed',
+                        'archived' => 'Archived',
+                    ])
+                    ->placeholder('All Statuses')
+                    ->label('Status')
+                    ->indicator('Status'),
+
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from')
+                            ->label('Created From'),
+                        DatePicker::make('created_until')
+                            ->label('Created Until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        
+                        if ($data['created_from'] ?? null) {
+                            $indicators[] = Indicator::make('Created from ' . Carbon::parse($data['created_from'])->toFormattedDateString())
+                                ->removeField('created_from');
+                        }
+                        
+                        if ($data['created_until'] ?? null) {
+                            $indicators[] = Indicator::make('Created until ' . Carbon::parse($data['created_until'])->toFormattedDateString())
+                                ->removeField('created_until');
+                        }
+                        
+                        return $indicators;
+                    }),
+
+                SelectFilter::make('assigned_to')
+                    ->relationship('assignedTo', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Technicians')
+                    ->label('Assigned To')
+                    ->indicator('Assigned'),
+
+                SelectFilter::make('type')
+                    ->options([
+                        'hardware' => 'Hardware',
+                        'internet' => 'Internet',
+                        'application' => 'Application',
+                        'asset_request' => 'Asset Request',
+                        'classroom_request' => 'Classroom Request',
+                        'general_inquiry' => 'General Inquiry',
+                    ])
+                    ->placeholder('All Categories')
+                    ->label('Category')
+                    ->indicator('Category'),
+            ])
+            ->filtersFormColumns(3)
             ->actions([
                 \Filament\Tables\Actions\Action::make('view')
                     ->icon('heroicon-m-eye')
@@ -358,31 +547,83 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->modalContent(fn (Ticket $record) => view(
                         'tickets.view',
                         ['ticket' => $record]
-                    )),
+                    ))
+                    ->modalFooter(fn () => null) // This removes the footer with submit button
+                    ->modalWidth('md')
+                    ->modalSubmitAction(false) // Explicitly disable submit button
+                    ->modalCancelAction(fn ($action) => $action->label('Close')),
+
                 \Filament\Tables\Actions\Action::make('edit')
                     ->icon('heroicon-m-pencil-square')
                     ->color('warning')
                     ->button()
-                    ->modalContent(fn (Ticket $record) => view(
-                        'tickets.edit',
-                        [
-                            'ticket' => $record,
-                            'technicians' => User::role('technician')->get()
-                        ]
-                    )),
+                    ->modalWidth('md')
+                    ->form([
+                        TextInput::make('title')
+                            ->required()
+                            ->maxLength(255),
+                        Textarea::make('description')
+                            ->required()
+                            ->rows(4),
+                        Select::make('priority')
+                            ->options([
+                                'low' => 'Low',
+                                'medium' => 'Medium',
+                                'high' => 'High',
+                            ])
+                            ->required(),
+                        Select::make('ticket_status')
+                            ->options([
+                                'open' => 'Open',
+                                'in_progress' => 'In Progress',
+                                'closed' => 'Closed',
+                                'archived' => 'Archived',
+                            ])
+                            ->required(),
+                        Select::make('assigned_to')
+                            ->label('Assigned To')
+                            ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                            ->nullable()
+                            ->placeholder('-- Unassigned --')
+                    ])
+                    ->fillForm(function (Ticket $record): array {
+                        return [
+                            'title' => $record->title,
+                            'description' => $record->description,
+                            'priority' => $record->priority,
+                            'ticket_status' => $record->ticket_status,
+                            'assigned_to' => $record->assigned_to,
+                        ];
+                    })
+                    ->action(function (Ticket $record, array $data): void {
+                        $record->update([
+                            'title' => $data['title'],
+                            'description' => $data['description'],
+                            'priority' => $data['priority'],
+                            'ticket_status' => $data['ticket_status'],
+                            'assigned_to' => $data['assigned_to'],
+                        ]);
+
+                        Notification::make()
+                            ->title('Ticket Updated Successfully')
+                            ->success()
+                            ->send();
+                    }),
+
                 \Filament\Tables\Actions\Action::make('assign')
                     ->icon('heroicon-m-user-plus')
                     ->color('success')
                     ->button()
                     ->label(fn (Ticket $record) => 
                         is_null($record->assigned_to) ? 
-                            (auth()->user()->hasRole('technician') ? 'Claim' : 'Assign') : 
-                            'Reassign'
+                        (auth()->user()->hasRole('technician') ? 'Claim' : 'Assign') : 
+                        'Reassign'
                     )
+                    ->modalContent(fn (Ticket $record) => view('path.to.assign', ['ticket' => $record]))
                     ->modalHeading(fn (Ticket $record) => 
                         is_null($record->assigned_to) ? 
-                            (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign Ticket') : 
-                            'Reassign Ticket'
+                        (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign Ticket') : 
+                        'Reassign Ticket'
                     )
                     ->form([
                         Select::make('assign_type')
@@ -402,17 +643,33 @@ class Ticketing extends Component implements HasTable, HasForms
                             ->required(fn (Get $get) => $get('assign_type') === 'specific')
                     ])
                     ->visible(fn (Ticket $record) => 
-                        auth()->user()->hasRole(['admin', 'supervisor']) || 
-                        (auth()->user()->hasRole('technician') && $record->ticket_status === 'open')
+                        auth()->user()->hasRole(['admin', 'supervisor', 'technician'])
                     )
                     ->action(function (array $data, Ticket $record): void {
-                        // ... existing assign action code ...
+                        $technician_id = match ($data['assign_type'] ?? 'self') {
+                            'self' => auth()->id(),
+                            'auto' => User::role('technician')
+                                ->inRandomOrder()
+                                ->first()
+                                ->id,
+                            'specific' => $data['technician_id'],
+                        };
+
+                        $record->update([
+                            'assigned_to' => $technician_id,
+                            'ticket_status' => 'in_progress'
+                        ]);
+
+                        Notification::make()
+                            ->title('Ticket Assigned Successfully')
+                            ->success()
+                            ->send();
                     })
             ])
             ->bulkActions([
                 BulkAction::make('archive')
                     ->label('Archive Selected')
-                    ->icon('heroicon-m-archive-box') // Changed from o-archive to m-archive-box
+                    ->icon('heroicon-m-archive-box')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->modalHeading('Archive Selected Tickets')

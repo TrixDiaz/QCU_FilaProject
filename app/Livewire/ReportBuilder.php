@@ -41,7 +41,7 @@ class ReportBuilder extends Component implements HasForms
         'terminals' => [],
     ];
     public $moduleFields = [
-        'inventory' => ['category_id', 'brand_id', 'name', 'asset_code', 'serial_number', 'expiry_date', 'status'],
+        'inventory' => ['category', 'brand', 'name', 'asset_code', 'serial_number', 'expiry_date', 'status'],
         'users' => ['name', 'email', 'approval_status', 'created_at', 'updated_at'],
         'classroom_assets' => ['classroom_id', 'asset_group_id', 'name', 'code', 'status', 'quantity'],
         'classroom_schedule' => ['classroom_id', 'subject_name', 'subject_code', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
@@ -155,7 +155,7 @@ class ReportBuilder extends Component implements HasForms
         $this->availableFields = $this->moduleFields[$this->selectedModule];
 
         $this->selectedFields = match ($this->selectedModule) {
-            'inventory' => ['name', 'category_id', 'brand_id', 'status'],
+            'inventory' => ['name', 'category', 'brand', 'status', 'asset_code'],
             'users' => ['name', 'email', 'approval_status'],
             'classroom_assets' => ['classroom_id', 'name', 'code', 'quantity'],
             'classroom_schedule' => ['classroom_id', 'subject_name', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
@@ -244,11 +244,11 @@ class ReportBuilder extends Component implements HasForms
         $query = Asset::query();
         
         // Add necessary relationships based on selected fields
-        if (in_array('category_id', $this->selectedFields)) {
+        if (in_array('category', $this->selectedFields)) {
             $query->with('category');
         }
         
-        if (in_array('brand_id', $this->selectedFields)) {
+        if (in_array('brand', $this->selectedFields)) {
             $query->with('brand');
         }
 
@@ -272,7 +272,34 @@ class ReportBuilder extends Component implements HasForms
             $query->whereIn('brand_id', $this->filters['brands']);
         }
 
-        return $query;
+        // Create a custom collection class that implements get()
+        return new class($query) {
+            protected $query;
+            
+            public function __construct($query) {
+                $this->query = $query;
+            }
+            
+            public function get() {
+                return $this->query->get()->map(function ($asset) {
+                    return (object) [
+                        'id' => $asset->id,
+                        'name' => $asset->name,
+                        'category' => optional($asset->category)->name,
+                        'brand' => optional($asset->brand)->name,
+                        'status' => $asset->status,
+                        'asset_code' => $asset->asset_code ?? 'N/A',
+                        'serial_number' => $asset->serial_number ?? 'N/A',
+                        'quantity' => $asset->quantity ?? 1,
+                        'expiry_date' => $asset->expiry_date 
+                            ? (is_string($asset->expiry_date) 
+                                ? $asset->expiry_date 
+                                : $asset->expiry_date->format('Y-m-d'))
+                            : 'N/A',
+                    ];
+                });
+            }
+        };
     }
 
     private function queryUsers()
@@ -294,8 +321,8 @@ class ReportBuilder extends Component implements HasForms
 
     private function queryClassroomAssets()
     {
-        // Using AssetGroup instead of Asset directly based on your Rooms.php structure
-        $query = AssetGroup::query()->with(['assets.category', 'assets.brand', 'classroom']);
+        $query = AssetGroup::query()
+            ->with(['classroom']); // We only need classroom relationship
         
         if (!empty($this->filters['classrooms'])) {
             $query->whereIn('classroom_id', $this->filters['classrooms']);
@@ -311,153 +338,152 @@ class ReportBuilder extends Component implements HasForms
             }
         }
         
-        // Transform results for display purposes
-        $query->get()->map(function ($assetGroup) {
-            // Add fields for display
-            $assetGroup->setAttribute('classroom_name', optional($assetGroup->classroom)->name ?? 'N/A');
-            return $assetGroup;
-        });
-        
-        return $query;
+        return new class($query) {
+            protected $query;
+            
+            public function __construct($query) {
+                $this->query = $query;
+            }
+            
+            public function get() {
+                return $this->query->get()->map(function ($assetGroup) {
+                    return (object) [
+                        'id' => $assetGroup->id,
+                        'classroom_id' => optional($assetGroup->classroom)->name,
+                        'name' => $assetGroup->name,
+                        'code' => $assetGroup->code,
+                        'quantity' => 1, // Set to 1 since each record represents one asset group
+                        'asset_group_id' => $assetGroup->id,
+                        'status' => $assetGroup->status
+                    ];
+                });
+            }
+        };
     }
 
     private function queryClassroomSchedule()
-{
-    // Use Subject model for schedules 
-    $query = Subject::query()->with(['professor']);
-    
-    // Filter by school year if specified
-    if (!empty($this->filters['school_years'])) {
-        $query->whereIn('school_year', $this->filters['school_years']);
-    }
-    
-    // Filter by semester if specified
-    if (!empty($this->filters['semesters'])) {
-        $query->whereIn('semester', $this->filters['semesters']);
-    }
-    
-    // Filter by classroom if specified
-    if (!empty($this->filters['classrooms'])) {
-        $query->whereHas('classroom', function ($q) {
-            $q->whereIn('id', $this->filters['classrooms']);
-        });
-    }
-    
-    // Date filtering
-    if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
-        try {
-            $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
-            $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
-            $query->where(function($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
-            });
-        } catch (\Exception $e) {
-            Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
-        }
-    }
-    
-    // Get the subjects and transform to the format we need
-    $subjects = $query->get();
-    $scheduleCollection = collect();
-    
-    foreach ($subjects as $subject) {
-        // Create a schedule data object for each subject
-        $scheduleData = new \stdClass();
-        $scheduleData->classroom_id = $subject->classroom_id ?? null;
-        $scheduleData->subject_name = $subject->name;
-        $scheduleData->subject_code = $subject->subject_code;
-        $scheduleData->professor = optional($subject->professor)->name ?? 'N/A';
-        $scheduleData->day = $subject->day;
-        $scheduleData->start_time = optional($subject->lab_time_starts_at)->format('H:i:s');
-        $scheduleData->end_time = optional($subject->lab_time_ends_at)->format('H:i:s');
-        $scheduleData->school_year = $subject->school_year;
-        $scheduleData->semester = $subject->semester;
+    {
+        $query = Subject::query()
+            ->with(['professor', 'classroom']); // Make sure we load classroom relationship
         
-        // Add to our collection
-        $scheduleCollection->push($scheduleData);
-    }
-    
-    // Return the collection as a query builder that will get executed
-    return new class($scheduleCollection) {
-        protected $collection;
-        
-        public function __construct($collection) {
-            $this->collection = $collection;
+        // Filter by school year if specified
+        if (!empty($this->filters['school_years'])) {
+            $query->whereIn('school_year', $this->filters['school_years']);
         }
         
-        public function get() {
-            return $this->collection;
+        // Filter by semester if specified
+        if (!empty($this->filters['semesters'])) {
+            $query->whereIn('semester', $this->filters['semesters']);
         }
-    };
-}
+        
+        // Filter by classroom if specified
+        if (!empty($this->filters['classrooms'])) {
+            $query->whereIn('classroom_id', $this->filters['classrooms']);
+        }
+        
+        // Date filtering
+        if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
+            try {
+                $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
+                $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } catch (\Exception $e) {
+                Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
+            }
+        }
+        
+        return new class($query) {
+            protected $query;
+            
+            public function __construct($query) {
+                $this->query = $query;
+            }
+            
+            public function get() {
+                return $this->query->get()->map(function ($subject) {
+                    return (object) [
+                        'classroom_id' => optional($subject->classroom)->name ?? 'Unassigned',
+                        'subject_name' => $subject->name,
+                        'subject_code' => $subject->subject_code,
+                        'professor' => optional($subject->professor)->name ?? 'Unassigned',
+                        'day' => $subject->day,
+                        'start_time' => optional($subject->lab_time_starts_at)->format('H:i:s'),
+                        'end_time' => optional($subject->lab_time_ends_at)->format('H:i:s'),
+                        'school_year' => $subject->school_year,
+                        'semester' => $subject->semester
+                    ];
+                });
+            }
+        };
+    }
 
-private function queryAttendance()
-{
-    // Start with base query
-    $query = \App\Models\Attendance::query()->with(['subject.professor']);
-    
-    // Date range filtering
-    if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
-        try {
-            $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
-            $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
-        } catch (\Exception $e) {
-            Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
-        }
-    }
-    
-    // School year filtering
-    if (!empty($this->filters['school_years'])) {
-        $query->forSchoolYear($this->filters['school_years']);
-    }
-    
-    // Semester filtering
-    if (!empty($this->filters['semesters'])) {
-        $query->forSemester($this->filters['semesters']);
-    }
-    
-    // Professor filtering
-    if (!empty($this->filters['professors'])) {
-        $query->forProfessor($this->filters['professors']);
-    }
-    
-    // Transform results for display
-    $attendanceCollection = collect();
-    $attendanceData = $query->get();
-    
-    foreach ($attendanceData as $record) {
-        $data = new \stdClass();
-        $data->student_full_name = $record->student_full_name;
-        $data->student_email = $record->student_email;
-        $data->student_number = $record->student_number;
-        $data->terminal_number = $record->terminal_number;
-        $data->subject_id = $record->subject_id;
-        $data->subject_name = optional($record->subject)->name ?? 'N/A';
-        $data->subject_code = optional($record->subject)->subject_code ?? 'N/A';
-        $data->peripherals = $record->peripherals;
-        $data->remarks = $record->remarks ?? '';
-        $data->created_at = optional($record->created_at)->format('Y-m-d H:i:s') ?? 'N/A';
-        $data->professor_name = optional($record->subject->professor)->name ?? 'N/A';
-        $data->school_year = optional($record->subject)->school_year ?? 'N/A';
-        $data->semester = optional($record->subject)->semester ?? 'N/A';
+    private function queryAttendance()
+    {
+        // Start with base query
+        $query = \App\Models\Attendance::query()->with(['subject.professor']);
         
-        $attendanceCollection->push($data);
-    }
-    
-    // Return the collection wrapped in a class that implements a get() method
-    return new class($attendanceCollection) {
-        protected $collection;
-        
-        public function __construct($collection) {
-            $this->collection = $collection;
+        // Date range filtering
+        if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
+            try {
+                $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
+                $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } catch (\Exception $e) {
+                Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
+            }
         }
         
-        public function get() {
-            return $this->collection;
+        // School year filtering
+        if (!empty($this->filters['school_years'])) {
+            $query->forSchoolYear($this->filters['school_years']);
         }
-    };
-}
+        
+        // Semester filtering
+        if (!empty($this->filters['semesters'])) {
+            $query->forSemester($this->filters['semesters']);
+        }
+        
+        // Professor filtering
+        if (!empty($this->filters['professors'])) {
+            $query->forProfessor($this->filters['professors']);
+        }
+        
+        // Transform results for display
+        $attendanceCollection = collect();
+        $attendanceData = $query->get();
+        
+        foreach ($attendanceData as $record) {
+            $data = new \stdClass();
+            $data->student_full_name = $record->student_full_name;
+            $data->student_email = $record->student_email;
+            $data->student_number = $record->student_number;
+            $data->terminal_number = $record->terminal_number;
+            $data->subject_id = $record->subject_id;
+            $data->subject_name = optional($record->subject)->name ?? 'N/A';
+            $data->subject_code = optional($record->subject)->subject_code ?? 'N/A';
+            $data->peripherals = $record->peripherals;
+            $data->remarks = $record->remarks ?? '';
+            $data->created_at = optional($record->created_at)->format('Y-m-d H:i:s') ?? 'N/A';
+            $data->professor_name = optional($record->subject->professor)->name ?? 'N/A';
+            $data->school_year = optional($record->subject)->school_year ?? 'N/A';
+            $data->semester = optional($record->subject)->semester ?? 'N/A';
+            
+            $attendanceCollection->push($data);
+        }
+        
+        // Return the collection wrapped in a class that implements a get() method
+        return new class($attendanceCollection) {
+            protected $collection;
+            
+            public function __construct($collection) {
+                $this->collection = $collection;
+            }
+            
+            public function get() {
+                return $this->collection;
+            }
+        };
+    }
 
     public function printReport()
     {

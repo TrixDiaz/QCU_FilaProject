@@ -1,34 +1,66 @@
 <div class="p-4 space-y-4">
-    <div>
-        <h3 class="text-lg font-medium">Ticket Details</h3>
-        <p class="text-sm text-gray-500">{{ $ticket->ticket_number }}</p>
-    </div>
-
-    <div class="space-y-2">
-        <div>
-            <span class="font-medium">Title:</span>
-            <p>{{ $ticket->title }}</p>
-        </div>
-        
-        <div>
-            <span class="font-medium">Description:</span>
-            <div class="prose dark:prose-invert">
-                {!! is_array($ticket->description) ? Str::markdown(implode("\n", $ticket->description)) : Str::markdown($ticket->description) !!}
+    <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Ticket Number</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ $ticket->ticket_number }}</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Status</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ ucfirst($ticket->ticket_status) }}</p>
             </div>
         </div>
 
         <div>
-            <span class="font-medium">Priority:</span>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $ticket->priority === 'high' ? 'bg-red-100 text-red-800' : ($ticket->priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
-                {{ ucfirst($ticket->priority) }}
-            </span>
+            <h3 class="text-sm font-medium text-gray-500">Title</h3>
+            <p class="mt-1 text-sm text-gray-900">{{ $ticket->title }}</p>
         </div>
 
         <div>
-            <span class="font-medium">Status:</span>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {{ ucfirst($ticket->ticket_status) }}
-            </span>
+            <h3 class="text-sm font-medium text-gray-500">Description</h3>
+            <div class="mt-1 text-sm text-gray-900 prose max-w-none">
+                {!! nl2br(e($ticket->description)) !!}
+            </div>
+        </div>
+
+        @if($ticket->type === 'classroom_request')
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Classroom</h3>
+                    <p class="mt-1 text-sm text-gray-900">{{ $ticket->classroom?->name ?? 'N/A' }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Section</h3>
+                    <p class="mt-1 text-sm text-gray-900">{{ $ticket->section?->name ?? 'N/A' }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Start Time</h3>
+                    <p class="mt-1 text-sm text-gray-900">{{ $ticket->start_time ? $ticket->start_time->format('M d, Y H:i') : 'N/A' }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">End Time</h3>
+                    <p class="mt-1 text-sm text-gray-900">{{ $ticket->end_time ? $ticket->end_time->format('M d, Y H:i') : 'N/A' }}</p>
+                </div>
+            </div>
+        @endif
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Created By</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ $ticket->creator?->name ?? 'N/A' }}</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Assigned To</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ $ticket->assignedTo?->name ?? 'Unassigned' }}</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Created At</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ $ticket->created_at->format('M d, Y H:i') }}</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Updated At</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ $ticket->updated_at->format('M d, Y H:i') }}</p>
+            </div>
         </div>
     </div>
 </div>

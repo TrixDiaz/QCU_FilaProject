@@ -11,7 +11,7 @@ class PublicAssetGroup extends Component
     public $classroomId;
     public $classroom;
     public $assetGroups;
-    public $search = ''; // Add search property
+    public $search = '';
 
     public function mount($classroomId)
     {
@@ -24,31 +24,40 @@ class PublicAssetGroup extends Component
         $this->classroom = Classroom::find($this->classroomId);
 
         if (!$this->classroom) {
-            return redirect()->route('welcome')->with('error', 'Classroom not found');
+            return;
         }
 
         $query = AssetGroup::where('classroom_id', $this->classroomId);
 
         // Apply search filter if search term exists
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('code', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('assets', function ($assetQuery) {
-                        $assetQuery->where('name', 'like', '%' . $this->search . '%')
-                            ->orWhere('code', 'like', '%' . $this->search . '%');
+        if (!empty(trim($this->search))) {
+            $searchTerm = '%' . trim($this->search) . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                    ->orWhere('code', 'like', $searchTerm)
+                    ->orWhereHas('classroomAsset', function ($assetQuery) use ($searchTerm) {
+                        $assetQuery->where('name', 'like', $searchTerm)
+                            ->orWhere('asset_code', 'like', $searchTerm)
+                            ->orWhere('serial_number', 'like', $searchTerm)
+                            ->orWhereHas('brand', function ($brandQuery) use ($searchTerm) {
+                                $brandQuery->where('name', 'like', $searchTerm);
+                            })
+                            ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
+                                $categoryQuery->where('name', 'like', $searchTerm);
+                            });
                     });
             });
         }
 
-        $this->assetGroups = AssetGroup::where('classroom_id', $this->classroomId)
-            ->with(['assets' => function ($query) {
-                $query->whereIn('status', ['active', 'inactive']);
-            },  'assets.brand', 'assets.category'])
-            ->get();
+        // Apply the eager loading AFTER the where conditions
+        $query->with(['classroomAsset' => function ($query) {
+            $query->with(['brand', 'category']);
+        }]);
+
+        $this->assetGroups = $query->get();
     }
 
-    // Add method to update search when typing
+    // This is the key method for handling search updates
     public function updatedSearch()
     {
         $this->loadAssets();
@@ -56,9 +65,17 @@ class PublicAssetGroup extends Component
 
     public function render()
     {
-        $assetGroupsCount = $this->assetGroups->count();
-        $activeAssetsCount = \App\Models\Asset::where('status', 'active')->count();
-        $inactiveAssetsCount = \App\Models\Asset::where('status', 'inactive')->count();
+        // These queries should run AFTER loadAssets so they reflect current search state
+        $assetGroupsCount = $this->assetGroups ? $this->assetGroups->count() : 0;
+
+        // These counts should not be affected by search
+        $activeAssetsCount = AssetGroup::where('classroom_id', $this->classroomId)
+            ->where('status', 'active')
+            ->count();
+
+        $inactiveAssetsCount = AssetGroup::where('classroom_id', $this->classroomId)
+            ->where('status', 'inactive')
+            ->count();
 
         return view('livewire.public-asset-group', [
             'assetGroupsCount' => $assetGroupsCount,

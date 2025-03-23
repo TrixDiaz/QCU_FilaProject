@@ -16,6 +16,20 @@
  <div x-show="confirmingBulkDelete" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
         <h3 class="text-lg font-medium mb-4">Confirm Bulk Archive</h3>
+
+        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <h4 class="text-sm font-medium mb-2">Archiving the following assets:</h4>
+            <ul class="list-disc list-inside space-y-1">
+                @foreach($selected as $assetId)
+                    @php
+                        $asset = \App\Models\Asset::find($assetId);
+                    @endphp
+                    <li class="text-sm text-gray-700 dark:text-gray-300">
+                        {{ $asset->name }} ({{ $asset->asset_code }})
+                    </li>
+                @endforeach
+            </ul>
+        </div>
         <p>Are you sure you want to archive the selected {{ count($selected) }} assets? This action cannot be undone.</p>
         <div class="mt-6 flex justify-end space-x-3">
             <x-filament::button type="button" color="gray" @click="confirmingBulkDelete = false">
@@ -28,7 +42,78 @@
     </div>
 </div>
 
+<!-- Bulk Edit Modal -->
+<!-- Bulk Edit Modal -->
+<div x-data="{ showBulkEditModal: @entangle('showBulkEditModal') }">
+    <div x-show="showBulkEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-3xl w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Bulk Edit Assets</h3>
+                <button @click="showBulkEditModal = false" class="text-gray-400 hover:text-gray-600">
+                    <x-heroicon-o-x-mark class="w-6 h-6" />
+                </button>
+            </div>
+            
+            <form wire:submit.prevent="saveBulkEdit">
+                <div class="space-y-4">
+                    <!-- List of Assets Being Edited -->
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium mb-2">Editing the following assets:</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            @foreach($selected as $assetId)
+                                @php
+                                    $asset = \App\Models\Asset::find($assetId);
+                                @endphp
+                                <li class="text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $asset->name }} ({{ $asset->asset_code }})
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    
+                    <!-- Status Field -->
+                    <div>
+                        <label for="bulkStatus" class="block text-sm font-medium">Status</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select id="bulkStatus" wire:model="bulkEditData.status">
+                                <option value="">No change</option>
+                               
+                                <option value="broken">Broken</option>
+                                <option value="maintenance">Maintenance</option>
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+                    
+                    <!-- Deployment Field -->
+                    <div>
+                        <label for="bulkDeploy" class="block text-sm font-medium">Deploy to Classroom</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select id="bulkDeploy" wire:model="bulkEditData.deployClassroom">
+                                <option value="">No change</option>
+                                @foreach ($classrooms as $classroom)
+                                    <option value="{{ $classroom->id }}">
+                                        {{ $classroom->building->name }} - {{ $classroom->name }} (Floor {{ $classroom->floor }})
+                                    </option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
 
+                    <!-- Action Buttons -->
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <x-filament::button type="button" color="gray" @click="showBulkEditModal = false">
+                            Cancel
+                        </x-filament::button>
+                        <x-filament::button type="submit">
+                            <span wire:loading.remove wire:target="saveBulkEdit">Save Changes</span>
+                            <span wire:loading wire:target="saveBulkEdit">Saving...</span>
+                        </x-filament::button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
     <x-filament::section class="my-4">
         {{-- Search and Create Asset --}}
         <div class="grid grid-cols-1 gap-6 w-full">

@@ -73,6 +73,14 @@ class PublicAssetGroup extends Component
             ->where('status', 'active')
             ->count();
 
+        $maintenanceAssetsCount = AssetGroup::where('classroom_id', $this->classroomId)
+            ->where('status', 'maintenance')
+            ->count();
+
+        $brokenAssetsCount = AssetGroup::where('classroom_id', $this->classroomId)
+            ->where('status', 'broken')
+            ->count();
+
         $inactiveAssetsCount = AssetGroup::where('classroom_id', $this->classroomId)
             ->where('status', 'inactive')
             ->count();
@@ -80,6 +88,8 @@ class PublicAssetGroup extends Component
         return view('livewire.public-asset-group', [
             'assetGroupsCount' => $assetGroupsCount,
             'activeAssetsCount' => $activeAssetsCount,
+            'maintenanceAssetsCount' => $maintenanceAssetsCount,
+            'brokenAssetsCount' => $brokenAssetsCount,
             'inactiveAssetsCount' => $inactiveAssetsCount,
         ])->layout('layouts.app');
     }

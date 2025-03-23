@@ -11,12 +11,14 @@ use App\Models\Classroom;
 use App\Models\AssetGroup;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
+
 
 class Inventory extends Component
 {
@@ -47,8 +49,8 @@ class Inventory extends Component
     public $showBulkEditModal = false;
     public $bulkEditData = [
         'status' => '',
-        'category_id' => '',
-        'brand_id' => '',
+        'deployClassroom' => null,
+    
     ];
 
     // Deployment properties
@@ -60,6 +62,7 @@ class Inventory extends Component
     public $statusActive = true;
 
     protected $listeners = ['refreshAssets' => '$refresh'];
+    public $selectedAssets = [];
 
     public function mount()
     {
@@ -71,7 +74,11 @@ class Inventory extends Component
     }
 
     public function render()
+
+
     {
+        
+        
         $query = Asset::with(['brand', 'category', 'assetTags'])->where('status', 'available');
 
         // Apply search if provided
@@ -304,33 +311,82 @@ class Inventory extends Component
 
     public function openBulkEditModal()
     {
-        if (empty($this->selected)) {
-            $this->addError('bulkAction', 'Please select at least one asset');
-            return;
+        // Fetch the selected assets
+        $this->selectedAssets = Asset::whereIn('id', $this->selected)->get();
+    
+        // Initialize the bulk edit data for each asset
+        foreach ($this->selectedAssets as $asset) {
+            $this->bulkEditData[$asset->id] = [
+                'category_id' => $asset->category_id,
+                'brand_id' => $asset->brand_id,
+                'status' => $asset->status,
+                'asset_tag_id' => $asset->assetTags->pluck('id')->toArray(),
+            ];
         }
-
+    
+        // Show the bulk edit modal
         $this->showBulkEditModal = true;
     }
-
-    public function doBulkEdit()
+    
+    public function saveBulkEdit()
     {
-        $data = array_filter($this->bulkEditData);
+        // Validate the bulk edit data
+        $this->validate([
+            'bulkEditData.status' => 'nullable|in:broken,maintenance',
+            'bulkEditData.deployClassroom' => 'nullable|exists:classrooms,id',
+        ]);
 
-        if (empty($data)) {
-            $this->addError('bulkEdit', 'Please select at least one field to update');
-            return;
+        // Update selected assets
+        foreach ($this->selected as $assetId) {
+            $asset = Asset::find($assetId);
+
+            // Update status if provided
+            if ($this->bulkEditData['status']) {
+                $asset->status = $this->bulkEditData['status'];
+                $asset->save();
+            }
+
+            // Deploy to classroom if provided
+            if ($this->bulkEditData['deployClassroom']) {
+                // Auto-generate deployment code based on the asset's serial number
+                $deploymentCode = $this->generateAssetCodeFromSerialNumber($asset->serial_number);
+
+                // Update the asset's status to "deployed"
+                $asset->status = 'deployed';
+                $asset->save();
+
+                // Create or update the AssetGroup record
+                AssetGroup::updateOrCreate(
+                    ['asset_id' => $assetId], // Find by asset_id
+                    [
+                        'classroom_id' => $this->bulkEditData['deployClassroom'],
+                        'name' => $asset->name, // Use the asset's name as the deployment name
+                        'code' => $deploymentCode, // Auto-generated deployment code
+                        'status' => 'active', // Set status to "active" in AssetGroup
+                    ]
+                );
+            }
         }
 
-        Asset::whereIn('id', $this->selected)->update($data);
-
+        // Reset bulk edit data and close modal
+        $this->reset('bulkEditData');
         $this->showBulkEditModal = false;
-        $this->bulkEditData = [
-            'status' => '',
-            'category_id' => '',
-            'brand_id' => '',
-        ];
-        $this->dispatch('notify', ['message' => count($this->selected) . ' assets updated successfully', 'type' => 'success']);
+
+        // Notify user
+        $this->dispatch('notify', message: 'Bulk edit applied successfully!');
     }
+
+    protected function generateAssetCodeFromSerialNumber($serialNumber)
+    {
+        // Get the last 3 digits of the serial number
+        $lastThreeDigits = Str::substr($serialNumber, -3);
+
+        // Combine base code "AC" with the last 3 digits in uppercase
+        return "AC" . Str::upper($lastThreeDigits);
+    }
+  
+    
+    
 
     public function openImportModal()
     {
@@ -390,6 +446,8 @@ class Inventory extends Component
         }
     }
 
+    
+
     public function exportAssets()
     {
         try {
@@ -448,4 +506,5 @@ class Inventory extends Component
                 $this->addError('bulkAction', 'Please select a valid action');
         }
     }
+
 }

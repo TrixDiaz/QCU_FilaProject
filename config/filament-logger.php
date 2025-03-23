@@ -5,8 +5,8 @@ return [
     'date_format' => 'd/m/Y',
 
     'activity_resource' => \Z3d0X\FilamentLogger\Resources\ActivityResource::class,
-	'scoped_to_tenant' => true,
-	'navigation_sort' => null,
+    'scoped_to_tenant' => true,
+    'navigation_sort' => null,
 
     'resources' => [
         'enabled' => true,
@@ -18,7 +18,7 @@ return [
             //App\Filament\Resources\UserResource::class,
         ],
         'cluster' => null,
-        'navigation_group' =>'System Settings',
+        'navigation_group' => 'System Settings',
     ],
 
     'access' => [

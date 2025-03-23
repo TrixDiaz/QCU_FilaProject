@@ -35,7 +35,7 @@
         </div>
 
         <!-- Asset Summary Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <!-- Total Assets -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Total Assets</h3>
@@ -45,13 +45,27 @@
             <!-- Active Assets -->
             <div
                 class="bg-green-100 dark:bg-green-900 p-6 rounded-lg shadow-md border border-green-300 dark:border-green-700">
-                <h3 class="text-lg font-semibold text-green-700 dark:text-green-300 mb-2">Active Assets</h3>
+                <h3 class="text-lg font-semibold text-green-700 dark:text-green-300 mb-2">Active</h3>
                 <p class="text-4xl font-bold text-green-800 dark:text-green-100">{{ $activeAssetsCount }}</p>
+            </div>
+
+            <!-- Maintenance Assets -->
+            <div
+                class="bg-yellow-100 dark:bg-yellow-900 p-6 rounded-lg shadow-md border border-yellow-300 dark:border-yellow-700">
+                <h3 class="text-lg font-semibold text-yellow-700 dark:text-yellow-300 mb-2">Maintenance</h3>
+                <p class="text-4xl font-bold text-yellow-800 dark:text-yellow-100">{{ $maintenanceAssetsCount }}</p>
+            </div>
+
+            <!-- Broken Assets -->
+            <div
+                class="bg-orange-100 dark:bg-orange-900 p-6 rounded-lg shadow-md border border-orange-300 dark:border-orange-700">
+                <h3 class="text-lg font-semibold text-orange-700 dark:text-orange-300 mb-2">Broken</h3>
+                <p class="text-4xl font-bold text-orange-800 dark:text-orange-100">{{ $brokenAssetsCount }}</p>
             </div>
 
             <!-- Inactive Assets -->
             <div class="bg-red-100 dark:bg-red-900 p-6 rounded-lg shadow-md border border-red-300 dark:border-red-700">
-                <h3 class="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Inactive Assets</h3>
+                <h3 class="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Inactive</h3>
                 <p class="text-4xl font-bold text-red-800 dark:text-red-100">{{ $inactiveAssetsCount }}</p>
             </div>
         </div>

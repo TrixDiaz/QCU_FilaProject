@@ -546,11 +546,14 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->button()
                     ->modalContent(fn (Ticket $record) => view(
                         'tickets.view',
-                        ['ticket' => $record]
+                        [
+                            'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
+                            'classrooms' => Classroom::all(),
+                            'sections' => Section::all(),
+                        ]
                     ))
-                    ->modalFooter(fn () => null) // This removes the footer with submit button
                     ->modalWidth('md')
-                    ->modalSubmitAction(false) // Explicitly disable submit button
+                    ->modalSubmitAction(false)
                     ->modalCancelAction(fn ($action) => $action->label('Close')),
 
                 \Filament\Tables\Actions\Action::make('edit')
@@ -584,7 +587,25 @@ class Ticketing extends Component implements HasTable, HasForms
                             ->label('Assigned To')
                             ->options(fn () => User::role('technician')->pluck('name', 'id'))
                             ->nullable()
-                            ->placeholder('-- Unassigned --')
+                            ->placeholder('-- Unassigned --'),
+                        Select::make('classroom_id')
+                            ->label('Classroom')
+                            ->options(fn () => Classroom::pluck('name', 'id'))
+                            ->nullable()
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request'),
+                        Select::make('section_id')
+                            ->label('Section')
+                            ->options(fn () => Section::pluck('name', 'id'))
+                            ->nullable()
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request'),
+                        DatePicker::make('start_time')
+                            ->label('Start Time')
+                            ->nullable()
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request'),
+                        DatePicker::make('end_time')
+                            ->label('End Time')
+                            ->nullable()
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
                     ])
                     ->fillForm(function (Ticket $record): array {
                         return [
@@ -593,6 +614,10 @@ class Ticketing extends Component implements HasTable, HasForms
                             'priority' => $record->priority,
                             'ticket_status' => $record->ticket_status,
                             'assigned_to' => $record->assigned_to,
+                            'classroom_id' => $record->classroom_id,
+                            'section_id' => $record->section_id,
+                            'start_time' => $record->start_time,
+                            'end_time' => $record->end_time,
                         ];
                     })
                     ->action(function (Ticket $record, array $data): void {
@@ -602,6 +627,10 @@ class Ticketing extends Component implements HasTable, HasForms
                             'priority' => $data['priority'],
                             'ticket_status' => $data['ticket_status'],
                             'assigned_to' => $data['assigned_to'],
+                            'classroom_id' => $data['classroom_id'],
+                            'section_id' => $data['section_id'],
+                            'start_time' => $data['start_time'],
+                            'end_time' => $data['end_time'],
                         ]);
 
                         Notification::make()

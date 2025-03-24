@@ -15,25 +15,25 @@ class UserSeeder extends Seeder
     {
         \App\Models\User::create([
             'name' => 'Admin',
-            'email' => 'admin@qcu.edu.ph',
+            'email' => 'admin@gmail.com',
             'email_verified_at' => \Carbon\Carbon::now(),
             'password' => bcrypt('password'),
         ]);
 
         \App\Models\User::create([
             'name' => 'Technician',
-            'email' => 'technician@qcu.edu.ph',
+            'email' => 'technician@gmail.com',
             'email_verified_at' => \Carbon\Carbon::now(),
             'password' => bcrypt('password'),
         ]);
 
         \App\Models\User::create([
             'name' => 'Professor',
-            'email' => 'professor@qcu.edu.ph',
+            'email' => 'professor@gmail.com',
             'email_verified_at' => \Carbon\Carbon::now(),
             'password' => bcrypt('password'),
         ]);
 
-//        \App\Models\User::factory(10)->create();
+        //        \App\Models\User::factory(10)->create();
     }
 }

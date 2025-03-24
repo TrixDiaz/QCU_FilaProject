@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class StudentReportResource extends Resource implements HasShieldPermissions
 {
@@ -32,8 +33,15 @@ class StudentReportResource extends Resource implements HasShieldPermissions
         ];
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = Auth::user();
+
+        // Show if user is super admin or has Inventory page permission
+        return $user->hasRole('professor');
+    }
+
     protected static ?string $navigationGroup = 'Tickets';
-    protected static ?string $navigationParentItem = 'Tickets';
     protected static ?string $model = StudentReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

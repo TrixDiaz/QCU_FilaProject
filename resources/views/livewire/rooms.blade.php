@@ -162,15 +162,18 @@
                                             View Details
                                         </x-filament::button>
 
-                                        <x-filament::button size="sm"
-                                            wire:click="viewClassroomAssets({{ $classroom->id }})" tag="button">
-                                            View Assets
-                                        </x-filament::button>
-                                        <x-filament::button size="sm"
-                                            href="{{ route('filament.app.resources.subjects.edit', $classroom) }}"
-                                            tag="a">
-                                            Edit Schedule
-                                        </x-filament::button>
+                                        @if (auth()->user()->hasRole(['admin', 'super_admin', 'technician']))
+                                            <x-filament::button size="sm"
+                                                wire:click="viewClassroomAssets({{ $classroom->id }})" tag="button">
+                                                View Assets
+                                            </x-filament::button>
+                                            <x-filament::button size="sm"
+                                                href="{{ route('filament.app.resources.subjects.edit', $classroom) }}"
+                                                tag="a">
+                                                Edit Schedule
+                                            </x-filament::button>
+                                        @endif
+
                                     </x-filament-tables::cell>
                                 </x-filament-tables::row>
                             @endforeach

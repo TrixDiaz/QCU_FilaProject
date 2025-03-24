@@ -335,6 +335,24 @@ class ListAssets extends ListRecords
                                         'status' => $status,
                                         'name' => $data['name'] ?? 'Not Assigned'
                                     ]);
+
+                                    // Send notification for each deployed asset
+                                    if ($status === 'deploy') {
+                                        $asset = \App\Models\Asset::find($assetId);
+                                        $classroom = \App\Models\Classroom::find($data['classroom']);
+
+                                        // Send notification to the user who performed the action
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Asset Deployed')
+                                            ->body("Asset {$asset->asset_code} has been deployed to {$classroom->name} as {$data['name']}")
+                                            ->success()
+                                            ->icon('heroicon-m-computer-desktop')
+                                            ->actions([
+                                                \Filament\Notifications\Actions\Action::make('view')
+                                                    ->url(AssetResource::getUrl('edit', ['record' => $assetId]))
+                                            ])
+                                            ->sendToDatabase(auth()->user());
+                                    }
                                 }
                             }
                         }

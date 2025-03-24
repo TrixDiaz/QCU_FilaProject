@@ -60,7 +60,7 @@
     <div class="content">
         Hello {{ $user->name }},
         <br><br>
-        Your account has been activated successfully. You can now log in to access all features.
+        Your account has been activated successfully. You can now log in and Access System.
     </div>
 
     <div class="button-container">

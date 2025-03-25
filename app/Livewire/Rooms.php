@@ -9,6 +9,10 @@ use App\Models\Subject;
 use App\Models\AssetGroup;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use League\Csv\Writer;
+use SplTempFileObject;
+
 
 class Rooms extends Component
 {
@@ -58,6 +62,8 @@ class Rooms extends Component
         'selectedSemester' => ['except' => ''],
     ];
 
+
+    
     public function mount()
     {
         $this->loadBuildingCounts();
@@ -449,4 +455,72 @@ class Rooms extends Component
             'classrooms' => $classroomsQuery->paginate(10),
         ]);
     }
+
+
+
+    public function exportSchedule(): StreamedResponse
+{
+    try {
+        // Check if classroom is selected
+        if (!$this->currentClassroom) {
+            throw new \Exception('No classroom selected for export');
+        }
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        // Add CSV headers
+        $csv->insertOne([
+            'Day', 
+            'Time', 
+            'Section', 
+            'Subject', 
+            'Subject Code', 
+            'Professor', 
+            'School Year', 
+            'Semester'
+        ]);
+
+        // Add data rows
+        foreach ($this->schedulesByDay as $day => $schedules) {
+            foreach ($schedules as $schedule) {
+                $csv->insertOne([
+                    $day,
+                    date('h:i A', strtotime($schedule->start_time)) . ' - ' . date('h:i A', strtotime($schedule->end_time)),
+                    $schedule->section->name ?? 'N/A',
+                    $schedule->subject ?? 'N/A',
+                    $schedule->subject_code ?? 'N/A',
+                    $schedule->professor ?? 'N/A',
+                    $schedule->school_year ?? 'N/A',
+                    $schedule->semester ?? 'N/A',
+                ]);
+            }
+        }
+
+        $filename = $this->currentClassroom->name . '_Schedule_' . now()->format('Y-m-d') . '.csv';
+
+        // Dispatch success notification
+        $this->dispatch('notify', [
+            'message' => 'Schedule exported successfully', 
+            'type' => 'success'
+        ]);
+
+        return response()->streamDownload(
+            function () use ($csv) {
+                echo $csv->getContent();
+            },
+            $filename
+        );
+
+    } catch (\Exception $e) {
+        // Dispatch error notification
+        $this->dispatch('notify', [
+            'message' => 'Error exporting schedule: ' . $e->getMessage(),
+            'type' => 'error'
+        ]);
+        
+        // Return empty response or redirect back
+        return response()->noContent(500);
+    }
+}
+
 }

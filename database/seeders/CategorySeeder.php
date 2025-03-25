@@ -16,13 +16,13 @@ class CategorySeeder extends Seeder
         $timestamp = Carbon::now();
 
         $categories = [
-            ['name' => 'hardware', 'slug' => 'hardware', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'software', 'slug' => 'software', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'license', 'slug' => 'license', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'components', 'slug' => 'components', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'accessories', 'slug' => 'accessories', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'computer set', 'slug' => 'computer_set', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'others', 'slug' => 'others', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Hardware', 'slug' => 'hardware', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Software', 'slug' => 'software', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'License', 'slug' => 'license', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Components', 'slug' => 'components', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Accessories', 'slug' => 'accessories', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Computer set', 'slug' => 'computer_set', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Others', 'slug' => 'others', 'created_at' => $timestamp, 'updated_at' => $timestamp],
         ];
 
         DB::table('categories')->insert($categories);

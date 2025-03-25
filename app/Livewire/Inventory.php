@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
 
 
+
 class Inventory extends Component
 {
     use WithPagination;

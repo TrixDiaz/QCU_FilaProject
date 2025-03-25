@@ -4,6 +4,10 @@ use App\Livewire\PublicAssetGroup;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Filament\App\Resources\TicketResource;
+use App\Http\Controllers\AssetController;
+
+Route::get('/example-csv', [AssetController::class, 'downloadExampleCsv'])->name('example-csv');
+
 
 Route::get('/', function () {
     return view('welcome');

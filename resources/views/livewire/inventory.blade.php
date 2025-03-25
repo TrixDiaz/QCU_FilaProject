@@ -322,17 +322,134 @@
                             </x-filament::button>
 
 
-                            <div x-data="{ showImportModal: false, importSuccess: false }" class="relative">
-                                <!-- Import Button -->
-                                <x-filament::button @click="showImportModal = true" icon="heroicon-o-arrow-up-tray">
-                                    Import Excel
-                                </x-filament::button>
+                            <div>
+                                    <!-- Import Button and Modal -->
+                                    <div x-data="{ showImportModal: false, importSuccess: false }" class="relative">
+                                        <!-- Import Button -->
+                                        <x-filament::button @click="showImportModal = true" icon="heroicon-o-arrow-up-tray">
+                                            Import Excel
+                                        </x-filament::button>
 
-                                <!-- Success Message -->
-                                <div x-show="importSuccess" x-transition
-                                    class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-                                    File imported successfully!
+                                        <!-- Import Modal with Light/Dark Mode Support -->
+                                        <div x-show="showImportModal"
+                                            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 transition radius-5"
+                                            style="display: none;">
+                                            <div
+                                                class="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md transition">
+                                                <!-- Header -->
+                                                <div class="flex justify-between items-center mb-4 sm:mb-6">
+                                                    <h3 class="text-2xl font-bold">Import Assets from Excel</h3>
+                                                    <button @click="showImportModal = false"
+                                                        class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none">
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+
+                                                <form wire:submit.prevent="importAssets" class="space-y-6">
+                                                    <!-- Download Link -->
+                                                    <div class="text-center mb-4">
+                                                        <a href="/example-csv">Download Example CSV</a>
+                                                    </div>
+
+                                                    <!-- File Input -->
+                                                    <div>
+                                                        <label for="importFile"
+                                                            class="block text-sm font-medium text-gray-200 dark:text-gray-300 mb-2">Excel File</label>
+                                                        <input type="file" id="importFile" accept=".xlsx,.xls,.csv" wire:model="importFile"
+                                                            class="w-full p-3 border rounded-lg bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                                    </div>
+
+                                                    <!-- Action Buttons -->
+                                                    <div class="flex justify-end space-x-3">
+                                                    <div>
+                                    <!-- Import Button and Modal -->
+                                    <div x-data="{ showImportModal: false, importSuccess: false }" class="relative">
+                                        <!-- Import Button -->
+                                        <x-filament::button @click="showImportModal = true" icon="heroicon-o-arrow-up-tray">
+                                            Import Excel
+                                        </x-filament::button>
+
+                                        <!-- Import Modal with Light/Dark Mode Support -->
+                                        <div x-show="showImportModal"
+                                            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 transition radius-5"
+                                            style="display: none;">
+                                            <div
+                                                class="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md transition">
+                                                <!-- Header -->
+                                                <div class="flex justify-between items-center mb-4 sm:mb-6">
+                                                    <h3 class="text-2xl font-bold">Import Assets from Excel</h3>
+                                                    <button @click="showImportModal = false"
+                                                        class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none">
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+
+                                                <form wire:submit.prevent="importAssets" class="space-y-6">
+                                                    <!-- Download Link -->
+                                                    <div class="text-left mb-4">
+                                                        <a href="/example-csv" class="text-blue-600 hover:underline">
+                                                            ↓ Download Example CSV
+                                                        </a>
+                                                    </div>
+
+                                                    <!-- File Input -->
+                                                    <div>
+                                                        <label for="importFile"
+                                                            class="block text-sm font-medium text-gray-200 dark:text-gray-300 mb-2">Excel File</label>
+                                                        <input type="file" id="importFile" accept=".xlsx,.xls,.csv" wire:model="importFile"
+                                                            class="w-full p-3 border rounded-lg bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                                    </div>
+
+                                                    <!-- Action Buttons -->
+                                                    <div class="flex justify-end space-x-3">
+                                                        <!-- Cancel Button -->
+                                                        <button type="button" @click="showImportModal = false" wire:click="resetImportFile"
+                                                            class="px-6 py-2.5 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-300 focus:outline-none shadow-md transition">
+                                                            Cancel
+                                                        </button>
+
+                                                        <!-- Import Button (Primary) -->
+                                                        <button type="submit"
+                                                            class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 focus:outline-none shadow-md transition">
+                                                            Import
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Error Message -->
+                                                    <div class="mt-2">
+                                                        @error('importFile')
+                                                            <div
+                                                                class="text-red-600 text-sm bg-red-50 border border-red-300 rounded-lg px-4 py-2">
+                                                                {{ $message }}
+                                                            </div>
+                                                        @enderror
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Success Message -->
+                                    @if (session()->has('message'))
+                                        <div x-data="{ show: true }" x-show="show" class="fixed top-4 right-4 bg-green-500 text-white pl-4 pr-2 py-2 rounded-lg shadow-lg z-50 flex items-center">
+                                            <span class="mr-4">{{ session('message') }}</span>
+                                            <button @click="show = false" class="text-white hover:text-green-100 focus:outline-none">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    @endif
                                 </div>
+
                             </div>
                         </div>
                     </div>

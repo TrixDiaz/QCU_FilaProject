@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\Tag;
 use App\Models\Classroom;
 use App\Models\AssetGroup;
+use App\Models\User;
+//use Filament\Notifications\Notification;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Str;
@@ -17,7 +19,13 @@ use League\Csv\Writer;
 use League\Csv\Reader;
 use SplTempFileObject;
 use Illuminate\Support\Facades\Storage;
-use Filament\Notifications\Notification;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\AssetImport;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Carbon\Carbon;
+
+
+//use Filament\Notifications\Notification;
 
 
 class Inventory extends Component
@@ -44,7 +52,11 @@ class Inventory extends Component
     public $selectAll = false;
     public $bulkAction = '';
     public $confirmingBulkDelete = false;
-    public $importFile = null;
+    public $importFile;
+    protected $rules = [
+        'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
+    ];
+
     public $showImportModal = false;
     public $showBulkEditModal = false;
     public $bulkEditData = [
@@ -60,6 +72,18 @@ class Inventory extends Component
     public $deploymentName;
     public $deploymentCode;
     public $statusActive = true;
+
+   // protected $listeners = ['refreshAssets' => '$refresh'];
+
+ //  protected $listeners = [
+    //'importFileSelected' => 'importFileSelected',
+//];
+
+//public function importFileSelected($file)
+//{
+    //$this->importFile = $file;
+//}
+
 
     protected $listeners = ['refreshAssets' => '$refresh'];
     public $selectedAssets = [];
@@ -139,12 +163,6 @@ class Inventory extends Component
             }
         }
 
-        // Fix ordering by making it more explicit
-        // Order first by updated_at, then by created_at (both descending)
-        // This shows most recently modified assets first, then newest created assets
-        $query->orderByDesc('updated_at')
-            ->orderByDesc('created_at');
-
         $assets = $query->paginate($this->perPage);
         $this->filteredCount = $assets->total();
 
@@ -184,27 +202,39 @@ class Inventory extends Component
 
             DB::commit();
 
-            // Use Filament Notification instead of dispatching a custom event
-            Notification::make()
-                ->title('Asset Deployed')
-                ->body('Asset has been successfully deployed to the classroom.')
-                ->success()
-                ->send();
+            $this->dispatch('notify', ['message' => 'Asset deployed successfully', 'type' => 'success']);
 
             // Reset deployment form
             $this->reset(['deployAssetId', 'selectedClassroom', 'deploymentName', 'deploymentCode']);
             $this->statusActive = true;
 
+            // Get all users
+            $users = \App\Models\User::all();
+
+            // Optionally notify all users after giving them admin roles
+            foreach ($users as $user) {
+                $user->notify(
+                    \Filament\Notifications\Notification::make()
+                        ->title('Assets Deployed')
+                        ->body('The selected assets have been successfully deployed.')
+                        ->success()
+                        ->icon('heroicon-m-computer-desktop')
+                        ->toDatabase()
+                );
+                $user->notify(
+                    \Filament\Notifications\Notification::make()
+                        ->title('Assets Deployed')
+                        ->body('The selected assets have been successfully deployed.')
+                        ->success()
+                        ->icon('heroicon-m-computer-desktop')
+                        ->send()
+                );
+            }
+
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-
-            Notification::make()
-                ->title('Deployment Failed')
-                ->body('Error deploying asset: ' . $e->getMessage())
-                ->danger()
-                ->send();
-
+            $this->dispatch('notify', ['message' => 'Error deploying asset: ' . $e->getMessage(), 'type' => 'error']);
             return false;
         }
     }
@@ -267,14 +297,12 @@ class Inventory extends Component
     // Reset filters
     public function resetFilters()
     {
-        $this->reset([
-            'filterType',
-            'filterValue',
-            'filterBrand',
-            'filterCategory',
-            'filterTag',
-            'search'
-        ]);
+        $this->filterType = 'all';
+        $this->filterValue = '';
+        $this->filterBrand = '';
+        $this->filterCategory = '';
+        $this->filterTag = '';
+        $this->search = '';
         $this->resetPage();
     }
 
@@ -393,97 +421,131 @@ class Inventory extends Component
         $this->showImportModal = true;
     }
 
+    public function resetImportFile()
+    {
+    // Reset the file input
+    $this->importFile = null;
+    // Optionally reset any other variables related to import (e.g., error messages, etc.)
+    $this->resetErrorBag();
+    }
+
+    
     public function importAssets()
     {
         $this->validate([
             'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
         ]);
-
+    
         if (!$this->importFile) {
             $this->addError('importFile', 'No file selected.');
             return;
         }
-
+    
         try {
-            // Store temporarily and get the path
-            $path = $this->importFile->store('temp');  // Saves in storage/app/temp
-            $fullPath = Storage::path($path);  // Gets the absolute path
+            // Store the file temporarily and get the path
+            $path = $this->importFile->store('temp');
+            $fullPath = Storage::path($path);
+    
+            // Check file extension
+            $extension = $this->importFile->getClientOriginalExtension();
+    
+            if (in_array($extension, ['xlsx', 'xls'])) {
+                // Handle Excel file
+                $spreadsheet = IOFactory::load($fullPath);
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray();
+    
+                // Extract header and remove it from the rows
+                $header = array_map('trim', $rows[0]);
+                unset($rows[0]);
+    
+                foreach ($rows as $row) {
+                    $assetData = array_combine($header, $row);
+                    if (empty($assetData['serial_number'])) {
+                        continue;
+                    }
+    
+                    $asset = Asset::firstOrNew(['serial_number' => $assetData['serial_number']]);
+                    $asset->name = $assetData['name'];
+                    $asset->asset_code = $assetData['asset_code'] ?? null;
+                    $asset->status = $assetData['status'] ?? 'available';
+                    $asset->expiry_date = !empty($assetData['expiry_date']) 
+                    ? Carbon::parse($assetData['expiry_date']) 
+                    : null;
+    
+                    // Handle missing brand and category keys
+                    $brandName = $assetData['brand'] ?? 'Unknown';
+                    $categoryName = $assetData['category'] ?? 'Uncategorized';
+    
+                    $brand = Brand::firstOrCreate(
+                        ['name' => $brandName],
+                        ['slug' => Str::slug($brandName)]
+                    );
+                    $category = Category::firstOrCreate(
+                        ['name' => $categoryName],
+                        ['slug' => Str::slug($categoryName)]
+                    );
+    
+                    $asset->brand_id = $brand->id;
+                    $asset->category_id = $category->id;
+                    $asset->save();
+                }
+            } else {
+                // Handle CSV file
+                if (($handle = fopen($fullPath, 'r')) !== false) {
+                    $header = array_map('trim', fgetcsv($handle));
+    
+                    while (($row = fgetcsv($handle)) !== false) {
+                        $assetData = array_combine($header, $row);
 
-            $csv = Reader::createFromPath($fullPath, 'r');
-            $csv->setHeaderOffset(0);
-
-            $records = $csv->getRecords();
-            $imported = 0;
-
-            DB::beginTransaction();
-
-            foreach ($records as $record) {
-                $brand = Brand::firstOrCreate(['name' => $record['brand']]);
-                $category = Category::firstOrCreate(['name' => $record['category']]);
-
-                Asset::create([
-                    'name' => $record['name'],
-                    'serial_number' => $record['serial_number'],
-                    'asset_code' => $record['asset_code'] ?? '',
-                    'status' => $record['status'] ?? 'available',
-                    'brand_id' => $brand->id,
-                    'category_id' => $category->id,
-                ]);
-
-                $imported++;
+                        if (empty($assetData['serial_number'])) {
+                            continue;
+                        }
+    
+                        $asset = Asset::firstOrNew(['serial_number' => $assetData['serial_number']]);
+                        $asset->name = $assetData['name'];
+                        $asset->asset_code = $assetData['asset_code'] ?? null;
+                        $asset->status = $assetData['status'] ?? 'available';
+                        $asset->expiry_date = !empty($assetData['expiry_date']) 
+                        ? Carbon::parse($assetData['expiry_date']) 
+                        : null;
+    
+                        // Handle missing brand and category keys
+                        $brandName = $assetData['brand'] ?? 'Unknown';
+                        $categoryName = $assetData['category'] ?? 'Uncategorized';
+    
+                        $brand = Brand::firstOrCreate(
+                            ['name' => $brandName],
+                            ['slug' => Str::slug($brandName)]
+                        );
+                        $category = Category::firstOrCreate(
+                            ['name' => $categoryName],
+                            ['slug' => Str::slug($categoryName)]
+                        );
+    
+                        $asset->brand_id = $brand->id;
+                        $asset->category_id = $category->id;
+                        $asset->save();
+                    }
+                    fclose($handle);
+                }
             }
-
-            DB::commit();
-            $this->dispatch('notify', ['message' => $imported . ' assets imported successfully', 'type' => 'success']);
-            $this->importFile = null;
-            $this->showImportModal = false;
-
-            // Clean up the file after importing
+    
+            // Clean up the uploaded file
             Storage::delete($path);
+    
+            // Show success message
+            session()->flash('message', 'Assets imported successfully!');
+            session()->flash('type', 'success');
+    
+            // Reset file input and hide modal
+            $this->resetImportFile();
+            $this->showImportModal = false;
         } catch (\Exception $e) {
-            DB::rollBack();
             $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
         }
     }
-
     
-
-    public function exportAssets()
-    {
-        try {
-            $csv = Writer::createFromFileObject(new SplTempFileObject());
-
-            // Add headers
-            $csv->insertOne(['Name', 'Serial Number', 'Asset Code', 'Status', 'Brand', 'Category']);
-
-            // Get selected assets
-            $assets = Asset::with(['brand', 'category'])
-                ->whereIn('id', $this->selected)
-                ->get();
-
-            foreach ($assets as $asset) {
-                $csv->insertOne([
-                    $asset->name,
-                    $asset->serial_number,
-                    $asset->asset_code,
-                    $asset->status,
-                    $asset->brand->name,
-                    $asset->category->name,
-                ]);
-            }
-
-            $this->dispatch('notify', ['message' => 'Assets exported successfully', 'type' => 'success']);
-
-            return response()->streamDownload(
-                function () use ($csv) {
-                    echo $csv->getContent();
-                },
-                'assets-export-' . now()->format('Y-m-d') . '.csv'
-            );
-        } catch (\Exception $e) {
-            $this->dispatch('notify', ['message' => 'Error exporting assets: ' . $e->getMessage(), 'type' => 'error']);
-        }
-    }
 
     public function executeBulkAction()
     {

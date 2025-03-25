@@ -24,6 +24,7 @@
         "leandrocfe/filament-apex-charts": "^3.1",
         "livewire/livewire": "^3.5",
         "maatwebsite/excel": "^3.1",
+        "phpoffice/phpspreadsheet": "^1.29",
         "pxlrbt/filament-excel": "^2.4",
         "saade/filament-fullcalendar": "^3.2",
         "z3d0x/filament-logger": "^0.7.3"

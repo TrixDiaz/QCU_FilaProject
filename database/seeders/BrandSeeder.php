@@ -16,10 +16,10 @@ class BrandSeeder extends Seeder
         $timestamp = Carbon::now();
 
         $brands = [
-            ['name' => 'asus', 'slug' => 'asus', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'dell', 'slug' => 'dell', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'lenovo', 'slug' => 'lenovo', 'created_at' => $timestamp, 'updated_at' => $timestamp],
-            ['name' => 'apple', 'slug' => 'apple', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Asus', 'slug' => 'asus', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Dell', 'slug' => 'dell', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Lenovo', 'slug' => 'lenovo', 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ['name' => 'Apple', 'slug' => 'apple', 'created_at' => $timestamp, 'updated_at' => $timestamp],
         ];
 
         DB::table('brands')->insert($brands);

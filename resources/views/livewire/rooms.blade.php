@@ -477,20 +477,25 @@
                             </div>
 
                             <!-- Schedule Card -->
-                            <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
-                                x-transition:enter-start="opacity-0 transform translate-y-4"
-                                x-transition:enter-end="opacity-100 transform translate-y-0"
-                                class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
-                                <h4 class="text-lg font-medium mb-2 dark:text-gray-100">Schedule</h4>
-
-                                @php
-                                    $hasSchedules = false;
-                                    foreach ($schedulesByDay as $day => $schedules) {
-                                        if (count($schedules) > 0) {
-                                            $hasSchedules = true;
-                                            break;
+                         <!-- In the Schedule Card section -->
+                                    <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
+                                    x-transition:enter-start="opacity-0 transform translate-y-4"
+                                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                                    class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="text-lg font-medium dark:text-gray-100">Schedule</h4>
+                                        <x-filament::button size="sm" wire:click="exportSchedule" icon="heroicon-o-document-arrow-down">
+                                            Export 
+                                        </x-filament::button>
+                                    </div>
+                                                                    @php
+                                        $hasSchedules = false;
+                                        foreach ($schedulesByDay as $day => $schedules) {
+                                            if (count($schedules) > 0) {
+                                                $hasSchedules = true;
+                                                break;
+                                            }
                                         }
-                                    }
                                 @endphp
 
                                 @if (!$hasSchedules)

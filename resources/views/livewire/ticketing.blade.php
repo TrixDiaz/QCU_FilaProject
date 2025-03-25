@@ -408,14 +408,14 @@
                     <div @click="selectSubType('lan')" class="cursor-pointer card-hover">
                         <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🔌</div>
-                            <h3 class="mt-4 text-lg font-semibold">LAN</h3>
+                            <h3 class="mt-4 text-lg font-semibold">Wired</h3>
                         </div>
                     </div>
 
                     <div @click="selectSubType('wifi')" class="cursor-pointer card-hover">
                         <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">📶</div>
-                            <h3 class="mt-4 text-lg font-semibold">WiFi</h3>
+                            <h3 class="mt-4 text-lg font-semibold">Wi-Fi</h3>
                         </div>
                     </div>
                 </div>
@@ -500,14 +500,13 @@
 
                         <!-- Asset Dropdown -->
                         <div>
-                            <label for="asset_id"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Related
-                                Asset</label>
+                            <label for="asset_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Related Asset</label>
                             <select id="asset_id" wire:model.defer="asset_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="">-- Select Asset (Optional) --</option>
                                 @forelse ($assets as $asset)
-                                    <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->asset_tag }})
+                                    <option value="{{ $asset->id }}">
+                                        {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN: {{ $asset->serial_number ?? 'N/A' }})
                                     </option>
                                 @empty
                                     <option value="" disabled>No matching assets found</option>

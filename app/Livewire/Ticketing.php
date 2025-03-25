@@ -68,8 +68,10 @@ class Ticketing extends Component implements HasTable, HasForms
         'priority' => 'required|in:low,medium,high',
         'asset_id' => 'nullable|exists:assets,id',
         'assigned_to' => 'nullable|exists:users,id',
-        'classroom_id' => 'nullable|required_if:selectedType,classroom_request|exists:classrooms,id',
-        'section_id' => 'nullable|required_if:selectedType,classroom_request|exists:sections,id',
+        'classroom_id' => 'nullable|exists:classrooms,id',
+        'section_id' => 'nullable|exists:sections,id',
+        'start_time' => 'nullable|date',
+        'end_time' => 'nullable|date|after:start_time',
     ];
 
     public function mount()
@@ -304,33 +306,28 @@ class Ticketing extends Component implements HasTable, HasForms
     // Update the submitTicket method
     public function submitTicket()
     {
+        // Base validation rules
         $rules = [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high',
         ];
 
+        // Add specific validation rules for classroom requests
         if ($this->selectedType === 'classroom_request') {
-            $rules['classroom_id'] = 'required|exists:classrooms,id';
-            $rules['section_id'] = 'required|exists:sections,id';
-            $rules['start_time'] = 'required|date';
-            $rules['end_time'] = 'required|date|after:start_time';
-            
-            $this->checkTimeConflict();
-            
-            if ($this->timeConflictExists) {
-                session()->flash('error', 'Cannot book the classroom due to a time conflict.');
-                return;
-            }
+            $rules = array_merge($rules, [
+                'classroom_id' => 'required|exists:classrooms,id',
+                'section_id' => 'required|exists:sections,id',
+                'start_time' => 'required|date',
+                'end_time' => 'required|date|after:start_time'
+            ]);
         }
 
         $this->validate($rules);
 
         try {
-            $ticketNumber = $this->generateTicketNumber();
-            
-            $ticket = Ticket::create([
-                'ticket_number' => $ticketNumber,
+            $ticketData = [
+                'ticket_number' => $this->generateTicketNumber(),
                 'title' => $this->title,
                 'description' => $this->formatDescription($this->description),
                 'priority' => $this->priority,
@@ -341,18 +338,29 @@ class Ticketing extends Component implements HasTable, HasForms
                 'asset_id' => $this->asset_id,
                 'assigned_to' => auth()->user()->hasRole('professor') ? null : $this->assigned_to,
                 'created_by' => auth()->id(),
-                'classroom_id' => $this->classroom_id,
-                'section_id' => $this->section_id,
-                'start_time' => $this->start_time,
-                'end_time' => $this->end_time,
-            ]);
+            ];
+
+            // Add classroom-specific data only if it's a classroom request
+            if ($this->selectedType === 'classroom_request') {
+                if ($this->timeConflictExists) {
+                    session()->flash('error', 'Cannot book the classroom due to a time conflict.');
+                    return;
+                }
+                
+                $ticketData['classroom_id'] = $this->classroom_id;
+                $ticketData['section_id'] = $this->section_id;
+                $ticketData['start_time'] = $this->start_time;
+                $ticketData['end_time'] = $this->end_time;
+            }
+
+            $ticket = Ticket::create($ticketData);
 
             $this->resetForm();
             $this->dispatch('close-ticket-modal');
 
             Notification::make()
                 ->title('Ticket Created')
-                ->body("Ticket {$ticketNumber} has been created successfully.")
+                ->body("Ticket {$ticketData['ticket_number']} has been created successfully.")
                 ->success()
                 ->send();
 
@@ -592,20 +600,27 @@ class Ticketing extends Component implements HasTable, HasForms
                             ->label('Classroom')
                             ->options(fn () => Classroom::pluck('name', 'id'))
                             ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request'),
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                            ->default(null), // Add default value
+                            
                         Select::make('section_id')
                             ->label('Section')
                             ->options(fn () => Section::pluck('name', 'id'))
                             ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request'),
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                            ->default(null), // Add default value
+                            
                         DatePicker::make('start_time')
                             ->label('Start Time')
                             ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request'),
+                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                            ->default(null), // Add default value
+                            
                         DatePicker::make('end_time')
                             ->label('End Time')
                             ->nullable()
                             ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                            ->default(null) // Add default value
                     ])
                     ->fillForm(function (Ticket $record): array {
                         return [
@@ -614,24 +629,21 @@ class Ticketing extends Component implements HasTable, HasForms
                             'priority' => $record->priority,
                             'ticket_status' => $record->ticket_status,
                             'assigned_to' => $record->assigned_to,
-                            'classroom_id' => $record->classroom_id,
-                            'section_id' => $record->section_id,
-                            'start_time' => $record->start_time,
-                            'end_time' => $record->end_time,
+                            'classroom_id' => $record->classroom_id ?? null,
+                            'section_id' => $record->section_id ?? null,
+                            'start_time' => $record->start_time ?? null,
+                            'end_time' => $record->end_time ?? null,
                         ];
                     })
                     ->action(function (Ticket $record, array $data): void {
-                        $record->update([
-                            'title' => $data['title'],
-                            'description' => $data['description'],
-                            'priority' => $data['priority'],
-                            'ticket_status' => $data['ticket_status'],
-                            'assigned_to' => $data['assigned_to'],
-                            'classroom_id' => $data['classroom_id'],
-                            'section_id' => $data['section_id'],
-                            'start_time' => $data['start_time'],
-                            'end_time' => $data['end_time'],
-                        ]);
+                        // Filter out null values for non-classroom requests
+                        if ($record->type !== 'classroom_request') {
+                            unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
+                        }
+                        
+                        $record->update(array_filter($data, function ($value) {
+                            return !is_null($value);
+                        }));
 
                         Notification::make()
                             ->title('Ticket Updated Successfully')

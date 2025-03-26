@@ -40,6 +40,7 @@ class Ticketing extends Component implements HasTable, HasForms
     // Form Fields
     public $selectedType = null;
     public $selectedSubType = null;
+    public $selectedTerminal = null;  // Add this line
     public $title = '';
     public $description = '';
     public $priority = 'medium';
@@ -50,6 +51,7 @@ class Ticketing extends Component implements HasTable, HasForms
     public $start_time;
     public $end_time;
     public $timeConflictExists = false;
+    public $assigned_technician = null;
     
     // Data Collections
     public $classrooms = [];
@@ -77,6 +79,7 @@ class Ticketing extends Component implements HasTable, HasForms
     public function mount()
     {
         $this->loadInitialData();
+        $this->autoAssignTechnician();
     }
 
     protected function loadInitialData()
@@ -122,6 +125,12 @@ class Ticketing extends Component implements HasTable, HasForms
         if ($this->description) {
             $this->dispatch('updateTemplate', ['template' => $this->description]);
         }
+    }
+
+    public function selectTerminal($terminal)
+    {
+        $this->selectedTerminal = "Terminal {$terminal}";
+        $this->generateTicketContent();
     }
 
     public function updatedClassroomId()
@@ -238,23 +247,24 @@ class Ticketing extends Component implements HasTable, HasForms
     protected function generateDescription()
 {
     $currentTime = now()->format('Y-m-d H:i');
+    $terminalInfo = $this->selectedTerminal ? " at {$this->selectedTerminal}" : "";
     
     $templates = [
         'hardware' => [
-            'mouse' => "Mouse in Computer Laboratory is not functioning properly (reported on {$currentTime}), with symptoms including unresponsive movement, cursor freezing, and non-working clicks.",
-            'keyboard' => "Keyboard in Computer Laboratory has multiple non-responding keys and system recognition issues (reported on {$currentTime}).",
-            'monitor' => "Monitor in Computer Laboratory is experiencing display issues including flickering and signal problems (reported on {$currentTime}).",
-            'other' => "Hardware device in Computer Laboratory requires technical assessment due to malfunction (reported on {$currentTime})."
+            'mouse' => "Mouse{$terminalInfo} is not functioning properly (reported on {$currentTime}), with symptoms including unresponsive movement, cursor freezing, and non-working clicks.",
+            'keyboard' => "Keyboard{$terminalInfo} has multiple non-responding keys and system recognition issues (reported on {$currentTime}).",
+            'monitor' => "Monitor{$terminalInfo} is experiencing display issues including flickering and signal problems (reported on {$currentTime}).",
+            'other' => "Hardware device{$terminalInfo} requires technical assessment due to malfunction (reported on {$currentTime})."
         ],
         'internet' => [
-            'Wired' => "Wired connection in Computer Laboratory is experiencing connectivity issues including slow speeds and connection drops (reported on {$currentTime}).",
-            'wi-fi' => "Wi-Fi connection in Computer Laboratory has weak signal strength and frequent disconnections (reported on {$currentTime})."
+            'lan' => "Wired connection{$terminalInfo} is experiencing connectivity issues including slow speeds and connection drops (reported on {$currentTime}).",
+            'wifi' => "Wi-Fi connection{$terminalInfo} has weak signal strength and frequent disconnections (reported on {$currentTime})."
         ],
         'application' => [
-            'word' => "Microsoft Word application is not launching properly and experiencing frequent crashes (reported on {$currentTime}).",
-            'chrome' => "Google Chrome browser is having performance issues including slow page loading and frequent crashes (reported on {$currentTime}).",
-            'excel' => "Microsoft Excel is experiencing calculation errors and file saving problems (reported on {$currentTime}).",
-            'other_app' => "Application is experiencing performance issues and requires technical support (reported on {$currentTime})."
+            'word' => "Microsoft Word application{$terminalInfo} is not launching properly and experiencing frequent crashes (reported on {$currentTime}).",
+            'chrome' => "Google Chrome browser{$terminalInfo} is having performance issues including slow page loading and frequent crashes (reported on {$currentTime}).",
+            'excel' => "Microsoft Excel{$terminalInfo} is experiencing calculation errors and file saving problems (reported on {$currentTime}).",
+            'other_app' => "Application{$terminalInfo} is experiencing performance issues and requires technical support (reported on {$currentTime})."
         ],
         'asset_request' => [
             'default' => "Requesting new asset for daily operations to improve workflow efficiency (submitted on {$currentTime})."
@@ -272,7 +282,7 @@ class Ticketing extends Component implements HasTable, HasForms
     }
 
     return $templates[$this->selectedType][$this->selectedSubType] ?? 
-        "Issue with {$this->getReadableSubtype()} reported on {$currentTime} requires technical support and assessment.";
+        "Issue with {$this->getReadableSubtype()}{$terminalInfo} reported on {$currentTime} requires technical support and assessment.";
 }
 
     protected function formatDescription($description)
@@ -292,6 +302,7 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $this->selectedType = null;
         $this->selectedSubType = null;
+        $this->selectedTerminal = null;  // Add this line
         $this->title = '';
         $this->description = '';
         $this->priority = 'medium';
@@ -309,9 +320,25 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->loadAssets();
     }
 
+    // Add this method
+    public function autoAssignTechnician()
+    {
+        // Get all technicians
+        $technicians = User::role('technician')->inRandomOrder()->first();
+
+        if ($technicians) {
+            $this->assigned_to = $technicians->id;
+            $this->assigned_technician = $technicians;
+        }
+    }
+
     // Update the submitTicket method
     public function submitTicket()
     {
+        if (!$this->assigned_to) {
+            $this->autoAssignTechnician();
+        }
+
         // Base validation rules
         $rules = [
             'title' => 'required|string|max:255',

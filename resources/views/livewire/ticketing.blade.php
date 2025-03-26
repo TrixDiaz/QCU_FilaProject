@@ -2,6 +2,7 @@
     isOpen: false,
     step: 1,
     selectedType: null,
+    selectedTerminal: null,
     selectedSubType: null,
     darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches),
     openModal() {
@@ -19,6 +20,11 @@
         console.log('Selected type:', type);
         this.selectedType = type;
         $wire.selectIssueType(type);
+        this.step = 1.5; // New step for terminal selection
+    },
+    selectTerminal(terminal) {
+        console.log('Selected terminal:', terminal);
+        this.selectedTerminal = terminal;
         this.step = 2;
     },
     selectSubType(subType) {
@@ -177,6 +183,26 @@
         .filament-tables-cell {
             @apply text-sm text-gray-600 dark:text-gray-300;
         }
+
+        /* Add to your existing styles section */
+        .terminal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .terminal-item {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .terminal-item:hover {
+            transform: scale(1.05);
+            background-color: var(--hover-bg);
+        }
     </style>
 
     <!-- Flash Messages -->
@@ -292,6 +318,7 @@
                     class="border-b px-4 py-3 flex items-center justify-between bg-gray-200 dark:bg-gray-700 dark:border-gray-600">
                     <h2 class="text-xl font-bold">
                         <span x-show="step === 1">Select Issue Type</span>
+                        <span x-show="step === 1.5">Select Terminal</span>
                         <span x-show="step === 2 && selectedType === 'hardware'">Select Hardware Type</span>
                         <span x-show="step === 2 && selectedType === 'internet'">Select Internet Connection Type</span>
                         <span x-show="step === 2 && selectedType === 'application'">Select Application Type</span>
@@ -302,13 +329,18 @@
                             x-show="step === 3 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry'">Submit
                             Ticket</span>
                     </h2>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-4"> <!-- Increased space-x-2 to space-x-4 -->
                         <button
                             x-show="step > 1 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry' && selectedType !== 'classroom_request'"
-                            @click="step--" type="button" class="dark:text-white">
+                            @click="step = step === 2 ? 1.5 : step - 1" 
+                            type="button" 
+                            class="dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 p-2 rounded-md">
                             ← Back
                         </button>
-                        <button @click="closeModal()" type="button" class="dark:text-white">
+                        <button 
+                            @click="closeModal()" 
+                            type="button" 
+                            class="dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 p-2 rounded-md"> <!-- Added padding and hover effects -->
                             ✕
                         </button>
                     </div>
@@ -335,6 +367,19 @@
                             <div class="h-12 w-12 mx-auto">🖥️</div>
                             <h3 class="mt-4 text-lg font-semibold">Hardware</h3>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Terminal Selection -->
+                <div x-show="step === 1.5" class="p-4">
+                    <div class="grid grid-cols-5 gap-4">
+                        @for ($i = 1; $i <= 50; $i++)
+                            <div @click="selectTerminal('T-' + {{ $i }})" class="cursor-pointer card-hover">
+                                <div class="p-4 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                    <h3 class="text-lg font-semibold">T-{{ $i }}</h3>
+                                </div>
+                            </div>
+                        @endfor
                     </div>
                 </div>
 
@@ -394,10 +439,43 @@
                         </div>
                     </div>
 
-                    <div @click="selectSubType('other')" class="cursor-pointer card-hover">
-                        <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
-                            <div class="h-12 w-12 mx-auto">🔄</div>
-                            <h3 class="mt-4 text-lg font-semibold">Other</h3>
+                    <div x-data="{ showOtherDropdown: false }" @click.away="showOtherDropdown = false" class="relative">
+                        <div @click="showOtherDropdown = !showOtherDropdown" class="cursor-pointer card-hover">
+                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                <div class="h-12 w-12 mx-auto">🔄</div>
+                                <h3 class="mt-4 text-lg font-semibold">Other</h3>
+                            </div>
+                        </div>
+                        
+                        <!-- Dropdown Menu -->
+                        <div x-show="showOtherDropdown" 
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform scale-95"
+                            x-transition:enter-end="opacity-100 transform scale-100"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 transform scale-100"
+                            x-transition:leave-end="opacity-0 transform scale-95"
+                            class="absolute z-50 mt-2 w-full rounded-md shadow-lg">
+                            <div class="rounded-md bg-white dark:bg-gray-700 shadow-xs">
+                                <div class="py-1">
+                                    <button @click="selectSubType('tv'); showOtherDropdown = false" 
+                                        class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
+                                        📺 TV
+                                    </button>
+                                    <button @click="selectSubType('printer'); showOtherDropdown = false" 
+                                        class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
+                                        🖨️ Printer
+                                    </button>
+                                    <button @click="selectSubType('router'); showOtherDropdown = false" 
+                                        class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
+                                        📡 Router
+                                    </button>
+                                    <button @click="selectSubType('ups'); showOtherDropdown = false" 
+                                        class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
+                                        🔋 UPS
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -439,10 +517,9 @@
                                         You are submitting a classroom request. Please select the classroom and section
                                         below.
                                     </span>
-                                    <span
-                                        x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
-                                        You are submitting a ticket for a <strong x-text="selectedType"></strong> issue
-                                        - <strong x-text="selectedSubType"></strong>
+                                    <span x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
+                                        You are submitting a ticket for Terminal <strong x-text="selectedTerminal"></strong> - 
+                                        <strong x-text="selectedType"></strong> issue - <strong x-text="selectedSubType"></strong>
                                     </span>
                                 </p>
                             </div>

@@ -236,38 +236,44 @@ class Ticketing extends Component implements HasTable, HasForms
     }
 
     protected function generateDescription()
-    {
-        $templates = [
-            'hardware' => [
-                'mouse' => "**Mouse Issue**\n- Location/Tag: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]",
-                'keyboard' => "**Keyboard Issue**\n- Location/Tag: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]",
-                'monitor' => "**Monitor Issue**\n- Location/Tag: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]"
-            ],
-            'internet' => [
-                'lan' => "**LAN Issue**\n- Location: [specify]\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]",
-                'wifi' => "**WiFi Issue**\n- Location: [specify]\n- Network: [if known]\n- Problem: [describe issue]\n- Since: [date/time]"
-            ],
-            'application' => [
-                'word' => "**MS Word Issue**\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]"
-            ],
-            'asset_request' => [
-                'default' => "**Asset Request**\n- Item: [specify]\n- Quantity: [number]\n- Purpose: [brief explanation]\n- When Needed: [date]"
-            ],
-            'general_inquiry' => [
-                'default' => "**General Inquiry**\n- Topic: [specify]\n- Question: [your inquiry]\n- Preferred Contact: [email/phone]"
-            ],
-            'classroom_request' => [
-                'default' => "**Classroom Request**\n- Date: [specify]\n- Time: [start-end]\n- Purpose: [brief description]\n- Attendees: [number]"
-            ]
-        ];
+{
+    $currentTime = now()->format('Y-m-d H:i');
+    
+    $templates = [
+        'hardware' => [
+            'mouse' => "Mouse in Computer Laboratory is not functioning properly (reported on {$currentTime}), with symptoms including unresponsive movement, cursor freezing, and non-working clicks.",
+            'keyboard' => "Keyboard in Computer Laboratory has multiple non-responding keys and system recognition issues (reported on {$currentTime}).",
+            'monitor' => "Monitor in Computer Laboratory is experiencing display issues including flickering and signal problems (reported on {$currentTime}).",
+            'other' => "Hardware device in Computer Laboratory requires technical assessment due to malfunction (reported on {$currentTime})."
+        ],
+        'internet' => [
+            'Wired' => "Wired connection in Computer Laboratory is experiencing connectivity issues including slow speeds and connection drops (reported on {$currentTime}).",
+            'wi-fi' => "Wi-Fi connection in Computer Laboratory has weak signal strength and frequent disconnections (reported on {$currentTime})."
+        ],
+        'application' => [
+            'word' => "Microsoft Word application is not launching properly and experiencing frequent crashes (reported on {$currentTime}).",
+            'chrome' => "Google Chrome browser is having performance issues including slow page loading and frequent crashes (reported on {$currentTime}).",
+            'excel' => "Microsoft Excel is experiencing calculation errors and file saving problems (reported on {$currentTime}).",
+            'other_app' => "Application is experiencing performance issues and requires technical support (reported on {$currentTime})."
+        ],
+        'asset_request' => [
+            'default' => "Requesting new asset for daily operations to improve workflow efficiency (submitted on {$currentTime})."
+        ],
+        'general_inquiry' => [
+            'default' => "General inquiry regarding technical support and system access (submitted on {$currentTime})."
+        ],
+        'classroom_request' => [
+            'default' => "Requesting classroom booking for regular class session with standard computer laboratory setup (submitted on {$currentTime})."
+        ]
+    ];
 
-        if (in_array($this->selectedType, ['asset_request', 'general_inquiry', 'classroom_request'])) {
-            return $templates[$this->selectedType]['default'];
-        }
-
-        return $templates[$this->selectedType][$this->selectedSubType] ?? 
-            "**{$this->getReadableSubtype()} Issue**\n- Problem: [describe issue]\n- Since: [date/time]\n- Steps Tried: [list steps]";
+    if (in_array($this->selectedType, ['asset_request', 'general_inquiry', 'classroom_request'])) {
+        return $templates[$this->selectedType]['default'];
     }
+
+    return $templates[$this->selectedType][$this->selectedSubType] ?? 
+        "Issue with {$this->getReadableSubtype()} reported on {$currentTime} requires technical support and assessment.";
+}
 
     protected function formatDescription($description)
     {

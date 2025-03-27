@@ -37,7 +37,7 @@
         <!-- Asset Summary Section -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <!-- Total Assets -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <div class=" dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Total Assets</h3>
                 <p class="text-4xl font-bold text-gray-700 dark:text-gray-300">{{ $assetGroupsCount }}</p>
             </div>
@@ -74,7 +74,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach ($assetGroups as $assetGroup)
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-gray-200 dark:border-gray-700">
+                        class=" dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-gray-200 dark:border-gray-700">
                         <div class="p-6">
                             <h2 class="text-xl font-semibold mb-2 dark:text-white">{{ $assetGroup->name }}</h2>
                             <p class="text-gray-700 dark:text-gray-300 mb-1"><span class="font-medium">Code:</span>
@@ -82,13 +82,12 @@
 
                             @if ($assetGroup->classroomAsset)
                                 <div
-                                    class="mt-6 bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                                    class="mt-6 dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
                                     <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Asset Details
                                     </h3>
                                     <table
                                         class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-lg overflow-hidden">
-                                        <tbody
-                                            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                        <tbody class=" dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             @foreach ([
         'Asset Name' => $assetGroup->classroomAsset->name,
         'Serial Number' => $assetGroup->classroomAsset->serial_number,

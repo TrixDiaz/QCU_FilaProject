@@ -33,17 +33,17 @@ class Asset extends Model
 
     public function brand(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Brand::class);
+        return $this->belongsTo(Brand::class);
     }
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Category::class);
+        return $this->belongsTo(Category::class);
     }
 
     public function assetTags(): BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Tag::class, 'asset_tags', 'asset_id', 'asset_tag_id');
+        return $this->belongsToMany(Tag::class, 'asset_tags', 'asset_id', 'asset_tag_id');
     }
 
     public function tickets(): HasMany
@@ -51,23 +51,13 @@ class Asset extends Model
         return $this->hasMany(Ticket::class, 'asset_id');
     }
 
-    public function classroom(): BelongsTo
+    public function assetGroups(): HasMany
     {
-        return $this->belongsTo(Classroom::class);
+        return $this->hasMany(AssetGroup::class, 'asset_id');
     }
 
-    public function assetGroup(): HasOne
+    public function tags(): BelongsToMany
     {
-        return $this->hasOne(\App\Models\AssetGroup::class, 'asset_id');
-    }
-
-    public function assets(): HasMany
-    {
-        return $this->hasMany(\App\Models\Asset::class);
-    }
-
-    public function tags()
-    {
-        return $this->belongsToMany(Tag::class, 'asset_tags', 'asset_id', 'asset_tag_id');
+        return $this->assetTags();
     }
 }

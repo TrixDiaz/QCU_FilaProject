@@ -63,7 +63,7 @@ class Inventory extends Component
     public $bulkEditData = [
         'status' => '',
         'deployClassroom' => null,
-    
+
     ];
 
     // Deployment properties
@@ -74,16 +74,16 @@ class Inventory extends Component
     public $deploymentCode;
     public $statusActive = true;
 
-   // protected $listeners = ['refreshAssets' => '$refresh'];
+    // protected $listeners = ['refreshAssets' => '$refresh'];
 
- //  protected $listeners = [
+    //  protected $listeners = [
     //'importFileSelected' => 'importFileSelected',
-//];
+    //];
 
-//public function importFileSelected($file)
-//{
+    //public function importFileSelected($file)
+    //{
     //$this->importFile = $file;
-//}
+    //}
 
 
     protected $listeners = ['refreshAssets' => '$refresh'];
@@ -99,81 +99,44 @@ class Inventory extends Component
     }
 
     public function render()
-
-
     {
-        
-        
-        $query = Asset::with(['brand', 'category', 'assetTags'])->where('status', 'available');
+        // Base query with relationships
+        $query = Asset::with(['brand', 'category', 'assetTags', 'assetGroups.classroom.building']);
 
         // Apply search if provided
         if ($this->search) {
             $searchTerm = '%' . $this->search . '%';
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', $searchTerm)
-                    ->orWhere('serial_number', 'like', $searchTerm)
                     ->orWhere('asset_code', 'like', $searchTerm)
-                    ->orWhereHas('brand', function ($brandQuery) use ($searchTerm) {
-                        $brandQuery->where('name', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
-                        $categoryQuery->where('name', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('assetTags', function ($tagQuery) use ($searchTerm) {
-                        $tagQuery->where('name', 'like', $searchTerm);
-                    });
+                    ->orWhere('serial_number', 'like', $searchTerm);
             });
         }
 
-        // Apply filters
-        if ($this->filterType === 'brand' && $this->filterValue) {
-            $query->where('brand_id', $this->filterValue);
-        } elseif ($this->filterType === 'category' && $this->filterValue) {
-            $query->where('category_id', $this->filterValue);
-        } elseif ($this->filterType === 'tag' && $this->filterValue) {
-            $query->whereHas('assetTags', function ($q) {
-                $q->where('tags.id', $this->filterValue);
-            });
-        } elseif ($this->filterType === 'brand-category') {
-            if ($this->filterBrand) {
-                $query->where('brand_id', $this->filterBrand);
-            }
-            if ($this->filterCategory) {
-                $query->where('category_id', $this->filterCategory);
-            }
-        } elseif ($this->filterType === 'brand-tag') {
-            if ($this->filterBrand) {
-                $query->where('brand_id', $this->filterBrand);
-            }
-            if ($this->filterTag) {
-                $query->whereHas('assetTags', function ($q) {
-                    $q->where('tags.id', $this->filterTag);
-                });
-            }
-        } elseif ($this->filterType === 'category-brand-tag') {
-            if ($this->filterCategory) {
-                $query->where('category_id', $this->filterCategory);
-            }
-            if ($this->filterBrand) {
-                $query->where('brand_id', $this->filterBrand);
-            }
-            if ($this->filterTag) {
-                $query->whereHas('assetTags', function ($q) {
-                    $q->where('tags.id', $this->filterTag);
-                });
-            }
-        }
-
+        // Get the paginated results
         $assets = $query->paginate($this->perPage);
-        $this->filteredCount = $assets->total();
 
-        // Handle "Select All" checkboxes
-        if ($this->selectAll) {
-            $this->selected = $assets->pluck('id')->map(fn($id) => (string) $id)->toArray();
+        // Calculate deployment stats using the loaded relationship
+        $deploymentStats = [];
+        foreach ($this->classrooms as $classroom) {
+            $deployedCount = $assets->filter(function ($asset) use ($classroom) {
+                return $asset->status === 'deployed' &&
+                    $asset->assetGroups->contains('classroom_id', $classroom->id);
+            })->count();
+
+            if ($deployedCount > 0) {
+                $deploymentStats[$classroom->id] = [
+                    'classroom' => $classroom,
+                    'count' => $deployedCount
+                ];
+            }
         }
 
         return view('livewire.inventory', [
-            'assets' => $assets
+            'assets' => $assets,
+            'availableCount' => $assets->where('status', 'available')->count(),
+            'deployedCount' => $assets->where('status', 'deployed')->count(),
+            'deploymentStats' => $deploymentStats
         ]);
     }
 
@@ -325,15 +288,15 @@ class Inventory extends Component
             $this->addError('bulkAction', 'Please select at least one asset');
             return;
         }
-    
+
         // Perform the archiving by updating the status
         Asset::whereIn('id', $this->selected)->update(['status' => 'archived']);
-    
+
         // Reset the state
         $this->confirmingBulkDelete = false;
         $this->selected = [];
         $this->selectAll = false;
-    
+
         // Notify the user
         $this->dispatch('notify', ['message' => count($this->selected) . ' assets archived successfully', 'type' => 'success']);
     }
@@ -342,7 +305,7 @@ class Inventory extends Component
     {
         // Fetch the selected assets
         $this->selectedAssets = Asset::whereIn('id', $this->selected)->get();
-    
+
         // Initialize the bulk edit data for each asset
         foreach ($this->selectedAssets as $asset) {
             $this->bulkEditData[$asset->id] = [
@@ -352,11 +315,11 @@ class Inventory extends Component
                 'asset_tag_id' => $asset->assetTags->pluck('id')->toArray(),
             ];
         }
-    
+
         // Show the bulk edit modal
         $this->showBulkEditModal = true;
     }
-    
+
     public function saveBulkEdit()
     {
         // Validate the bulk edit data
@@ -413,9 +376,9 @@ class Inventory extends Component
         // Combine base code "AC" with the last 3 digits in uppercase
         return "AC" . Str::upper($lastThreeDigits);
     }
-  
-    
-    
+
+
+
 
     public function openImportModal()
     {
@@ -424,60 +387,60 @@ class Inventory extends Component
 
     public function resetImportFile()
     {
-    // Reset the file input
-    $this->importFile = null;
-    // Optionally reset any other variables related to import (e.g., error messages, etc.)
-    $this->resetErrorBag();
+        // Reset the file input
+        $this->importFile = null;
+        // Optionally reset any other variables related to import (e.g., error messages, etc.)
+        $this->resetErrorBag();
     }
 
-    
+
     public function importAssets()
     {
         $this->validate([
             'importFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:1024',
         ]);
-    
+
         if (!$this->importFile) {
             $this->addError('importFile', 'No file selected.');
             return;
         }
-    
+
         try {
             // Store the file temporarily and get the path
             $path = $this->importFile->store('temp');
             $fullPath = Storage::path($path);
-    
+
             // Check file extension
             $extension = $this->importFile->getClientOriginalExtension();
-    
+
             if (in_array($extension, ['xlsx', 'xls'])) {
                 // Handle Excel file
                 $spreadsheet = IOFactory::load($fullPath);
                 $sheet = $spreadsheet->getActiveSheet();
                 $rows = $sheet->toArray();
-    
+
                 // Extract header and remove it from the rows
                 $header = array_map('trim', $rows[0]);
                 unset($rows[0]);
-    
+
                 foreach ($rows as $row) {
                     $assetData = array_combine($header, $row);
                     if (empty($assetData['serial_number'])) {
                         continue;
                     }
-    
+
                     $asset = Asset::firstOrNew(['serial_number' => $assetData['serial_number']]);
                     $asset->name = $assetData['name'];
                     $asset->asset_code = $assetData['asset_code'] ?? null;
                     $asset->status = $assetData['status'] ?? 'available';
-                    $asset->expiry_date = !empty($assetData['expiry_date']) 
-                    ? Carbon::parse($assetData['expiry_date']) 
-                    : null;
-    
+                    $asset->expiry_date = !empty($assetData['expiry_date'])
+                        ? Carbon::parse($assetData['expiry_date'])
+                        : null;
+
                     // Handle missing brand and category keys
                     $brandName = $assetData['brand'] ?? 'Unknown';
                     $categoryName = $assetData['category'] ?? 'Uncategorized';
-    
+
                     $brand = Brand::firstOrCreate(
                         ['name' => $brandName],
                         ['slug' => Str::slug($brandName)]
@@ -486,7 +449,7 @@ class Inventory extends Component
                         ['name' => $categoryName],
                         ['slug' => Str::slug($categoryName)]
                     );
-    
+
                     $asset->brand_id = $brand->id;
                     $asset->category_id = $category->id;
                     $asset->save();
@@ -495,26 +458,26 @@ class Inventory extends Component
                 // Handle CSV file
                 if (($handle = fopen($fullPath, 'r')) !== false) {
                     $header = array_map('trim', fgetcsv($handle));
-    
+
                     while (($row = fgetcsv($handle)) !== false) {
                         $assetData = array_combine($header, $row);
 
                         if (empty($assetData['serial_number'])) {
                             continue;
                         }
-    
+
                         $asset = Asset::firstOrNew(['serial_number' => $assetData['serial_number']]);
                         $asset->name = $assetData['name'];
                         $asset->asset_code = $assetData['asset_code'] ?? null;
                         $asset->status = $assetData['status'] ?? 'available';
-                        $asset->expiry_date = !empty($assetData['expiry_date']) 
-                        ? Carbon::parse($assetData['expiry_date']) 
-                        : null;
-    
+                        $asset->expiry_date = !empty($assetData['expiry_date'])
+                            ? Carbon::parse($assetData['expiry_date'])
+                            : null;
+
                         // Handle missing brand and category keys
                         $brandName = $assetData['brand'] ?? 'Unknown';
                         $categoryName = $assetData['category'] ?? 'Uncategorized';
-    
+
                         $brand = Brand::firstOrCreate(
                             ['name' => $brandName],
                             ['slug' => Str::slug($brandName)]
@@ -523,7 +486,7 @@ class Inventory extends Component
                             ['name' => $categoryName],
                             ['slug' => Str::slug($categoryName)]
                         );
-    
+
                         $asset->brand_id = $brand->id;
                         $asset->category_id = $category->id;
                         $asset->save();
@@ -531,14 +494,14 @@ class Inventory extends Component
                     fclose($handle);
                 }
             }
-    
+
             // Clean up the uploaded file
             Storage::delete($path);
-    
+
             // Show success message
             session()->flash('message', 'Assets imported successfully!');
             session()->flash('type', 'success');
-    
+
             // Reset file input and hide modal
             $this->resetImportFile();
             $this->showImportModal = false;
@@ -546,7 +509,7 @@ class Inventory extends Component
             $this->addError('importFile', 'Error importing file: ' . $e->getMessage());
         }
     }
-    
+
 
     public function executeBulkAction()
     {
@@ -569,5 +532,4 @@ class Inventory extends Component
                 $this->addError('bulkAction', 'Please select a valid action');
         }
     }
-
 }

@@ -5,6 +5,7 @@
     selectedTerminal: null,
     selectedSubType: null,
     darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    selectedClassroom: null,
     openModal() {
         this.isOpen = true;
         this.step = 1;
@@ -20,7 +21,7 @@
         console.log('Selected type:', type);
         this.selectedType = type;
         $wire.selectIssueType(type);
-        this.step = 1.5; // New step for terminal selection
+        this.step = 1.25; // Go to classroom selection
     },
     selectTerminal(terminal) {
         console.log('Selected terminal:', terminal);
@@ -32,6 +33,11 @@
         this.selectedSubType = subType;
         $wire.selectSubType(subType);
         this.step = 3;
+    },
+    selectClassroom(classroom) {
+        this.selectedClassroom = classroom;
+        $wire.selectClassroom(classroom);
+        this.step = 1.5; // Move to terminal selection after classroom
     },
     toggleDarkMode() {
         this.darkMode = !this.darkMode;
@@ -318,6 +324,7 @@
                     class="border-b px-4 py-3 flex items-center justify-between bg-gray-200 dark:bg-gray-700 dark:border-gray-600">
                     <h2 class="text-xl font-bold">
                         <span x-show="step === 1">Select Issue Type</span>
+                        <span x-show="step === 1.25">Select Classroom</span>
                         <span x-show="step === 1.5">Select Terminal</span>
                         <span x-show="step === 2 && selectedType === 'hardware'">Select Hardware Type</span>
                         <span x-show="step === 2 && selectedType === 'internet'">Select Internet Connection Type</span>
@@ -366,6 +373,40 @@
                         <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                             <div class="h-12 w-12 mx-auto">🖥️</div>
                             <h3 class="mt-4 text-lg font-semibold">Hardware</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 1.25: Classroom Selection -->
+                <div x-show="step === 1.25" class="p-4">
+                    <h3 class="text-lg font-semibold mb-4">Select Classroom</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div @click="selectClassroom('IK503b')" class="cursor-pointer card-hover">
+                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                <div class="h-12 w-12 mx-auto">🏫</div>
+                                <h3 class="mt-4 text-lg font-semibold">IK503b</h3>
+                            </div>
+                        </div>
+
+                        <div @click="selectClassroom('IK504b')" class="cursor-pointer card-hover">
+                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                <div class="h-12 w-12 mx-auto">🏫</div>
+                                <h3 class="mt-4 text-lg font-semibold">IK504b</h3>
+                            </div>
+                        </div>
+
+                        <div @click="selectClassroom('IK603b')" class="cursor-pointer card-hover">
+                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                <div class="h-12 w-12 mx-auto">🏫</div>
+                                <h3 class="mt-4 text-lg font-semibold">IK603b</h3>
+                            </div>
+                        </div>
+
+                        <div @click="selectClassroom('IK604b')" class="cursor-pointer card-hover">
+                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                <div class="h-12 w-12 mx-auto">🏫</div>
+                                <h3 class="mt-4 text-lg font-semibold">IK604b</h3>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -518,8 +559,10 @@
                                         below.
                                     </span>
                                     <span x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
-                                        You are submitting a ticket for Terminal <strong x-text="selectedTerminal"></strong> - 
-                                        <strong x-text="selectedType"></strong> issue - <strong x-text="selectedSubType"></strong>
+                                        You are submitting a ticket for Classroom <strong x-text="selectedClassroom"></strong>
+                                        <span x-show="selectedTerminal"> - Terminal <strong x-text="selectedTerminal"></strong></span>
+                                        - <strong x-text="selectedType"></strong> issue
+                                        <span x-show="selectedSubType"> - <strong x-text="selectedSubType"></strong></span>
                                     </span>
                                 </p>
                             </div>
@@ -576,24 +619,24 @@
                         </div>
 
                         <!-- Asset Dropdown -->
-                        <div>
-                            <label for="asset_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Related Asset</label>
+                        <div x-show="selectedType !== 'classroom_request'">
+                            <label for="asset_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Asset</label>
                             <select id="asset_id" wire:model.defer="asset_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-                                <option value="">-- Select Asset (Optional) --</option>
-                                @forelse ($assets as $asset)
-                                    <option value="{{ $asset->id }}">
-                                        {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN: {{ $asset->serial_number ?? 'N/A' }})
-                                    </option>
-                                @empty
-                                    <option value="" disabled>No matching assets found</option>
-                                @endforelse
+                                <option value="">-- Select Asset --</option>
+                            @forelse ($assets as $asset)
+                                <option value="{{ $asset->id }}">
+                                {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN: {{ $asset->serial_number ?? 'N/A' }})
+                                </option>
+                            @empty
+                                <option value="" disabled>No matching assets found</option>
+                            @endforelse
                             </select>
-                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                @if ($selectedType == 'hardware' && $selectedSubType)
-                                    Showing {{ ucfirst($selectedSubType) }} assets only
-                                @endif
-                            </div>
+                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            @if ($selectedType == 'hardware' && $selectedSubType)
+                                Showing {{ ucfirst($selectedSubType) }} assets only
+                            @endif
+                                </div>
                             @error('asset_id')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
@@ -635,21 +678,6 @@
                                 <option value="high">High</option>
                             </select>
                             @error('priority')
-                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <!-- Classroom Selection -->
-                        <div>
-                            <label for="classroom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Classroom</label>
-                            <select id="classroom" wire:model.defer="classroom_id"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-                                <option value="">-- Select Classroom (Optional) --</option>
-                                @foreach ($classrooms as $classroom)
-                                    <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('classroom_id')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>

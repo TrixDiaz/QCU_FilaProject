@@ -13,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Get;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkAction;
@@ -52,6 +53,7 @@ class Ticketing extends Component implements HasTable, HasForms
     public $end_time;
     public $timeConflictExists = false;
     public $assigned_technician = null;
+    public $selectedClassroom = null;
     
     // Data Collections
     public $classrooms = [];
@@ -74,12 +76,43 @@ class Ticketing extends Component implements HasTable, HasForms
         'section_id' => 'nullable|exists:sections,id',
         'start_time' => 'nullable|date',
         'end_time' => 'nullable|date|after:start_time',
+        'selectedType' => 'required|in:hardware,internet,application,asset_request,classroom_request,general_inquiry',
+        'selectedSubType' => 'required_unless:selectedType,asset_request,classroom_request,general_inquiry',
+        'selectedTerminal' => 'nullable|string'
     ];
+
+    public function getRules()
+    {
+        $rules = $this->rules;
+
+        // Add conditional validation for asset requests
+        if ($this->selectedType === 'asset_request') {
+            $rules['asset_id'] = 'required|exists:assets,id';
+        }
+
+        // Add conditional validation for classroom requests
+        if ($this->selectedType === 'classroom_request') {
+            $rules['classroom_id'] = 'required|exists:classrooms,id';
+            $rules['section_id'] = 'required|exists:sections,id';
+            $rules['start_time'] = 'required|date';
+            $rules['end_time'] = 'required|date|after:start_time';
+        }
+
+        // Add conditional validation for hardware/internet issues
+        if (in_array($this->selectedType, ['hardware', 'internet'])) {
+            $rules['selectedTerminal'] = 'required|string';
+        }
+
+        return $rules;
+    }
 
     public function mount()
     {
         $this->loadInitialData();
         $this->autoAssignTechnician();
+        
+        // Add this debug line
+        \Log::info('User roles:', ['roles' => auth()->user()->roles->pluck('name')]);
     }
 
     protected function loadInitialData()
@@ -131,6 +164,12 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $this->selectedTerminal = "Terminal {$terminal}";
         $this->generateTicketContent();
+    }
+
+    public function selectClassroom($classroom)
+    {
+        $this->selectedClassroom = $classroom;
+        $this->classroom_id = $classroom; // If you're using IDs in your database
     }
 
     public function updatedClassroomId()
@@ -339,24 +378,8 @@ class Ticketing extends Component implements HasTable, HasForms
             $this->autoAssignTechnician();
         }
 
-        // Base validation rules
-        $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
-        ];
-
-        // Add specific validation rules for classroom requests
-        if ($this->selectedType === 'classroom_request') {
-            $rules = array_merge($rules, [
-                'classroom_id' => 'required|exists:classrooms,id',
-                'section_id' => 'required|exists:sections,id',
-                'start_time' => 'required|date',
-                'end_time' => 'required|date|after:start_time'
-            ]);
-        }
-
-        $this->validate($rules);
+        // Validate using dynamic rules
+        $this->validate($this->getRules());
 
         try {
             $ticketData = [
@@ -373,7 +396,7 @@ class Ticketing extends Component implements HasTable, HasForms
                 'created_by' => auth()->id(),
             ];
 
-            // Add classroom-specific data only if it's a classroom request
+            // Add classroom-specific data
             if ($this->selectedType === 'classroom_request') {
                 if ($this->timeConflictExists) {
                     session()->flash('error', 'Cannot book the classroom due to a time conflict.');
@@ -441,8 +464,24 @@ class Ticketing extends Component implements HasTable, HasForms
     // Update the assign action in the table configuration
     public function table(Table $table): Table
     {
+        // Start with base ticket query
+        $query = Ticket::query()->with('assignedTo')->latest();
+
+        // Filter tickets based on user role
+        if (auth()->user()->hasRole('professor')) {
+            // Professors can only see their own tickets
+            $query->where('created_by', auth()->id());
+        } elseif (auth()->user()->hasRole('technician')) {
+            // Technicians can see tickets assigned to them or unassigned tickets
+            $query->where(function ($q) {
+                $q->where('assigned_to', auth()->id())
+                  ->orWhereNull('assigned_to');
+            });
+        }
+        // Admins/supervisors can see all tickets (no additional filter needed)
+
         return $table
-            ->query(Ticket::query()->with('assignedTo')->latest())
+            ->query($query)
             ->columns([
                 TextColumn::make('ticket_number')
                     ->label('Ticket No.')
@@ -581,165 +620,159 @@ class Ticketing extends Component implements HasTable, HasForms
             ])
             ->filtersFormColumns(3)
             ->actions([
-                \Filament\Tables\Actions\Action::make('view')
-                    ->icon('heroicon-m-eye')
-                    ->color('info')
-                    ->button()
-                    ->modalContent(fn (Ticket $record) => view(
-                        'tickets.view',
-                        [
-                            'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
-                            'classrooms' => Classroom::all(),
-                            'sections' => Section::all(),
-                        ]
-                    ))
-                    ->modalWidth('md')
-                    ->modalSubmitAction(false)
-                    ->modalCancelAction(fn ($action) => $action->label('Close')),
+    ActionGroup::make([
+        Action::make('view')
+            ->icon('heroicon-m-eye')
+            ->color('info')
+            ->modalContent(fn (Ticket $record) => view(
+                'tickets.view',
+                [
+                    'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
+                    'classrooms' => Classroom::all(),
+                    'sections' => Section::all(),
+                ]
+            ))
+            ->modalWidth('md')
+            ->modalSubmitAction(false)
+            ->modalCancelAction(fn ($action) => $action->label('Close')),
 
-                \Filament\Tables\Actions\Action::make('edit')
-                    ->icon('heroicon-m-pencil-square')
-                    ->color('warning')
-                    ->button()
-                    ->modalWidth('md')
-                    ->form([
-                        TextInput::make('title')
-                            ->required()
-                            ->maxLength(255),
-                        Textarea::make('description')
-                            ->required()
-                            ->rows(4),
-                        Select::make('priority')
-                            ->options([
-                                'low' => 'Low',
-                                'medium' => 'Medium',
-                                'high' => 'High',
-                            ])
-                            ->required(),
-                        Select::make('ticket_status')
-                            ->options([
-                                'open' => 'Open',
-                                'in_progress' => 'In Progress',
-                                'closed' => 'Closed',
-                                'archived' => 'Archived',
-                            ])
-                            ->required(),
-                        Select::make('assigned_to')
-                            ->label('Assigned To')
-                            ->options(fn () => User::role('technician')->pluck('name', 'id'))
-                            ->nullable()
-                            ->placeholder('-- Unassigned --'),
-                        Select::make('classroom_id')
-                            ->label('Classroom')
-                            ->options(fn () => Classroom::pluck('name', 'id'))
-                            ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                            ->default(null), // Add default value
-                            
-                        Select::make('section_id')
-                            ->label('Section')
-                            ->options(fn () => Section::pluck('name', 'id'))
-                            ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                            ->default(null), // Add default value
-                            
-                        DatePicker::make('start_time')
-                            ->label('Start Time')
-                            ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                            ->default(null), // Add default value
-                            
-                        DatePicker::make('end_time')
-                            ->label('End Time')
-                            ->nullable()
-                            ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                            ->default(null) // Add default value
+        Action::make('edit')
+            ->icon('heroicon-m-pencil-square')
+            ->color('warning')
+            ->modalWidth('md')
+            ->form([
+                TextInput::make('title')
+                    ->required()
+                    ->maxLength(255)
+                    ->readOnly(),
+                Textarea::make('description')
+                    ->required()
+                    ->rows(4),
+                Select::make('asset_id')
+                    ->label('Asset')
+                    ->options(fn () => Asset::pluck('name', 'id'))
+                    ->nullable()
+                    ->visible(fn (Ticket $record) => $record->type === 'hardware')
+                    ->default(null) // Add default value
+                    ->disabled(),
+                Select::make('priority')
+                    ->options([
+                        'low' => 'Low',
+                        'medium' => 'Medium',
+                        'high' => 'High',
                     ])
-                    ->fillForm(function (Ticket $record): array {
-                        return [
-                            'title' => $record->title,
-                            'description' => $record->description,
-                            'priority' => $record->priority,
-                            'ticket_status' => $record->ticket_status,
-                            'assigned_to' => $record->assigned_to,
-                            'classroom_id' => $record->classroom_id ?? null,
-                            'section_id' => $record->section_id ?? null,
-                            'start_time' => $record->start_time ?? null,
-                            'end_time' => $record->end_time ?? null,
-                        ];
-                    })
-                    ->action(function (Ticket $record, array $data): void {
-                        // Filter out null values for non-classroom requests
-                        if ($record->type !== 'classroom_request') {
-                            unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
-                        }
-                        
-                        $record->update(array_filter($data, function ($value) {
-                            return !is_null($value);
-                        }));
-
-                        Notification::make()
-                            ->title('Ticket Updated Successfully')
-                            ->success()
-                            ->send();
-                    }),
-
-                \Filament\Tables\Actions\Action::make('assign')
-                    ->icon('heroicon-m-user-plus')
-                    ->color('success')
-                    ->button()
-                    ->label(fn (Ticket $record) => 
-                        is_null($record->assigned_to) ? 
-                        (auth()->user()->hasRole('technician') ? 'Claim' : 'Assign') : 
-                        'Reassign'
-                    )
-                    ->modalContent(fn (Ticket $record) => view('path.to.assign', ['ticket' => $record]))
-                    ->modalHeading(fn (Ticket $record) => 
-                        is_null($record->assigned_to) ? 
-                        (auth()->user()->hasRole('technician') ? 'Claim Ticket' : 'Assign Ticket') : 
-                        'Reassign Ticket'
-                    )
-                    ->form([
-                        Select::make('assign_type')
-                            ->label('Assignment Type')
-                            ->options([
-                                'self' => 'Assign to myself',
-                                'auto' => 'Auto-assign to available technician',
-                                'specific' => 'Select specific technician'
-                            ])
-                            ->required()
-                            ->reactive()
-                            ->visible(fn () => auth()->user()->hasRole(['admin', 'supervisor'])),
-                        Select::make('technician_id')
-                            ->label('Select Technician')
-                            ->options(fn () => User::role('technician')->pluck('name', 'id'))
-                            ->visible(fn (Get $get) => $get('assign_type') === 'specific')
-                            ->required(fn (Get $get) => $get('assign_type') === 'specific')
+                    ->required()
+                    ->disabled(),
+                Select::make('ticket_status')
+                    ->options([
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'closed' => 'Closed',
+                        'archived' => 'Archived',
                     ])
-                    ->visible(fn (Ticket $record) => 
-                        auth()->user()->hasRole(['admin', 'supervisor', 'technician'])
-                    )
-                    ->action(function (array $data, Ticket $record): void {
-                        $technician_id = match ($data['assign_type'] ?? 'self') {
-                            'self' => auth()->id(),
-                            'auto' => User::role('technician')
-                                ->inRandomOrder()
-                                ->first()
-                                ->id,
-                            'specific' => $data['technician_id'],
-                        };
-
-                        $record->update([
-                            'assigned_to' => $technician_id,
-                            'ticket_status' => 'in_progress'
-                        ]);
-
-                        Notification::make()
-                            ->title('Ticket Assigned Successfully')
-                            ->success()
-                            ->send();
-                    })
+                    ->required()
+                    ->disabled(),
+                Select::make('assigned_to')
+                    ->label('Assigned To')
+                    ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                    ->nullable()
+                    ->placeholder('-- Unassigned --')
+                    ->disabled(),
+                Select::make('classroom_id')
+                    ->label('Classroom')
+                    ->options(fn () => Classroom::pluck('name', 'id'))
+                    ->nullable()
+                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                    ->default(null) // Add default value
+                    ->disabled(),
+                    
+                Select::make('section_id')
+                    ->label('Section')
+                    ->options(fn () => Section::pluck('name', 'id'))
+                    ->nullable()
+                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                    ->default(null) // Add default value
+                    ->disabled(),
+                    
+                DatePicker::make('start_time')
+                    ->label('Start Time')
+                    ->nullable()
+                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                    ->default(null) // Add default value
+                    ->disabled(),
+                    
+                DatePicker::make('end_time')
+                    ->label('End Time')
+                    ->nullable()
+                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                    ->default(null) // Add default value
+                    ->disabled(),
             ])
+            ->fillForm(function (Ticket $record): array {
+                return [
+                    'title' => $record->title,
+                    'description' => $record->description,
+                    'priority' => $record->priority,
+                    'ticket_status' => $record->ticket_status,
+                    'assigned_to' => $record->assigned_to,
+                    'classroom_id' => $record->classroom_id ?? null,
+                    'section_id' => $record->section_id ?? null,
+                    'start_time' => $record->start_time ?? null,
+                    'end_time' => $record->end_time ?? null,
+                ];
+            })
+            ->action(function (Ticket $record, array $data): void {
+                // Filter out null values for non-classroom requests
+                if ($record->type !== 'classroom_request') {
+                    unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
+                }
+                
+                $record->update(array_filter($data, function ($value) {
+                    return !is_null($value);
+                }));
+
+                Notification::make()
+                    ->title('Ticket Updated Successfully')
+                    ->success()
+                    ->send();
+            }),
+
+        Action::make('assign')
+            ->icon('heroicon-m-user-plus')
+            ->color('success')
+            ->modalWidth('md')
+            ->label(fn (Ticket $record) => 
+                is_null($record->assigned_to) ? 'Assign' : 'Reassign'
+            )
+            ->visible(fn (Ticket $record) => 
+                auth()->user()->hasRole(['admin', 'supervisor', 'technician']) &&
+                ($record->ticket_status !== 'closed' && $record->ticket_status !== 'archived')
+            )
+            ->modalContent(fn (Ticket $record) => view(
+                'tickets.assign',
+                ['ticket' => $record]
+            ))
+            ->form([
+                Select::make('assign_type')
+                    ->label('Assignment Type')
+                    ->options([
+                        'self' => 'Assign to myself',
+                        'auto' => 'Auto-assign to available technician',
+                        'specific' => 'Select specific technician'
+                    ])
+                    ->required()
+                    ->reactive()
+                    ->visible(fn () => auth()->user()->hasRole(['admin', 'supervisor'])),
+                Select::make('technician_id')
+                    ->label('Select Technician')
+                    ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                    ->visible(fn (Get $get) => $get('assign_type') === 'specific')
+                    ->required(fn (Get $get) => $get('assign_type') === 'specific')
+            ])
+    ])
+    ->tooltip('Actions')
+    ->icon('heroicon-m-ellipsis-vertical')
+])
             ->bulkActions([
                 BulkAction::make('archive')
                     ->label('Archive Selected')

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('approvals', function (Blueprint $table) {
             $table->id();
-            
+            $table->string('ticket_number');
             $table->foreignId('ticket_id')->nullable()->constrained('tickets')->onDelete('cascade');
             $table->foreignId('asset_id')->nullable()->constrained('assets')->onDelete('cascade');
             $table->foreignId('professor_id')->nullable()->constrained('users')->onDelete('cascade');
@@ -26,6 +26,11 @@ return new class extends Migration
             $table->dateTime('ends_at')->nullable();
             $table->string('status')->default('pending');
             $table->timestamps();
+
+            $table->foreign('ticket_number')
+                  ->references('ticket_number')
+                  ->on('tickets')
+                  ->onDelete('cascade');
         });
     }
 

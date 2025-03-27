@@ -465,23 +465,25 @@ class Ticketing extends Component implements HasTable, HasForms
     public function table(Table $table): Table
     {
         // Start with base ticket query
-        $query = Ticket::query()->with('assignedTo')->latest();
+        $baseQuery = Ticket::query()
+            ->with(['assignedTo', 'creator', 'classroom', 'section'])
+            ->latest();
 
         // Filter tickets based on user role
         if (auth()->user()->hasRole('professor')) {
-            // Professors can only see their own tickets
-            $query->where('created_by', auth()->id());
+            // Professors can only see tickets they created
+            $baseQuery->where('created_by', auth()->id());
         } elseif (auth()->user()->hasRole('technician')) {
             // Technicians can see tickets assigned to them or unassigned tickets
-            $query->where(function ($q) {
-                $q->where('assigned_to', auth()->id())
-                  ->orWhereNull('assigned_to');
+            $baseQuery->where(function ($query) {
+                $query->where('assigned_to', auth()->id())
+                      ->orWhereNull('assigned_to');
             });
         }
         // Admins/supervisors can see all tickets (no additional filter needed)
 
         return $table
-            ->query($query)
+            ->query($baseQuery)
             ->columns([
                 TextColumn::make('ticket_number')
                     ->label('Ticket No.')
@@ -531,6 +533,13 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->sortable()
                     ->size('sm'),
                     
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->visible(fn () => !auth()->user()->hasRole('professor')),
+
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M d, Y H:i')

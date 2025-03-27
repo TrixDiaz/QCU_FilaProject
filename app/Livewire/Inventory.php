@@ -135,11 +135,14 @@ class Inventory extends Component
             }
         }
 
+        $assetsGroups = AssetGroup::count();
+
         return view('livewire.inventory', [
             'assets' => $assets,
             'availableCount' => $availableCount,
             'deployedCount' => $deployedCount,
-            'deploymentStats' => $deploymentStats
+            'deploymentStats' => $deploymentStats,
+            'assetsGroups' => $assetsGroups,
         ]);
     }
 

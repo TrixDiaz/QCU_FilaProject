@@ -601,7 +601,7 @@
                     </div>
                     <div class="bg-success-100 dark:bg-success-800 rounded-full px-4 py-2">
                         <span class="text-2xl font-bold text-success-700 dark:text-success-300">
-                            {{ $assets->where('status', 'deployed')->count() }}
+                            {{ $assetsGroups }}
                         </span>
                     </div>
                 </div>

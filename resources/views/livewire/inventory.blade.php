@@ -592,6 +592,7 @@
             </x-filament::section>
 
             {{-- Card for Deployed Assets --}}
+            <!-- Replace the existing Card for Deployed Assets section with this updated version -->
             <x-filament::section>
                 <div class="flex items-center justify-between mb-4">
                     <div>
@@ -607,7 +608,7 @@
 
                 {{-- Deployment Location Stats --}}
                 <div class="space-y-3">
-                    @foreach ($deploymentStats as $stat)
+                    @forelse ($deploymentStats as $stat)
                         <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                             <div>
                                 <h4 class="text-sm font-medium">{{ $stat['classroom']->building->name }} - Room
@@ -616,7 +617,11 @@
                             </div>
                             <span class="text-lg font-semibold">{{ $stat['count'] }}</span>
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="text-center p-4 text-gray-500">
+                            No assets currently deployed
+                        </div>
+                    @endforelse
                 </div>
             </x-filament::section>
         </section>

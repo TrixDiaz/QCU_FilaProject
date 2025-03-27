@@ -113,16 +113,19 @@ class Inventory extends Component
             });
         }
 
+        // Get total counts from database
+        $availableCount = Asset::where('status', 'available')->count();
+        $deployedCount = Asset::where('status', 'deployed')->count();
+
         // Get the paginated results
         $assets = $query->paginate($this->perPage);
 
-        // Calculate deployment stats using the loaded relationship
+        // Calculate deployment stats from database
         $deploymentStats = [];
         foreach ($this->classrooms as $classroom) {
-            $deployedCount = $assets->filter(function ($asset) use ($classroom) {
-                return $asset->status === 'deployed' &&
-                    $asset->assetGroups->contains('classroom_id', $classroom->id);
-            })->count();
+            $deployedCount = Asset::whereHas('assetGroups', function ($query) use ($classroom) {
+                $query->where('classroom_id', $classroom->id);
+            })->where('status', 'deployed')->count();
 
             if ($deployedCount > 0) {
                 $deploymentStats[$classroom->id] = [
@@ -134,8 +137,8 @@ class Inventory extends Component
 
         return view('livewire.inventory', [
             'assets' => $assets,
-            'availableCount' => $assets->where('status', 'available')->count(),
-            'deployedCount' => $assets->where('status', 'deployed')->count(),
+            'availableCount' => $availableCount,
+            'deployedCount' => $deployedCount,
             'deploymentStats' => $deploymentStats
         ]);
     }

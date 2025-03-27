@@ -129,9 +129,19 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function loadTechnicians()
     {
-        $this->technicians = User::whereHas('roles', fn($query) => 
-            $query->where('name', 'technician')
-        )->get();
+        try {
+            // Check if the technician role exists
+            if(!\Spatie\Permission\Models\Role::where('name', 'technician')->exists()) {
+                \Log::warning('Technician role does not exist');
+                $this->technicians = collect(); // Empty collection as fallback
+                return;
+            }
+
+            $this->technicians = User::role('technician')->get();
+        } catch (\Exception $e) {
+            \Log::error('Error loading technicians: ' . $e->getMessage());
+            $this->technicians = collect(); // Empty collection as fallback
+        }
     }
 
     protected function loadClassroomsAndSections()
@@ -359,15 +369,23 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->loadAssets();
     }
 
-    // Add this method
     public function autoAssignTechnician()
     {
-        // Get all technicians
-        $technicians = User::role('technician')->inRandomOrder()->first();
+        try {
+            // Check if the technician role exists
+            if(!\Spatie\Permission\Models\Role::where('name', 'technician')->exists()) {
+                \Log::warning('Technician role does not exist');
+                return;
+            }
 
-        if ($technicians) {
-            $this->assigned_to = $technicians->id;
-            $this->assigned_technician = $technicians;
+            $technician = User::role('technician')->inRandomOrder()->first();
+
+            if ($technician) {
+                $this->assigned_to = $technician->id;
+                $this->assigned_technician = $technician;
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error auto-assigning technician: ' . $e->getMessage());
         }
     }
 

@@ -11,6 +11,7 @@ use App\Models\AssetGroup; // Added for classroom assets
 use Livewire\WithPagination;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\Ticket;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\CheckboxList;
@@ -39,13 +40,18 @@ class ReportBuilder extends Component implements HasForms
         'semesters' => [],
         'professors' => [], 
         'terminals' => [],
+        'ticket_statuses' => [], // Added for ticket reporting
+        'ticket_types' => [], // Added for ticket reporting
+        'ticket_priorities' => [], // Added for ticket reporting
+
     ];
     public $moduleFields = [
         'inventory' => ['category', 'brand', 'name', 'asset_code', 'serial_number', 'expiry_date', 'status'],
         'users' => ['name', 'email', 'approval_status', 'created_at', 'updated_at'],
         'classroom_assets' => ['classroom_id', 'asset_group_id', 'name', 'code', 'status', 'quantity'],
         'classroom_schedule' => ['classroom_id', 'subject_name', 'subject_code', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
-        'attendance' => ['subject_id', 'terminal_number', 'student_full_name', 'student_email', 'student_number', 'peripherals', 'remarks', 'created_at']
+        'attendance' => ['subject_id', 'terminal_number', 'student_full_name', 'student_email', 'student_number', 'peripherals', 'remarks', 'created_at'],
+        'tickets' => ['ticket_number', 'title', 'description', 'ticket_type', 'ticket_status', 'priority', 'created_by', 'assigned_to', 'start_time', 'end_time', 'classroom_id', 'asset_id'], // Added ticket fields
     ];
     public $availableFields = [];
     public $reportTitle = '';
@@ -74,6 +80,7 @@ class ReportBuilder extends Component implements HasForms
                         'classroom_assets' => 'Classroom Assets',
                         'classroom_schedule' => 'Classroom Schedule',
                         'attendance' => 'Attendance Records',
+                        'tickets' => 'Tickets',
                     ])
                     ->live(),
 
@@ -129,6 +136,30 @@ class ReportBuilder extends Component implements HasForms
                             ->columns(3)
                             ->visible(fn () => $this->selectedModule === 'attendance')
                             ->live(),
+
+                            CheckboxList::make('filters.ticket_statuses')
+                    ->label('Ticket Statuses')
+                    ->options(fn () => $this->selectedModule === 'tickets' ? 
+                        ['pending' => 'Pending', 'in progress' => 'In Progress', 'resolved' => 'Resolved', 'closed' => 'Closed'] : [])
+                    ->columns(3)
+                    ->visible(fn () => $this->selectedModule === 'tickets')
+                    ->live(),
+
+                CheckboxList::make('filters.ticket_types')
+                    ->label('Ticket Types')
+                    ->options(fn () => $this->selectedModule === 'tickets' ? 
+                        ['request' => 'Request', 'classroom' => 'Classroom', 'maintenance' => 'Maintenance', 'repair' => 'Repair'] : [])
+                    ->columns(3)
+                    ->visible(fn () => $this->selectedModule === 'tickets')
+                    ->live(),
+
+                CheckboxList::make('filters.ticket_priorities')
+                    ->label('Ticket Priorities')
+                    ->options(fn () => $this->selectedModule === 'tickets' ? 
+                        ['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical'] : [])
+                    ->columns(3)
+                    ->visible(fn () => $this->selectedModule === 'tickets')
+                    ->live(),
                     ]),
 
                 Fieldset::make('Fields to Display')
@@ -160,6 +191,7 @@ class ReportBuilder extends Component implements HasForms
             'classroom_assets' => ['classroom_id', 'name', 'code', 'quantity'],
             'classroom_schedule' => ['classroom_id', 'subject_name', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
             'attendance' => ['student_full_name', 'student_number', 'terminal_number', 'subject_id', 'peripherals', 'remarks', 'created_at'],
+            'tickets' => ['ticket_number', 'title', 'ticket_type', 'ticket_status', 'priority', 'created_by', 'assigned_to', 'start_time'], // Default ticket fields
             default => [],
         };
 
@@ -207,6 +239,7 @@ class ReportBuilder extends Component implements HasForms
                 'classroom_assets' => $this->queryClassroomAssets(),
                 'classroom_schedule' => $this->queryClassroomSchedule(),
                 'attendance' => $this->queryAttendance(),
+                'tickets' => $this->queryTickets(), // Added ticket query
                 default => null,
             };
 
@@ -481,6 +514,67 @@ class ReportBuilder extends Component implements HasForms
             
             public function get() {
                 return $this->collection;
+            }
+        };
+    }
+
+    private function queryTickets()
+    {
+        $query = Ticket::query()
+            ->with(['creator', 'assignedTo', 'classroom', 'asset']);
+        
+        // Date range filtering
+        if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
+            try {
+                $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
+                $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } catch (\Exception $e) {
+                Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
+            }
+        }
+        
+        // Ticket status filtering
+        if (!empty($this->filters['ticket_statuses'])) {
+            $query->whereIn('ticket_status', $this->filters['ticket_statuses']);
+        }
+        
+        // Ticket type filtering
+        if (!empty($this->filters['ticket_types'])) {
+            $query->whereIn('ticket_type', $this->filters['ticket_types']);
+        }
+        
+        // Ticket priority filtering
+        if (!empty($this->filters['ticket_priorities'])) {
+            $query->whereIn('priority', $this->filters['ticket_priorities']);
+        }
+        
+        // Transform results for display
+        return new class($query) {
+            protected $query;
+            
+            public function __construct($query) {
+                $this->query = $query;
+            }
+            
+            public function get() {
+                return $this->query->get()->map(function ($ticket) {
+                    return (object) [
+                        'ticket_number' => $ticket->ticket_number,
+                        'title' => $ticket->title,
+                        'description' => $ticket->description,
+                        'ticket_type' => $ticket->ticket_type,
+                        'ticket_status' => $ticket->ticket_status,
+                        'priority' => $ticket->priority,
+                        'created_by' => optional($ticket->creator)->name ?? 'N/A',
+                        'assigned_to' => optional($ticket->assignedTo)->name ?? 'N/A',
+                        'classroom_id' => optional($ticket->classroom)->name ?? 'N/A',
+                        'asset_id' => optional($ticket->asset)->name ?? 'N/A',
+                        'start_time' => optional($ticket->start_time)->format('Y-m-d H:i:s') ?? 'N/A',
+                        'end_time' => optional($ticket->end_time)->format('Y-m-d H:i:s') ?? 'N/A',
+                        'created_at' => optional($ticket->created_at)->format('Y-m-d H:i:s') ?? 'N/A',
+                    ];
+                });
             }
         };
     }

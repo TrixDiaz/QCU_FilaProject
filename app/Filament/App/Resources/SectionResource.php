@@ -89,6 +89,19 @@ class SectionResource extends Resource implements HasShieldPermissions
                                             // Include name and slug from DynamicForm
                                             ...\App\Services\DynamicForm::schema(\App\Models\Classroom::class),
 
+                                            Forms\Components\Select::make('floor')
+                                                ->required()
+                                                ->options([
+                                                    '1' => '1st Floor',
+                                                    '2' => '2nd Floor',
+                                                    '3' => '3rd Floor',
+                                                    '4' => '4th Floor',
+                                                    '5' => '5th Floor',
+                                                    '6' => '6th Floor',
+                                                    '7' => '7th Floor',
+                                                    '8' => '8th Floor',
+                                                ])
+                                                ->native(false),
                                             // Add the building_id field
                                             Forms\Components\Select::make('building_id')
                                                 ->relationship(
@@ -106,6 +119,20 @@ class SectionResource extends Resource implements HasShieldPermissions
                                         return [
                                             // Include name and slug from DynamicForm
                                             ...\App\Services\DynamicForm::schema(\App\Models\Classroom::class),
+
+                                            Forms\Components\Select::make('floor')
+                                                ->required()
+                                                ->options([
+                                                    '1' => '1st Floor',
+                                                    '2' => '2nd Floor',
+                                                    '3' => '3rd Floor',
+                                                    '4' => '4th Floor',
+                                                    '5' => '5th Floor',
+                                                    '6' => '6th Floor',
+                                                    '7' => '7th Floor',
+                                                    '8' => '8th Floor',
+                                                ])
+                                                ->native(false),
 
                                             // Add the building_id field
                                             Forms\Components\Select::make('building_id')

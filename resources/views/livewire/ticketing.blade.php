@@ -75,7 +75,11 @@
             }
         });
     }
-}" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()">
+}" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()" @notify.window="(e) => {
+    // Handle notification display
+    // You might want to use a toast notification library here
+    console.log(e.detail.message);
+}">
     <style>
         [x-cloak] { display: none !important; }
 
@@ -585,6 +589,12 @@
                     </div>
 
                     <form class="space-y-4" wire:submit.prevent="submitTicket">
+                        <!-- Hidden fields to store selected values -->
+                        <input type="hidden" wire:model="selectedType" x-model="selectedType">
+                        <input type="hidden" wire:model="selectedSubType" x-model="selectedSubType">
+                        <input type="hidden" wire:model="selectedClassroom" x-model="selectedClassroom">
+                        <input type="hidden" wire:model="selectedTerminal" x-model="selectedTerminal">
+
                         <div>
                             <label for="title"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -646,7 +656,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned Technician</label>
                             @if(auth()->user()->hasAnyRole(['admin', 'technician']))
-                                <select wire:model.defer="assigned_to"
+                                <select wire:model="assigned_to"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                     <option value="">-- Select Technician --</option>
                                     @foreach($technicians as $tech)
@@ -655,18 +665,17 @@
                                 </select>
                             @else
                                 <div class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                    @if($assigned_technician)
-                                        {{ $assigned_technician->name }}
+                                    @if($assigned_to)
+                                        {{ optional($technicians->firstWhere('id', $assigned_to))->name ?? 'Unassigned' }}
                                     @else
                                         Auto-assigning technician...
                                     @endif
-                                    <input type="hidden" wire:model.defer="assigned_to">
                                 </div>
                             @endif
                             @error('assigned_to')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
-                    </div>
+                        </div>
 
                         <div>
                             <label for="priority"

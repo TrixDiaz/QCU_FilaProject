@@ -32,6 +32,7 @@ use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\Indicator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Ticketing extends Component implements HasTable, HasForms
 {
@@ -39,31 +40,31 @@ class Ticketing extends Component implements HasTable, HasForms
     use InteractsWithForms;
 
     // Form Fields
-    public $selectedType = null;
-    public $selectedSubType = null;
-    public $selectedTerminal = null;  // Add this line
-    public $title = '';
-    public $description = '';
-    public $priority = 'medium';
-    public $asset_id = null;
-    public $assigned_to = null;
+    public $selectedType;
+    public $selectedSubType;
+    public $selectedClassroom;
+    public $selectedTerminal;
+    public $title;
+    public $description;
+    public $priority = 'low';
+    public $asset_id;
+    public $assigned_to;
     public $classroom_id = null;
     public $section_id = null;
     public $start_time;
     public $end_time;
     public $timeConflictExists = false;
     public $assigned_technician = null;
-    public $selectedClassroom = null;
-    
+
     // Data Collections
     public $classrooms = [];
     public $sections = [];
     public $assets = [];
     public $technicians = [];
-    
+
     // Control Variables
     public $showTicketForm = false;
-    
+
     protected $listeners = ['close-modal' => 'resetForm'];
 
     protected $rules = [
@@ -92,10 +93,7 @@ class Ticketing extends Component implements HasTable, HasForms
 
         // Add conditional validation for classroom requests
         if ($this->selectedType === 'classroom_request') {
-            $rules['classroom_id'] = 'required|exists:classrooms,id';
-            $rules['section_id'] = 'required|exists:sections,id';
-            $rules['start_time'] = 'required|date';
-            $rules['end_time'] = 'required|date|after:start_time';
+            $rules = array_merge($rules, $this->getClassroomRequestRules());
         }
 
         // Add conditional validation for hardware/internet issues
@@ -106,11 +104,30 @@ class Ticketing extends Component implements HasTable, HasForms
         return $rules;
     }
 
+    // Add these new validation rules for classroom requests
+    protected function getClassroomRequestRules()
+    {
+        return [
+            'classroom_id' => 'required|exists:classrooms,id',
+            'section_id' => 'required|exists:sections,id',
+            'start_time' => [
+                'required',
+                'date',
+                'after:now',
+            ],
+            'end_time' => [
+                'required',
+                'date',
+                'after:start_time',
+            ],
+        ];
+    }
+
     public function mount()
     {
         $this->loadInitialData();
         $this->autoAssignTechnician();
-        
+
         // Add this debug line
         \Log::info('User roles:', ['roles' => auth()->user()->roles->pluck('name')]);
     }
@@ -130,24 +147,48 @@ class Ticketing extends Component implements HasTable, HasForms
     protected function loadTechnicians()
     {
         try {
-            // Check if the technician role exists
-            if(!\Spatie\Permission\Models\Role::where('name', 'technician')->exists()) {
+            if (!\Spatie\Permission\Models\Role::where('name', 'technician')->exists()) {
                 \Log::warning('Technician role does not exist');
-                $this->technicians = collect(); // Empty collection as fallback
+                $this->technicians = collect();
                 return;
             }
 
-            $this->technicians = User::role('technician')->get();
+            $this->technicians = User::role('technician')
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            if (!$this->assigned_to && $this->technicians->isNotEmpty()) {
+                $this->autoAssignTechnician();
+            }
         } catch (\Exception $e) {
-            \Log::error('Error loading technicians: ' . $e->getMessage());
-            $this->technicians = collect(); // Empty collection as fallback
+            $this->handleError(
+                $e,
+                'loadTechnicians',
+                'Error loading technicians. Please try again.'
+            );
+            $this->technicians = collect();
         }
     }
 
     protected function loadClassroomsAndSections()
     {
-        $this->classrooms = Classroom::all();
-        $this->sections = Section::all();
+        try {
+            // Load all classrooms
+            $this->classrooms = Classroom::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            // Load all sections
+            $this->sections = Section::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+        } catch (\Exception $e) {
+            \Log::error('Error loading classrooms and sections: ' . $e->getMessage());
+            $this->classrooms = collect();
+            $this->sections = collect();
+        }
     }
 
     public function selectIssueType($type)
@@ -163,7 +204,7 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->showTicketForm = true;
         $this->generateTicketContent();
         $this->filterAssetsBySubtype($subType);
-        
+
         // Dispatch the template update event
         if ($this->description) {
             $this->dispatch('updateTemplate', ['template' => $this->description]);
@@ -179,65 +220,67 @@ class Ticketing extends Component implements HasTable, HasForms
     public function selectClassroom($classroom)
     {
         $this->selectedClassroom = $classroom;
-        $this->classroom_id = $classroom; // If you're using IDs in your database
+        $this->classroom_id = Classroom::where('name', $classroom)->value('id');
     }
 
     public function updatedClassroomId()
     {
         $this->checkTimeConflict();
     }
-    
+
     public function updatedStartTime()
     {
         $this->checkTimeConflict();
     }
-    
+
     public function updatedEndTime()
     {
         $this->checkTimeConflict();
     }
-    
+
     protected function checkTimeConflict()
     {
-        // Reset conflict flag
         $this->timeConflictExists = false;
-        
-        // Only check if we have all required values
+
         if (!$this->classroom_id || !$this->start_time || !$this->end_time) {
             return;
         }
-        
-        // Parse times
-        $start = Carbon::parse($this->start_time);
-        $end = Carbon::parse($this->end_time);
-        
-        // Validate end is after start
-        if ($end->lte($start)) {
-            return;
+
+        try {
+            $start = Carbon::parse($this->start_time);
+            $end = Carbon::parse($this->end_time);
+
+            if ($end->lte($start)) {
+                $this->addError('end_time', 'End time must be after start time');
+                return;
+            }
+
+            if ($start->lt(now())) {
+                $this->addError('start_time', 'Start time cannot be in the past');
+                return;
+            }
+
+            $existingBookings = Ticket::where('classroom_id', $this->classroom_id)
+                ->where('ticket_type', 'classroom_request')
+                ->where('ticket_status', '!=', 'cancelled')
+                ->where(function ($query) use ($start, $end) {
+                    $query->where(function ($q) use ($start, $end) {
+                        $q->whereBetween('start_time', [$start, $end])
+                            ->orWhereBetween('end_time', [$start, $end])
+                            ->orWhere(function ($q) use ($start, $end) {
+                                $q->where('start_time', '<=', $start)
+                                    ->where('end_time', '>=', $end);
+                            });
+                    });
+                })
+                ->exists();
+
+            $this->timeConflictExists = $existingBookings;
+
+        } catch (\Exception $e) {
+            \Log::error('Error checking time conflict: ' . $e->getMessage());
+            $this->addError('time_conflict', 'Error checking availability. Please try again.');
         }
-        
-        // Check for existing bookings
-        $existingBookings = Ticket::where('classroom_id', $this->classroom_id)
-            ->where('ticket_type', 'classroom_request')
-            ->where(function ($query) use ($start, $end) {
-                // Find any booking where:
-                // 1. The existing booking starts during our time slot
-                // 2. The existing booking ends during our time slot
-                // 3. The existing booking completely encompasses our time slot
-                $query->where(function ($q) use ($start, $end) {
-                    $q->where('start_time', '>=', $start)
-                      ->where('start_time', '<', $end);
-                })->orWhere(function ($q) use ($start, $end) {
-                    $q->where('end_time', '>', $start)
-                      ->where('end_time', '<=', $end);
-                })->orWhere(function ($q) use ($start, $end) {
-                    $q->where('start_time', '<=', $start)
-                      ->where('end_time', '>=', $end);
-                });
-            })
-            ->get();
-        
-        $this->timeConflictExists = $existingBookings->count() > 0;
     }
 
     /**
@@ -294,56 +337,56 @@ class Ticketing extends Component implements HasTable, HasForms
     }
 
     protected function generateDescription()
-{
-    $currentTime = now()->format('Y-m-d H:i');
-    $terminalInfo = $this->selectedTerminal ? " at {$this->selectedTerminal}" : "";
-    
-    $templates = [
-        'hardware' => [
-            'mouse' => "Mouse{$terminalInfo} is not functioning properly (reported on {$currentTime}), with symptoms including unresponsive movement, cursor freezing, and non-working clicks.",
-            'keyboard' => "Keyboard{$terminalInfo} has multiple non-responding keys and system recognition issues (reported on {$currentTime}).",
-            'monitor' => "Monitor{$terminalInfo} is experiencing display issues including flickering and signal problems (reported on {$currentTime}).",
-            'other' => "Hardware device{$terminalInfo} requires technical assessment due to malfunction (reported on {$currentTime})."
-        ],
-        'internet' => [
-            'lan' => "Wired connection{$terminalInfo} is experiencing connectivity issues including slow speeds and connection drops (reported on {$currentTime}).",
-            'wifi' => "Wi-Fi connection{$terminalInfo} has weak signal strength and frequent disconnections (reported on {$currentTime})."
-        ],
-        'application' => [
-            'word' => "Microsoft Word application{$terminalInfo} is not launching properly and experiencing frequent crashes (reported on {$currentTime}).",
-            'chrome' => "Google Chrome browser{$terminalInfo} is having performance issues including slow page loading and frequent crashes (reported on {$currentTime}).",
-            'excel' => "Microsoft Excel{$terminalInfo} is experiencing calculation errors and file saving problems (reported on {$currentTime}).",
-            'other_app' => "Application{$terminalInfo} is experiencing performance issues and requires technical support (reported on {$currentTime})."
-        ],
-        'asset_request' => [
-            'default' => "Requesting new asset for daily operations to improve workflow efficiency (submitted on {$currentTime})."
-        ],
-        'general_inquiry' => [
-            'default' => "General inquiry regarding technical support and system access (submitted on {$currentTime})."
-        ],
-        'classroom_request' => [
-            'default' => "Requesting classroom booking for regular class session with standard computer laboratory setup (submitted on {$currentTime})."
-        ]
-    ];
+    {
+        $currentTime = now()->format('Y-m-d H:i');
+        $terminalInfo = $this->selectedTerminal ? " at {$this->selectedTerminal}" : "";
 
-    if (in_array($this->selectedType, ['asset_request', 'general_inquiry', 'classroom_request'])) {
-        return $templates[$this->selectedType]['default'];
+        $templates = [
+            'hardware' => [
+                'mouse' => "Mouse{$terminalInfo} is not functioning properly (reported on {$currentTime}), with symptoms including unresponsive movement, cursor freezing, and non-working clicks.",
+                'keyboard' => "Keyboard{$terminalInfo} has multiple non-responding keys and system recognition issues (reported on {$currentTime}).",
+                'monitor' => "Monitor{$terminalInfo} is experiencing display issues including flickering and signal problems (reported on {$currentTime}).",
+                'other' => "Hardware device{$terminalInfo} requires technical assessment due to malfunction (reported on {$currentTime})."
+            ],
+            'internet' => [
+                'lan' => "Wired connection{$terminalInfo} is experiencing connectivity issues including slow speeds and connection drops (reported on {$currentTime}).",
+                'wifi' => "Wi-Fi connection{$terminalInfo} has weak signal strength and frequent disconnections (reported on {$currentTime})."
+            ],
+            'application' => [
+                'word' => "Microsoft Word application{$terminalInfo} is not launching properly and experiencing frequent crashes (reported on {$currentTime}).",
+                'chrome' => "Google Chrome browser{$terminalInfo} is having performance issues including slow page loading and frequent crashes (reported on {$currentTime}).",
+                'excel' => "Microsoft Excel{$terminalInfo} is experiencing calculation errors and file saving problems (reported on {$currentTime}).",
+                'other_app' => "Application{$terminalInfo} is experiencing performance issues and requires technical support (reported on {$currentTime})."
+            ],
+            'asset_request' => [
+                'default' => "Requesting new asset for daily operations to improve workflow efficiency (submitted on {$currentTime})."
+            ],
+            'general_inquiry' => [
+                'default' => "General inquiry regarding technical support and system access (submitted on {$currentTime})."
+            ],
+            'classroom_request' => [
+                'default' => "Requesting classroom booking for regular class session with standard computer laboratory setup (submitted on {$currentTime})."
+            ]
+        ];
+
+        if (in_array($this->selectedType, ['asset_request', 'general_inquiry', 'classroom_request'])) {
+            return $templates[$this->selectedType]['default'];
+        }
+
+        return $templates[$this->selectedType][$this->selectedSubType] ??
+            "Issue with {$this->getReadableSubtype()}{$terminalInfo} reported on {$currentTime} requires technical support and assessment.";
     }
-
-    return $templates[$this->selectedType][$this->selectedSubType] ?? 
-        "Issue with {$this->getReadableSubtype()}{$terminalInfo} reported on {$currentTime} requires technical support and assessment.";
-}
 
     protected function formatDescription($description)
     {
         if (empty($description)) {
             return '';
         }
-        
+
         if (is_array($description)) {
             return implode("\n", $description);
         }
-        
+
         return trim($description);
     }
 
@@ -351,7 +394,7 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $this->selectedType = null;
         $this->selectedSubType = null;
-        $this->selectedTerminal = null;  // Add this line
+        $this->selectedTerminal = null;
         $this->title = '';
         $this->description = '';
         $this->priority = 'medium';
@@ -369,81 +412,165 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->loadAssets();
     }
 
-    public function autoAssignTechnician()
+    protected function autoAssignTechnician()
     {
         try {
-            // Check if the technician role exists
-            if(!\Spatie\Permission\Models\Role::where('name', 'technician')->exists()) {
-                \Log::warning('Technician role does not exist');
+            if ($this->technicians->isEmpty()) {
+                \Log::warning('No technicians available for auto-assignment');
                 return;
             }
 
-            $technician = User::role('technician')->inRandomOrder()->first();
+            // Get active tickets count for each technician
+            $technicianLoads = User::role('technician')
+                ->withCount(['assignedTickets' => function ($query) {
+                    $query->whereIn('ticket_status', ['open', 'in_progress']);
+                }])
+                ->orderBy('assigned_tickets_count')
+                ->get();
 
-            if ($technician) {
-                $this->assigned_to = $technician->id;
-                $this->assigned_technician = $technician;
+            if ($technicianLoads->isEmpty()) {
+                \Log::warning('No technicians found for load calculation');
+                return;
             }
+
+            // Find technician with minimum load
+            $selectedTechnician = $technicianLoads->first();
+            
+            // If all technicians have similar load, randomize selection
+            $minLoad = $selectedTechnician->assigned_tickets_count;
+            $techniciansWithMinLoad = $technicianLoads->filter(function ($tech) use ($minLoad) {
+                return $tech->assigned_tickets_count === $minLoad;
+            });
+
+            if ($techniciansWithMinLoad->count() > 1) {
+                $selectedTechnician = $techniciansWithMinLoad->random();
+            }
+
+            if ($selectedTechnician) {
+                $this->assigned_to = $selectedTechnician->id;
+                
+                // Cache the technician name for display
+                $this->assigned_technician = $selectedTechnician->name;
+                
+                // Log the assignment
+                \Log::info('Auto-assigned ticket to technician', [
+                    'technician_id' => $selectedTechnician->id,
+                    'technician_name' => $selectedTechnician->name,
+                    'current_load' => $selectedTechnician->assigned_tickets_count
+                ]);
+
+                $this->dispatch('notify', [
+                    'message' => "Ticket will be assigned to {$selectedTechnician->name} (Current load: {$selectedTechnician->assigned_tickets_count} tickets)",
+                    'type' => 'info'
+                ]);
+            }
+
         } catch (\Exception $e) {
-            \Log::error('Error auto-assigning technician: ' . $e->getMessage());
+            $this->handleError(
+                $e,
+                'autoAssignTechnician',
+                'Error auto-assigning technician. Manual assignment may be required.'
+            );
+            
+            // Reset assignment on error
+            $this->assigned_to = null;
+            $this->assigned_technician = null;
         }
     }
 
-    // Update the submitTicket method
-    public function submitTicket()
+    // Add this method to handle manual assignment
+    public function manualAssignTechnician($technicianId)
     {
-        if (!$this->assigned_to) {
-            $this->autoAssignTechnician();
-        }
-
-        // Validate using dynamic rules
-        $this->validate($this->getRules());
-
         try {
-            $ticketData = [
-                'ticket_number' => $this->generateTicketNumber(),
-                'title' => $this->title,
-                'description' => $this->formatDescription($this->description),
-                'priority' => $this->priority,
-                'type' => $this->selectedType,
-                'subtype' => $this->selectedSubType,
-                'ticket_type' => in_array($this->selectedType, ['asset_request', 'classroom_request', 'general_inquiry']) ? 'request' : 'incident',
-                'ticket_status' => 'open',
-                'asset_id' => $this->asset_id,
-                'assigned_to' => auth()->user()->hasRole('professor') ? null : $this->assigned_to,
-                'created_by' => auth()->id(),
-            ];
-
-            // Add classroom-specific data
-            if ($this->selectedType === 'classroom_request') {
-                if ($this->timeConflictExists) {
-                    session()->flash('error', 'Cannot book the classroom due to a time conflict.');
-                    return;
-                }
-                
-                $ticketData['classroom_id'] = $this->classroom_id;
-                $ticketData['section_id'] = $this->section_id;
-                $ticketData['start_time'] = $this->start_time;
-                $ticketData['end_time'] = $this->end_time;
-            }
-
-            $ticket = Ticket::create($ticketData);
-
-            $this->resetForm();
-            $this->dispatch('close-ticket-modal');
-
-            Notification::make()
-                ->title('Ticket Created')
-                ->body("Ticket {$ticketData['ticket_number']} has been created successfully.")
-                ->success()
-                ->send();
+            $technician = User::role('technician')->findOrFail($technicianId);
+            
+            $this->assigned_to = $technician->id;
+            $this->assigned_technician = $technician->name;
+            
+            $this->dispatch('notify', [
+                'message' => "Ticket manually assigned to {$technician->name}",
+                'type' => 'success'
+            ]);
 
         } catch (\Exception $e) {
-            Notification::make()
-                ->title('Error')
-                ->body('Error creating ticket: ' . $e->getMessage())
-                ->danger()
-                ->send();
+            $this->handleError(
+                $e,
+                'manualAssignTechnician',
+                'Error assigning technician. Please try again.'
+            );
+        }
+    }
+
+    // Add a getter method for the assigned technician name
+    public function getAssignedTechnicianNameProperty()
+    {
+        if (!$this->assigned_to) {
+            return 'Unassigned';
+        }
+        
+        return optional($this->technicians->firstWhere('id', $this->assigned_to))->name ?? 'Unassigned';
+    }
+
+    // Improve ticket submission validation
+    public function submitTicket()
+    {
+        $rules = $this->getRules();
+        
+        // Add specific validation for classroom requests
+        if ($this->selectedType === 'classroom_request') {
+            $rules = array_merge($rules, $this->getClassroomRequestRules());
+            
+            // Check for time conflicts before proceeding
+            if ($this->timeConflictExists) {
+                $this->addError('time_conflict', 'The selected time slot is already booked.');
+                return;
+            }
+        }
+
+        $this->validate($rules);
+
+        try {
+            DB::beginTransaction();
+
+            $ticket = new Ticket();
+            $ticket->ticket_number = $this->generateTicketNumber();
+            $ticket->title = $this->title;
+            $ticket->description = $this->description;
+            $ticket->priority = $this->priority;
+            $ticket->ticket_status = 'open';
+            $ticket->type = $this->selectedType;
+            $ticket->subtype = $this->selectedSubType;
+            $ticket->classroom_id = $this->classroom_id;
+            $ticket->terminal = $this->selectedTerminal;
+            $ticket->asset_id = $this->asset_id;
+            $ticket->assigned_to = $this->assigned_to;
+            $ticket->created_by = auth()->id();
+            
+            // Add classroom request specific fields
+            if ($this->selectedType === 'classroom_request') {
+                $ticket->section_id = $this->section_id;
+                $ticket->start_time = $this->start_time;
+                $ticket->end_time = $this->end_time;
+            }
+
+            $ticket->save();
+
+            DB::commit();
+
+            $this->reset();
+            $this->dispatch('notify', [
+                'message' => 'Ticket submitted successfully!',
+                'type' => 'success'
+            ]);
+            $this->dispatch('close-ticket-modal');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error submitting ticket: ' . $e->getMessage());
+            $this->dispatch('notify', [
+                'message' => 'Error submitting ticket. Please try again.',
+                'type' => 'error'
+            ]);
         }
     }
 
@@ -454,7 +581,7 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $isRequest = in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']);
         $basePrefix = $isRequest ? 'REQ-' : 'INC-';
-        
+
         $subPrefix = match ($this->selectedType) {
             'classroom_request' => 'CLS-',
             'asset_request' => 'AST-',
@@ -467,7 +594,7 @@ class Ticketing extends Component implements HasTable, HasForms
 
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $randomPart = '';
-        
+
         do {
             $randomPart = '';
             for ($i = 0; $i < 8; $i++) {
@@ -495,7 +622,7 @@ class Ticketing extends Component implements HasTable, HasForms
             // Technicians can see tickets assigned to them or unassigned tickets
             $baseQuery->where(function ($query) {
                 $query->where('assigned_to', auth()->id())
-                      ->orWhereNull('assigned_to');
+                    ->orWhereNull('assigned_to');
             });
         }
         // Admins/supervisors can see all tickets (no additional filter needed)
@@ -509,14 +636,14 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->sortable()
                     ->size('sm')
                     ->color('primary'),
-                    
+
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
                     ->limit(30)
                     ->size('sm')
                     ->wrap(),
-                    
+
                 TextColumn::make('priority')
                     ->badge()
                     ->size('sm')
@@ -526,7 +653,7 @@ class Ticketing extends Component implements HasTable, HasForms
                         'low' => 'success',
                         default => 'info'
                     }),
-                    
+
                 TextColumn::make('ticket_status')
                     ->label('Status')
                     ->badge()
@@ -539,18 +666,18 @@ class Ticketing extends Component implements HasTable, HasForms
                         'archived' => 'gray',
                         default => 'info'
                     }),
-                    
+
                 TextColumn::make('assignedTo.name')
                     ->label('Assigned To')
                     ->formatStateUsing(fn ($record) => $record->assigned_to ? $record->assignedTo?->name : 'Unassigned')
                     ->searchable(query: function ($query, $search) {
-                        return $query->whereHas('assignedTo', fn ($q) => 
+                        return $query->whereHas('assignedTo', fn ($q) =>
                             $q->where('name', 'like', "%{$search}%")
                         );
                     })
                     ->sortable()
                     ->size('sm'),
-                    
+
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->searchable()
@@ -600,27 +727,27 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['created_from'],
+                                $data['created_from'] ?? null,
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
                             )
                             ->when(
-                                $data['created_until'],
+                                $data['created_until'] ?? null,
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
-                        
+
                         if ($data['created_from'] ?? null) {
                             $indicators[] = Indicator::make('Created from ' . Carbon::parse($data['created_from'])->toFormattedDateString())
                                 ->removeField('created_from');
                         }
-                        
+
                         if ($data['created_until'] ?? null) {
                             $indicators[] = Indicator::make('Created until ' . Carbon::parse($data['created_until'])->toFormattedDateString())
                                 ->removeField('created_until');
                         }
-                        
+
                         return $indicators;
                     }),
 
@@ -647,159 +774,159 @@ class Ticketing extends Component implements HasTable, HasForms
             ])
             ->filtersFormColumns(3)
             ->actions([
-    ActionGroup::make([
-        Action::make('view')
-            ->icon('heroicon-m-eye')
-            ->color('info')
-            ->modalContent(fn (Ticket $record) => view(
-                'tickets.view',
-                [
-                    'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
-                    'classrooms' => Classroom::all(),
-                    'sections' => Section::all(),
-                ]
-            ))
-            ->modalWidth('md')
-            ->modalSubmitAction(false)
-            ->modalCancelAction(fn ($action) => $action->label('Close')),
+                ActionGroup::make([
+                    Action::make('view')
+                        ->icon('heroicon-m-eye')
+                        ->color('info')
+                        ->modalContent(fn (Ticket $record) => view(
+                            'tickets.view',
+                            [
+                                'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
+                                'classrooms' => Classroom::all(),
+                                'sections' => Section::all(),
+                            ]
+                        ))
+                        ->modalWidth('md')
+                        ->modalSubmitAction(false)
+                        ->modalCancelAction(fn ($action) => $action->label('Close')),
 
-        Action::make('edit')
-            ->icon('heroicon-m-pencil-square')
-            ->color('warning')
-            ->modalWidth('md')
-            ->form([
-                TextInput::make('title')
-                    ->required()
-                    ->maxLength(255)
-                    ->readOnly(),
-                Textarea::make('description')
-                    ->required()
-                    ->rows(4),
-                Select::make('asset_id')
-                    ->label('Asset')
-                    ->options(fn () => Asset::pluck('name', 'id'))
-                    ->nullable()
-                    ->visible(fn (Ticket $record) => $record->type === 'hardware')
-                    ->default(null) // Add default value
-                    ->disabled(),
-                Select::make('priority')
-                    ->options([
-                        'low' => 'Low',
-                        'medium' => 'Medium',
-                        'high' => 'High',
-                    ])
-                    ->required()
-                    ->disabled(),
-                Select::make('ticket_status')
-                    ->options([
-                        'open' => 'Open',
-                        'in_progress' => 'In Progress',
-                        'closed' => 'Closed',
-                        'archived' => 'Archived',
-                    ])
-                    ->required()
-                    ->disabled(),
-                Select::make('assigned_to')
-                    ->label('Assigned To')
-                    ->options(fn () => User::role('technician')->pluck('name', 'id'))
-                    ->nullable()
-                    ->placeholder('-- Unassigned --')
-                    ->disabled(),
-                Select::make('classroom_id')
-                    ->label('Classroom')
-                    ->options(fn () => Classroom::pluck('name', 'id'))
-                    ->nullable()
-                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                    ->default(null) // Add default value
-                    ->disabled(),
-                    
-                Select::make('section_id')
-                    ->label('Section')
-                    ->options(fn () => Section::pluck('name', 'id'))
-                    ->nullable()
-                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                    ->default(null) // Add default value
-                    ->disabled(),
-                    
-                DatePicker::make('start_time')
-                    ->label('Start Time')
-                    ->nullable()
-                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                    ->default(null) // Add default value
-                    ->disabled(),
-                    
-                DatePicker::make('end_time')
-                    ->label('End Time')
-                    ->nullable()
-                    ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
-                    ->default(null) // Add default value
-                    ->disabled(),
+                    Action::make('edit')
+                        ->icon('heroicon-m-pencil-square')
+                        ->color('warning')
+                        ->modalWidth('md')
+                        ->form([
+                            TextInput::make('title')
+                                ->required()
+                                ->maxLength(255)
+                                ->readOnly(),
+                            Textarea::make('description')
+                                ->required()
+                                ->rows(4),
+                            Select::make('asset_id')
+                                ->label('Asset')
+                                ->options(fn () => Asset::pluck('name', 'id'))
+                                ->nullable()
+                                ->visible(fn (Ticket $record) => $record->type === 'hardware')
+                                ->default(null) // Add default value
+                                ->disabled(),
+                            Select::make('priority')
+                                ->options([
+                                    'low' => 'Low',
+                                    'medium' => 'Medium',
+                                    'high' => 'High',
+                                ])
+                                ->required()
+                                ->disabled(),
+                            Select::make('ticket_status')
+                                ->options([
+                                    'open' => 'Open',
+                                    'in_progress' => 'In Progress',
+                                    'closed' => 'Closed',
+                                    'archived' => 'Archived',
+                                ])
+                                ->required()
+                                ->disabled(),
+                            Select::make('assigned_to')
+                                ->label('Assigned To')
+                                ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                                ->nullable()
+                                ->placeholder('-- Unassigned --')
+                                ->disabled(),
+                            Select::make('classroom_id')
+                                ->label('Classroom')
+                                ->options(fn () => Classroom::pluck('name', 'id'))
+                                ->nullable()
+                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->default(null) // Add default value
+                                ->disabled(),
+
+                            Select::make('section_id')
+                                ->label('Section')
+                                ->options(fn () => Section::pluck('name', 'id'))
+                                ->nullable()
+                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->default(null) // Add default value
+                                ->disabled(),
+
+                            DatePicker::make('start_time')
+                                ->label('Start Time')
+                                ->nullable()
+                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->default(null) // Add default value
+                                ->disabled(),
+
+                            DatePicker::make('end_time')
+                                ->label('End Time')
+                                ->nullable()
+                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->default(null) // Add default value
+                                ->disabled(),
+                        ])
+                        ->fillForm(function (Ticket $record): array {
+                            return [
+                                'title' => $record->title,
+                                'description' => $record->description,
+                                'priority' => $record->priority,
+                                'ticket_status' => $record->ticket_status,
+                                'assigned_to' => $record->assigned_to,
+                                'classroom_id' => $record->classroom_id ?? null,
+                                'section_id' => $record->section_id ?? null,
+                                'start_time' => $record->start_time ?? null,
+                                'end_time' => $record->end_time ?? null,
+                            ];
+                        })
+                        ->action(function (Ticket $record, array $data): void {
+                            // Filter out null values for non-classroom requests
+                            if ($record->type !== 'classroom_request') {
+                                unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
+                            }
+
+                            $record->update(array_filter($data, function ($value) {
+                                return !is_null($value);
+                            }));
+
+                            Notification::make()
+                                ->title('Ticket Updated Successfully')
+                                ->success()
+                                ->send();
+                        }),
+
+                    Action::make('assign')
+                        ->icon('heroicon-m-user-plus')
+                        ->color('success')
+                        ->modalWidth('md')
+                        ->label(fn (Ticket $record) =>
+                            is_null($record->assigned_to) ? 'Assign' : 'Reassign'
+                        )
+                        ->visible(fn (Ticket $record) =>
+                            auth()->user()->hasRole(['admin', 'supervisor', 'technician']) &&
+                            ($record->ticket_status !== 'closed' && $record->ticket_status !== 'archived')
+                        )
+                        ->modalContent(fn (Ticket $record) => view(
+                            'tickets.assign',
+                            ['ticket' => $record]
+                        ))
+                        ->form([
+                            Select::make('assign_type')
+                                ->label('Assignment Type')
+                                ->options([
+                                    'self' => 'Assign to myself',
+                                    'auto' => 'Auto-assign to available technician',
+                                    'specific' => 'Select specific technician'
+                                ])
+                                ->required()
+                                ->reactive()
+                                ->visible(fn () => auth()->user()->hasRole(['admin', 'supervisor'])),
+                            Select::make('technician_id')
+                                ->label('Select Technician')
+                                ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                                ->visible(fn (Get $get) => $get('assign_type') === 'specific')
+                                ->required(fn (Get $get) => $get('assign_type') === 'specific')
+                        ])
+                ])
+                    ->tooltip('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
             ])
-            ->fillForm(function (Ticket $record): array {
-                return [
-                    'title' => $record->title,
-                    'description' => $record->description,
-                    'priority' => $record->priority,
-                    'ticket_status' => $record->ticket_status,
-                    'assigned_to' => $record->assigned_to,
-                    'classroom_id' => $record->classroom_id ?? null,
-                    'section_id' => $record->section_id ?? null,
-                    'start_time' => $record->start_time ?? null,
-                    'end_time' => $record->end_time ?? null,
-                ];
-            })
-            ->action(function (Ticket $record, array $data): void {
-                // Filter out null values for non-classroom requests
-                if ($record->type !== 'classroom_request') {
-                    unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
-                }
-                
-                $record->update(array_filter($data, function ($value) {
-                    return !is_null($value);
-                }));
-
-                Notification::make()
-                    ->title('Ticket Updated Successfully')
-                    ->success()
-                    ->send();
-            }),
-
-        Action::make('assign')
-            ->icon('heroicon-m-user-plus')
-            ->color('success')
-            ->modalWidth('md')
-            ->label(fn (Ticket $record) => 
-                is_null($record->assigned_to) ? 'Assign' : 'Reassign'
-            )
-            ->visible(fn (Ticket $record) => 
-                auth()->user()->hasRole(['admin', 'supervisor', 'technician']) &&
-                ($record->ticket_status !== 'closed' && $record->ticket_status !== 'archived')
-            )
-            ->modalContent(fn (Ticket $record) => view(
-                'tickets.assign',
-                ['ticket' => $record]
-            ))
-            ->form([
-                Select::make('assign_type')
-                    ->label('Assignment Type')
-                    ->options([
-                        'self' => 'Assign to myself',
-                        'auto' => 'Auto-assign to available technician',
-                        'specific' => 'Select specific technician'
-                    ])
-                    ->required()
-                    ->reactive()
-                    ->visible(fn () => auth()->user()->hasRole(['admin', 'supervisor'])),
-                Select::make('technician_id')
-                    ->label('Select Technician')
-                    ->options(fn () => User::role('technician')->pluck('name', 'id'))
-                    ->visible(fn (Get $get) => $get('assign_type') === 'specific')
-                    ->required(fn (Get $get) => $get('assign_type') === 'specific')
-            ])
-    ])
-    ->tooltip('Actions')
-    ->icon('heroicon-m-ellipsis-vertical')
-])
             ->bulkActions([
                 BulkAction::make('archive')
                     ->label('Archive Selected')
@@ -835,6 +962,18 @@ class Ticketing extends Component implements HasTable, HasForms
                     }),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    protected function handleError(\Exception $e, string $context, string $userMessage = null)
+    {
+        \Log::error("Error in {$context}: " . $e->getMessage());
+        
+        if ($userMessage) {
+            $this->dispatch('notify', [
+                'message' => $userMessage,
+                'type' => 'error'
+            ]);
+        }
     }
 
     public function render()

@@ -27,6 +27,7 @@ class Ticket extends Model
         'section_id',
         'start_time',
         'end_time',
+        'terminal',
     ];
 
     protected $casts = [

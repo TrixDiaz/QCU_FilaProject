@@ -47,6 +47,7 @@ class ReportBuilder extends Component implements HasForms
     ];
     public $moduleFields = [
         'inventory' => ['category', 'brand', 'name', 'asset_code', 'serial_number', 'expiry_date', 'status'],
+        'asset_count' => ['name', 'status', 'total_count', 'created_at', 'updated_at'],
         'users' => ['name', 'email', 'approval_status', 'created_at', 'updated_at'],
         'classroom_assets' => ['classroom_id', 'asset_group_id', 'name', 'code', 'status', 'quantity'],
         'classroom_schedule' => ['classroom_id', 'subject_name', 'subject_code', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
@@ -76,6 +77,7 @@ class ReportBuilder extends Component implements HasForms
                     ->label('Select Module')
                     ->options([
                         'inventory' => 'Inventory',
+                        'asset_count' => 'Asset Count',
                         'users' => 'Users',
                         'classroom_assets' => 'Classroom Assets',
                         'classroom_schedule' => 'Classroom Schedule',
@@ -187,6 +189,7 @@ class ReportBuilder extends Component implements HasForms
 
         $this->selectedFields = match ($this->selectedModule) {
             'inventory' => ['name', 'category', 'brand', 'status', 'asset_code'],
+            'asset_count' => ['name', 'status', 'total_count', 'created_at', 'updated_at'],
             'users' => ['name', 'email', 'approval_status'],
             'classroom_assets' => ['classroom_id', 'name', 'code', 'quantity'],
             'classroom_schedule' => ['classroom_id', 'subject_name', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
@@ -235,6 +238,7 @@ class ReportBuilder extends Component implements HasForms
         try {
             $query = match ($this->selectedModule) {
                 'inventory' => $this->queryInventory(),
+                'asset_count' => $this->queryAssetCount(),
                 'users' => $this->queryUsers(),
                 'classroom_assets' => $this->queryClassroomAssets(),
                 'classroom_schedule' => $this->queryClassroomSchedule(),
@@ -578,6 +582,43 @@ class ReportBuilder extends Component implements HasForms
             }
         };
     }
+
+    private function queryAssetCount()
+{
+    // Group assets by name and status, calculate counts
+    $assetCounts = Asset::select('name', 'status')
+        ->selectRaw('COUNT(*) as total_count')
+        ->selectRaw('MIN(created_at) as first_created')
+        ->selectRaw('MAX(updated_at) as last_updated')
+        ->groupBy('name', 'status')
+        ->get()
+        ->map(function ($asset) {
+            return (object) [
+                'name' => $asset->name,
+                'status' => $asset->status,
+                'total_count' => $asset->total_count,
+                'created_at' => $asset->first_created 
+                    ? \Carbon\Carbon::parse($asset->first_created)->format('Y-m-d H:i:s') 
+                    : null,
+                'updated_at' => $asset->last_updated 
+                    ? \Carbon\Carbon::parse($asset->last_updated)->format('Y-m-d H:i:s') 
+                    : null,
+            ];
+        });
+
+    // Return a custom class that implements get() method
+    return new class($assetCounts) {
+        protected $collection;
+        
+        public function __construct($collection) {
+            $this->collection = $collection;
+        }
+        
+        public function get() {
+            return $this->collection;
+        }
+    };
+}
 
     public function printReport()
     {

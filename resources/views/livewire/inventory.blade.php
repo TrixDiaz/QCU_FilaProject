@@ -855,9 +855,9 @@
                                 <x-filament-tables::header-cell scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     S/N</x-filament-tables::header-cell>
-                                <x-filament-tables::header-cell scope="col"
+                                {{-- <x-filament-tables::header-cell scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                    Tags</x-filament-tables::header-cell>
+                                    Tags</x-filament-tables::header-cell> --}}
                                 <x-filament-tables::header-cell scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Action</x-filament-tables::header-cell>
@@ -893,7 +893,7 @@
                                     <div class="text-sm text-gray-900">{{ $asset->serial_number }}</div>
                                 </x-filament-tables::cell>
                                 @if (count($selected) < 2)
-                                    <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
+                                    {{-- <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex flex-wrap gap-1">
                                             @foreach ($asset->assetTags as $tag)
                                                 <x-filament::badge>
@@ -901,7 +901,7 @@
                                                 </x-filament::badge>
                                             @endforeach
                                         </div>
-                                    </x-filament-tables::cell>
+                                    </x-filament-tables::cell> --}}
                                     <x-filament-tables::cell class="px-6 py-4 whitespace-nowrap">
                                         <div x-data="{ open: false }" class="relative">
                                             <!-- Action Menu Button -->

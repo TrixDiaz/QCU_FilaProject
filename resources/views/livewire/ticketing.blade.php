@@ -619,24 +619,24 @@
                         </div>
 
                         <!-- Asset Dropdown -->
-                        <div x-show="selectedType !== 'classroom_request'">
+                        <div x-show="selectedType !== 'classroom_request' && selectedType !== 'application' && selectedType !== 'internet' && selectedType !== 'general_inquiry'">
                             <label for="asset_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Asset</label>
                             <select id="asset_id" wire:model.defer="asset_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="">-- Select Asset --</option>
-                            @forelse ($assets as $asset)
-                                <option value="{{ $asset->id }}">
-                                {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN: {{ $asset->serial_number ?? 'N/A' }})
-                                </option>
-                            @empty
-                                <option value="" disabled>No matching assets found</option>
-                            @endforelse
+                                @forelse ($assets as $asset)
+                                    <option value="{{ $asset->id }}">
+                                    {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN: {{ $asset->serial_number ?? 'N/A' }})
+                                    </option>
+                                @empty
+                                    <option value="" disabled>No matching assets found</option>
+                                @endforelse
                             </select>
-                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            @if ($selectedType == 'hardware' && $selectedSubType)
-                                Showing {{ ucfirst($selectedSubType) }} assets only
-                            @endif
-                                </div>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                @if ($selectedType == 'hardware' && $selectedSubType)
+                                    Showing {{ ucfirst($selectedSubType) }} assets only
+                                @endif
+                            </div>
                             @error('asset_id')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror

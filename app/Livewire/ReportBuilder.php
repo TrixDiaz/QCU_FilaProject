@@ -47,7 +47,7 @@ class ReportBuilder extends Component implements HasForms
     ];
     public $moduleFields = [
         'inventory' => ['category', 'brand', 'name', 'asset_code', 'serial_number', 'expiry_date', 'status'],
-        'asset_count' => ['name', 'status', 'total_count', 'created_at', 'updated_at'],
+        'asset_count' => ['name', 'total_count', 'remarks'],
         'users' => ['name', 'email', 'approval_status', 'created_at', 'updated_at'],
         'classroom_assets' => ['classroom_id', 'asset_group_id', 'name', 'code', 'status', 'quantity'],
         'classroom_schedule' => ['classroom_id', 'subject_name', 'subject_code', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
@@ -189,7 +189,7 @@ class ReportBuilder extends Component implements HasForms
 
         $this->selectedFields = match ($this->selectedModule) {
             'inventory' => ['name', 'category', 'brand', 'status', 'asset_code'],
-            'asset_count' => ['name', 'status', 'total_count', 'created_at', 'updated_at'],
+            'asset_count' => ['name', 'total_count', 'remarks'],
             'users' => ['name', 'email', 'approval_status'],
             'classroom_assets' => ['classroom_id', 'name', 'code', 'quantity'],
             'classroom_schedule' => ['classroom_id', 'subject_name', 'professor', 'day', 'start_time', 'end_time', 'school_year', 'semester'],
@@ -585,26 +585,20 @@ class ReportBuilder extends Component implements HasForms
 
     private function queryAssetCount()
 {
-    // Group assets by name and status, calculate counts
-    $assetCounts = Asset::select('name', 'status')
+    // Group assets by name and calculate total count
+    $assetCounts = Asset::select('name')
         ->selectRaw('COUNT(*) as total_count')
-        ->selectRaw('MIN(created_at) as first_created')
-        ->selectRaw('MAX(updated_at) as last_updated')
-        ->groupBy('name', 'status')
+        ->groupBy('name')
         ->get()
         ->map(function ($asset) {
             return (object) [
                 'name' => $asset->name,
-                'status' => $asset->status,
                 'total_count' => $asset->total_count,
-                'created_at' => $asset->first_created 
-                    ? \Carbon\Carbon::parse($asset->first_created)->format('Y-m-d H:i:s') 
-                    : null,
-                'updated_at' => $asset->last_updated 
-                    ? \Carbon\Carbon::parse($asset->last_updated)->format('Y-m-d H:i:s') 
-                    : null,
+                'remarks' => $this->generateRemarks($asset->total_count)
             ];
-        });
+        })
+        // Sort by total count in descending order
+        ->sortByDesc('total_count');
 
     // Return a custom class that implements get() method
     return new class($assetCounts) {
@@ -618,6 +612,15 @@ class ReportBuilder extends Component implements HasForms
             return $this->collection;
         }
     };
+}
+
+// Helper method to generate remarks based on count
+private function generateRemarks($count)
+{
+    if ($count <= 1) return 'Low inventory';
+    if ($count <= 5) return 'Moderate inventory';
+    if ($count <= 10) return 'Good stock';
+    return 'Excess inventory';
 }
 
     public function printReport()

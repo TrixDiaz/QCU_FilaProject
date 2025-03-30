@@ -652,26 +652,17 @@
                             @enderror
                         </div>
 
-                        <!-- Auto-assigned Technician (Read-only for professors, editable for admins/technicians) -->
+                        <!-- Technician Assignment -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned Technician</label>
-                            @if(auth()->user()->hasAnyRole(['admin', 'technician']))
-                                <select wire:model="assigned_to"
+                            <label for="assigned_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign Technician</label>
+                            <select id="assigned_to" 
+                                    wire:model="assigned_to"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-                                    <option value="">-- Select Technician --</option>
-                                    @foreach($technicians as $tech)
-                                        <option value="{{ $tech->id }}">{{ $tech->name }}</option>
-                                    @endforeach
-                                </select>
-                            @else
-                                <div class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                    @if($assigned_to)
-                                        {{ optional($technicians->firstWhere('id', $assigned_to))->name ?? 'Unassigned' }}
-                                    @else
-                                        Auto-assigning technician...
-                                    @endif
-                                </div>
-                            @endif
+                                <option value="">-- Select Technician --</option>
+                                @foreach($technicians as $tech)
+                                    <option value="{{ $tech->id }}">{{ $tech->name }}</option>
+                                @endforeach
+                            </select>
                             @error('assigned_to')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror

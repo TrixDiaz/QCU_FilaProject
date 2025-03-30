@@ -72,7 +72,7 @@ class Ticketing extends Component implements HasTable, HasForms
         'description' => 'required|min:10|max:65535',
         'priority' => 'required|in:low,medium,high',
         'asset_id' => 'nullable|exists:assets,id',
-        'assigned_to' => 'nullable|exists:users,id',
+        'assigned_to' => 'required|exists:users,id', // Changed from nullable to required
         'classroom_id' => 'nullable|exists:classrooms,id',
         'section_id' => 'nullable|exists:sections,id',
         'start_time' => 'nullable|date',
@@ -126,7 +126,6 @@ class Ticketing extends Component implements HasTable, HasForms
     public function mount()
     {
         $this->loadInitialData();
-        $this->autoAssignTechnician();
 
         // Add this debug line
         \Log::info('User roles:', ['roles' => auth()->user()->roles->pluck('name')]);
@@ -157,10 +156,6 @@ class Ticketing extends Component implements HasTable, HasForms
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get();
-
-            if (!$this->assigned_to && $this->technicians->isNotEmpty()) {
-                $this->autoAssignTechnician();
-            }
         } catch (\Exception $e) {
             $this->handleError(
                 $e,
@@ -410,72 +405,6 @@ class Ticketing extends Component implements HasTable, HasForms
 
         // Reset the assets to show all assets
         $this->loadAssets();
-    }
-
-    protected function autoAssignTechnician()
-    {
-        try {
-            if ($this->technicians->isEmpty()) {
-                \Log::warning('No technicians available for auto-assignment');
-                return;
-            }
-
-            // Get active tickets count for each technician
-            $technicianLoads = User::role('technician')
-                ->withCount(['assignedTickets' => function ($query) {
-                    $query->whereIn('ticket_status', ['open', 'in_progress']);
-                }])
-                ->orderBy('assigned_tickets_count')
-                ->get();
-
-            if ($technicianLoads->isEmpty()) {
-                \Log::warning('No technicians found for load calculation');
-                return;
-            }
-
-            // Find technician with minimum load
-            $selectedTechnician = $technicianLoads->first();
-            
-            // If all technicians have similar load, randomize selection
-            $minLoad = $selectedTechnician->assigned_tickets_count;
-            $techniciansWithMinLoad = $technicianLoads->filter(function ($tech) use ($minLoad) {
-                return $tech->assigned_tickets_count === $minLoad;
-            });
-
-            if ($techniciansWithMinLoad->count() > 1) {
-                $selectedTechnician = $techniciansWithMinLoad->random();
-            }
-
-            if ($selectedTechnician) {
-                $this->assigned_to = $selectedTechnician->id;
-                
-                // Cache the technician name for display
-                $this->assigned_technician = $selectedTechnician->name;
-                
-                // Log the assignment
-                \Log::info('Auto-assigned ticket to technician', [
-                    'technician_id' => $selectedTechnician->id,
-                    'technician_name' => $selectedTechnician->name,
-                    'current_load' => $selectedTechnician->assigned_tickets_count
-                ]);
-
-                $this->dispatch('notify', [
-                    'message' => "Ticket will be assigned to {$selectedTechnician->name} (Current load: {$selectedTechnician->assigned_tickets_count} tickets)",
-                    'type' => 'info'
-                ]);
-            }
-
-        } catch (\Exception $e) {
-            $this->handleError(
-                $e,
-                'autoAssignTechnician',
-                'Error auto-assigning technician. Manual assignment may be required.'
-            );
-            
-            // Reset assignment on error
-            $this->assigned_to = null;
-            $this->assigned_technician = null;
-        }
     }
 
     // Add this method to handle manual assignment

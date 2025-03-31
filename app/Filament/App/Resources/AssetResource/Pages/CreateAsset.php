@@ -26,27 +26,27 @@ class CreateAsset extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('computerSet')
-                ->label('Computer Set')
-                ->color('success')
-                ->icon('heroicon-o-computer-desktop')
-                ->action(function (): void {
-                    // Check if Computer Set category exists, if not create it
-                    $category = Category::firstOrCreate(
-                        ['name' => 'Computer Set'],
-                        ['description' => 'Computer and related equipment', 'status' => 'active']
-                    );
+            // Actions\Action::make('computerSet')
+            //     ->label('Computer Set')
+            //     ->color('success')
+            //     ->icon('heroicon-o-computer-desktop')
+            //     ->action(function (): void {
+            //         // Check if Computer Set category exists, if not create it
+            //         $category = Category::firstOrCreate(
+            //             ['name' => 'Computer Set'],
+            //             ['description' => 'Computer and related equipment', 'status' => 'active']
+            //         );
 
-                    // Set the category in the form
-                    $this->form->fill([
-                        'category_id' => $category->id,
-                    ]);
+            //         // Set the category in the form
+            //         $this->form->fill([
+            //             'category_id' => $category->id,
+            //         ]);
 
-                    Notification::make()
-                        ->title('Category set to Computer Set')
-                        ->success()
-                        ->send();
-                }),
+            //         Notification::make()
+            //             ->title('Category set to Computer Set')
+            //             ->success()
+            //             ->send();
+            //     }),
         ];
     }
 }

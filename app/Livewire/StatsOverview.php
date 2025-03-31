@@ -23,16 +23,16 @@ class StatsOverview extends BaseWidget
 
         //  Assets Stats
         $totalAssets = Asset::count();
-        $activeAssets = Asset::where('status', 'Active')->count();
-        $inactiveAssets = Asset::where('status', 'Inactive')->count();
-        $deploy = Asset::where('status', 'Deploy')->count();
-        $maintenanceAssets = AssetGroup::where('status', 'Maintenance')->count();
+        $activeAssets = Asset::where('status', 'available')->count();
+        $inactiveAssets = Asset::where('status', 'inactive')->count();
+        $deploy = Asset::where('status', 'deployed')->count();
+        $maintenanceAssets = AssetGroup::where('status', 'maintenance')->count();
 
         // Format Assets description in two-column style with right-aligned numbers
         $assetsDescription = "<div style='display: grid; grid-template-columns: auto 90px; color: #3b82f6;'>
-            <span>Active</span><span style='text-align: right;'>$activeAssets</span>
+            <span>Available</span><span style='text-align: right;'>$activeAssets</span>
             <span>Inactive</span><span style='text-align: right;'>$inactiveAssets</span>
-            <span>Deploy</span><span style='text-align: right;'>$deploy</span>
+            <span>Deployed</span><span style='text-align: right;'>$deploy</span>
             <span>Maintenance</span><span style='text-align: right;'>$maintenanceAssets</span>
         </div>";
 

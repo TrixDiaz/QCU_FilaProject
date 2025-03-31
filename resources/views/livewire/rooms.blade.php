@@ -355,9 +355,9 @@
                             tag="a" target="_blank" color="secondary" class="mr-2">
                             View on page
                         </x-filament::button>
-                        <x-filament::button wire:click="showDeployComputerModal">
+                        {{-- <x-filament::button wire:click="showDeployComputerModal">
                             Deploy Computer Set
-                        </x-filament::button>
+                        </x-filament::button> --}}
                         <x-filament::button @click="show = false; setTimeout(() => $wire.closeClassroomAssets(), 200)"
                             tag="button"
                             class="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
@@ -477,25 +477,26 @@
                             </div>
 
                             <!-- Schedule Card -->
-                         <!-- In the Schedule Card section -->
-                                    <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
-                                    x-transition:enter-start="opacity-0 transform translate-y-4"
-                                    x-transition:enter-end="opacity-100 transform translate-y-0"
-                                    class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <h4 class="text-lg font-medium dark:text-gray-100">Schedule</h4>
-                                        <x-filament::button size="sm" wire:click="exportSchedule" icon="heroicon-o-document-arrow-down">
-                                            Export 
-                                        </x-filament::button>
-                                    </div>
-                                                                    @php
-                                        $hasSchedules = false;
-                                        foreach ($schedulesByDay as $day => $schedules) {
-                                            if (count($schedules) > 0) {
-                                                $hasSchedules = true;
-                                                break;
-                                            }
+                            <!-- In the Schedule Card section -->
+                            <div x-show="show" x-transition:enter="transition ease-out delay-300 duration-300"
+                                x-transition:enter-start="opacity-0 transform translate-y-4"
+                                x-transition:enter-end="opacity-100 transform translate-y-0"
+                                class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-lg font-medium dark:text-gray-100">Schedule</h4>
+                                    <x-filament::button size="sm" wire:click="exportSchedule"
+                                        icon="heroicon-o-document-arrow-down">
+                                        Export
+                                    </x-filament::button>
+                                </div>
+                                @php
+                                    $hasSchedules = false;
+                                    foreach ($schedulesByDay as $day => $schedules) {
+                                        if (count($schedules) > 0) {
+                                            $hasSchedules = true;
+                                            break;
                                         }
+                                    }
                                 @endphp
 
                                 @if (!$hasSchedules)

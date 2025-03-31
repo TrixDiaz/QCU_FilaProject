@@ -23,7 +23,7 @@ class AssetAvailability extends ApexChartWidget
         foreach ($categories as $category) {
             $active[] = Asset::whereHas('category', function ($query) use ($category) {
                 $query->where('name', $category);
-            })->where('status', 'active')->count();
+            })->where('status', 'available')->count();
 
             $inactive[] = Asset::whereHas('category', function ($query) use ($category) {
                 $query->where('name', $category);
@@ -31,7 +31,11 @@ class AssetAvailability extends ApexChartWidget
 
             $deploy[] = Asset::whereHas('category', function ($query) use ($category) {
                 $query->where('name', $category);
-            })->where('status', 'deploy')->count();
+            })->where('status', 'deployed')->count();
+
+            $maintenance[] = Asset::whereHas('category', function ($query) use ($category) {
+                $query->where('name', $category);
+            })->where('status', 'maintenance')->count();
         }
 
         return [
@@ -44,13 +48,14 @@ class AssetAvailability extends ApexChartWidget
                 ['name' => 'Active', 'data' => $active],
                 ['name' => 'Inactive', 'data' => $inactive],
                 ['name' => 'Deployed', 'data' => $deploy],
+                ['name' => 'Maintenance', 'data' => $maintenance],
             ],
             'xaxis' => [
                 'categories' => $categories,
                 'labels' => ['style' => ['fontFamily' => 'inherit']],
             ],
             'yaxis' => ['labels' => ['style' => ['fontFamily' => 'inherit']]],
-            'colors' => ['#22C55E', '#EF4444', '#FACC15'],
+            'colors' => ['#22C55E', '#EF4444', '#FACC15', '#3B82F6'],
             'plotOptions' => ['bar' => ['borderRadius' => 4, 'horizontal' => false]],
             'legend' => ['position' => 'bottom'],
         ];

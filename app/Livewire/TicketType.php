@@ -16,7 +16,7 @@ class TicketType extends ApexChartWidget
     /**
      * Widget content height
      */
-    protected static ?int $contentHeight = 275;
+    protected static ?int $contentHeight = 300;
 
     /**
      * Widget Title

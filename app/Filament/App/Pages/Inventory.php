@@ -17,6 +17,8 @@ class Inventory extends Page
 
     protected static ?string $navigationGroup = 'Assets';
 
+    protected static ?string $navigationLabel = 'Assets & Inventory';
+
     protected static string $view = 'filament.app.pages.inventory';
 
     public static function shouldRegisterNavigation(): bool

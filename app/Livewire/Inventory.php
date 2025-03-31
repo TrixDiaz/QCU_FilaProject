@@ -74,6 +74,9 @@ class Inventory extends Component
     public $deploymentCode;
     public $statusActive = true;
 
+    // Add this property
+    public $statusFilter = '';
+
     // protected $listeners = ['refreshAssets' => '$refresh'];
 
     //  protected $listeners = [
@@ -98,10 +101,22 @@ class Inventory extends Component
         $this->classrooms = Classroom::with('building')->get();
     }
 
+    // Add this method to handle status filter
+    public function filterByStatus($status)
+    {
+        $this->statusFilter = $status;
+        $this->resetPage();
+    }
+
     public function render()
     {
         // Base query with relationships
         $query = Asset::with(['brand', 'category', 'assetTags', 'assetGroups.classroom.building']);
+
+        // Apply status filter if set
+        if ($this->statusFilter) {
+            $query->where('status', $this->statusFilter);
+        }
 
         // Apply search if provided
         if ($this->search) {

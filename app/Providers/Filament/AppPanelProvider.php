@@ -2,11 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Reports\AssetReport;
-use App\Filament\Reports\InventoryReport;
-use App\Filament\Reports\MaintenanceReport;
-use App\Filament\Reports\UsersReport;
-use App\Filament\Reports\CategoryReport;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -14,7 +9,6 @@ use Filament\Navigation\MenuItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Navigation\NavigationItem;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -22,7 +16,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Z3d0X\FilamentLogger\Resources\ActivityResource;
 
 
 class AppPanelProvider extends PanelProvider
@@ -120,6 +113,16 @@ class AppPanelProvider extends PanelProvider
                 \Awcodes\LightSwitch\LightSwitchPlugin::make(),
                 \Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin::make(),
                 \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
+                \Awcodes\FilamentQuickCreate\QuickCreatePlugin::make()
+                    ->includes([
+                        \App\Filament\App\Resources\AssetResource::class,
+                        \App\Filament\App\Resources\BuildingResource::class,
+                        \App\Filament\App\Resources\ClassroomResource::class,
+                        \App\Filament\App\Resources\SectionResource::class,
+                        \App\Filament\App\Resources\SubjectResource::class,
+                        \App\Filament\App\Resources\UserResource::class,
+                        \App\Filament\App\Resources\RoleResource::class,
+                    ]),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,

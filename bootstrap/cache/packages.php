@@ -17,6 +17,13 @@
       'EloquentSerialize' => 'AnourValar\\EloquentSerialize\\Facades\\EloquentSerializeFacade',
     ),
   ),
+  'awcodes/filament-quick-create' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Awcodes\\FilamentQuickCreate\\QuickCreateServiceProvider',
+    ),
+  ),
   'awcodes/light-switch' => 
   array (
     'providers' => 

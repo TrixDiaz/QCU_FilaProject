@@ -113,6 +113,63 @@ class Inventory extends Component
         // Base query with relationships
         $query = Asset::with(['brand', 'category', 'assetTags', 'assetGroups.classroom.building']);
 
+        // Apply filters based on filterType
+        switch ($this->filterType) {
+            case 'brand':
+                if ($this->filterValue) {
+                    $query->where('brand_id', $this->filterValue);
+                }
+                break;
+
+            case 'category':
+                if ($this->filterValue) {
+                    $query->where('category_id', $this->filterValue);
+                }
+                break;
+
+            case 'tag':
+                if ($this->filterValue) {
+                    $query->whereHas('assetTags', function ($q) {
+                        $q->where('tag_id', $this->filterValue);
+                    });
+                }
+                break;
+
+            case 'brand-category':
+                if ($this->filterBrand) {
+                    $query->where('brand_id', $this->filterBrand);
+                }
+                if ($this->filterCategory) {
+                    $query->where('category_id', $this->filterCategory);
+                }
+                break;
+
+            case 'brand-tag':
+                if ($this->filterBrand) {
+                    $query->where('brand_id', $this->filterBrand);
+                }
+                if ($this->filterTag) {
+                    $query->whereHas('assetTags', function ($q) {
+                        $q->where('tag_id', $this->filterTag);
+                    });
+                }
+                break;
+
+            case 'category-brand-tag':
+                if ($this->filterCategory) {
+                    $query->where('category_id', $this->filterCategory);
+                }
+                if ($this->filterBrand) {
+                    $query->where('brand_id', $this->filterBrand);
+                }
+                if ($this->filterTag) {
+                    $query->whereHas('assetTags', function ($q) {
+                        $q->where('tag_id', $this->filterTag);
+                    });
+                }
+                break;
+        }
+
         // Apply status filter if set
         if ($this->statusFilter) {
             $query->where('status', $this->statusFilter);
@@ -124,18 +181,27 @@ class Inventory extends Component
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', $searchTerm)
                     ->orWhere('asset_code', 'like', $searchTerm)
-                    ->orWhere('serial_number', 'like', $searchTerm);
+                    ->orWhere('serial_number', 'like', $searchTerm)
+                    ->orWhereHas('brand', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', $searchTerm);
+                    })
+                    ->orWhereHas('category', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', $searchTerm);
+                    })
+                    ->orWhereHas('assetTags', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', $searchTerm);
+                    });
             });
         }
 
-        // Get total counts from database
-        $availableCount = Asset::where('status', 'available')->count();
-        $deployedCount = Asset::where('status', 'deployed')->count();
+        // Get total counts
+        $this->totalAssets = Asset::count();
+        $this->filteredCount = $query->count();
 
         // Get the paginated results
         $assets = $query->paginate($this->perPage);
 
-        // Calculate deployment stats from database
+        // Calculate deployment stats
         $deploymentStats = [];
         foreach ($this->classrooms as $classroom) {
             $deployedCount = Asset::whereHas('assetGroups', function ($query) use ($classroom) {
@@ -143,7 +209,7 @@ class Inventory extends Component
             })->where('status', 'deployed')->count();
 
             if ($deployedCount > 0) {
-                $deploymentStats[$classroom->id] = [
+                $deploymentStats[] = [
                     'classroom' => $classroom,
                     'count' => $deployedCount
                 ];
@@ -154,8 +220,8 @@ class Inventory extends Component
 
         return view('livewire.inventory', [
             'assets' => $assets,
-            'availableCount' => $availableCount,
-            'deployedCount' => $deployedCount,
+            'availableCount' => Asset::where('status', 'available')->count(),
+            'deployedCount' => Asset::where('status', 'deployed')->count(),
             'deploymentStats' => $deploymentStats,
             'assetsGroups' => $assetsGroups,
         ]);
@@ -282,13 +348,23 @@ class Inventory extends Component
     // Reset filters
     public function resetFilters()
     {
-        $this->filterType = 'all';
-        $this->filterValue = '';
-        $this->filterBrand = '';
-        $this->filterCategory = '';
-        $this->filterTag = '';
-        $this->search = '';
+        $this->reset([
+            'filterType',
+            'filterValue',
+            'filterBrand',
+            'filterCategory',
+            'filterTag',
+            'statusFilter',
+            'search'
+        ]);
         $this->resetPage();
+    }
+
+    public function updating($name, $value)
+    {
+        if (in_array($name, ['search', 'filterType', 'filterValue', 'filterBrand', 'filterCategory', 'filterTag'])) {
+            $this->resetPage();
+        }
     }
 
     // Bulk action methods

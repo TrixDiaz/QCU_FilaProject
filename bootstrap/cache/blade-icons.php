@@ -1,7 +1,7 @@
 <?php return array (
   'heroicons' => 
   array (
-    'C:\\Users\\PC\\Documents\\GitHub\\QCU_FilaProject\\vendor\\blade-ui-kit\\blade-heroicons\\src/../resources/svg' => 
+    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\vendor\\blade-ui-kit\\blade-heroicons\\src/../resources/svg' => 
     array (
       0 => 'c-academic-cap',
       1 => 'c-adjustments-horizontal',

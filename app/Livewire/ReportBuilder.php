@@ -22,6 +22,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class ReportBuilder extends Component implements HasForms
 {
@@ -125,10 +126,10 @@ class ReportBuilder extends Component implements HasForms
                             
                             CheckboxList::make('filters.semesters')
                             ->label('Semesters')
-                            ->options(fn () => in_array($this->selectedModule, ['classroom_schedule', 'attendance']) ? 
+                            ->options(fn () => in_array($this->selectedModule, ['inventory', 'classroom_schedule', 'attendance']) ? 
                                 Subject::distinct()->pluck('semester', 'semester')->toArray() : [])
                             ->columns(3)
-                            ->visible(fn () => in_array($this->selectedModule, ['classroom_schedule', 'attendance']))
+                            ->visible(fn () => in_array($this->selectedModule, ['inventory', 'classroom_schedule', 'attendance']))
                             ->live(),
 
                             CheckboxList::make('filters.professors')
@@ -150,7 +151,7 @@ class ReportBuilder extends Component implements HasForms
                 CheckboxList::make('filters.ticket_types')
                     ->label('Ticket Types')
                     ->options(fn () => $this->selectedModule === 'tickets' ? 
-                        ['request' => 'Request', 'classroom' => 'Classroom', 'maintenance' => 'Maintenance', 'repair' => 'Repair'] : [])
+                        ['request' => 'Request', 'classroom' => 'Classroom'] : [])
                     ->columns(3)
                     ->visible(fn () => $this->selectedModule === 'tickets')
                     ->live(),
@@ -158,7 +159,7 @@ class ReportBuilder extends Component implements HasForms
                 CheckboxList::make('filters.ticket_priorities')
                     ->label('Ticket Priorities')
                     ->options(fn () => $this->selectedModule === 'tickets' ? 
-                        ['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical'] : [])
+                        ['low' => 'Low', 'medium' => 'Medium', 'high' => 'High'] : [])
                     ->columns(3)
                     ->visible(fn () => $this->selectedModule === 'tickets')
                     ->live(),
@@ -277,67 +278,119 @@ class ReportBuilder extends Component implements HasForms
     }
 
     private function queryInventory()
-    {
-        $query = Asset::query();
-        
-        // Add necessary relationships based on selected fields
-        if (in_array('category', $this->selectedFields)) {
-            $query->with('category');
-        }
-        
-        if (in_array('brand', $this->selectedFields)) {
-            $query->with('brand');
-        }
-
-        $allNull = Asset::whereNotNull('created_at')->count() == 0;
-
-        if (!$allNull && !empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
-            try {
-                $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
-                $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
-                $query->whereBetween('created_at', [$startDate, $endDate]);
-            } catch (\Exception $e) {
-                Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
-            }
-        }
-
-        if (!empty($this->filters['categories'])) {
-            $query->whereIn('category_id', $this->filters['categories']);
-        }
-
-        if (!empty($this->filters['brands'])) {
-            $query->whereIn('brand_id', $this->filters['brands']);
-        }
-
-        // Create a custom collection class that implements get()
-        return new class($query) {
-            protected $query;
-            
-            public function __construct($query) {
-                $this->query = $query;
-            }
-            
-            public function get() {
-                return $this->query->get()->map(function ($asset) {
-                    return (object) [
-                        'id' => $asset->id,
-                        'name' => $asset->name,
-                        'category' => optional($asset->category)->name,
-                        'brand' => optional($asset->brand)->name,
-                        'status' => $asset->status,
-                        'asset_code' => $asset->asset_code ?? 'N/A',
-                        'serial_number' => $asset->serial_number ?? 'N/A',
-                        'quantity' => $asset->quantity ?? 1,
-                        'expiry_date' => $asset->expiry_date 
-                            ? (is_string($asset->expiry_date) 
-                                ? $asset->expiry_date 
-                                : $asset->expiry_date->format('Y-m-d'))
-                            : 'N/A',
-                    ];
-                });
-            }
-        };
+{
+    $query = Asset::query();
+    
+    // Add debug logging
+    logger('Starting inventory query, total asset count: ' . Asset::count());
+    
+    // Add necessary relationships based on selected fields
+    if (in_array('category', $this->selectedFields)) {
+        $query->with('category');
     }
+    
+    if (in_array('brand', $this->selectedFields)) {
+        $query->with('brand');
+    }
+
+    // Apply date filters if provided
+    if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
+        try {
+            $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
+            $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
+            
+            if (\Schema::hasColumn('assets', 'created_at')) {
+                $hasCreatedAt = Asset::whereNotNull('created_at')->exists();
+                
+                if ($hasCreatedAt) {
+                    $query->where(function($q) use ($startDate, $endDate) {
+                        $q->whereBetween('created_at', [$startDate, $endDate])
+                          ->orWhereNull('created_at');
+                    });
+                    logger('Applied date filter between ' . $startDate . ' and ' . $endDate);
+                } else {
+                    logger('Skipped date filter as no records have created_at values');
+                }
+            } else {
+                logger('Skipped date filter as created_at column does not exist');
+            }
+        } catch (\Exception $e) {
+            logger('Date filter error: ' . $e->getMessage());
+            Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
+        }
+    }
+
+    // Apply category filter if provided
+    if (!empty($this->filters['categories'])) {
+        $query->whereIn('category_id', $this->filters['categories']);
+        logger('Applied category filter: ' . implode(', ', $this->filters['categories']));
+    }
+
+    // Apply brand filter if provided
+    if (!empty($this->filters['brands'])) {
+        $query->whereIn('brand_id', $this->filters['brands']);
+        logger('Applied brand filter: ' . implode(', ', $this->filters['brands']));
+    }
+    
+    // Apply semester filter if provided (and if relevant to inventory)
+    if (!empty($this->filters['semesters']) && \Schema::hasColumn('assets', 'semester')) {
+        $query->whereIn('semester', $this->filters['semesters']);
+        logger('Applied semester filter: ' . implode(', ', $this->filters['semesters']));
+    }
+    
+    // Log the final query for debugging
+    $sqlWithBindings = $query->toSql();
+    $bindings = $query->getBindings();
+    foreach ($bindings as $binding) {
+        $value = is_string($binding) ? "'" . $binding . "'" : $binding;
+        $sqlWithBindings = preg_replace('/\?/', $value, $sqlWithBindings, 1);
+    }
+    logger('Final inventory query: ' . $sqlWithBindings);
+    logger('Expected record count: ' . $query->count());
+
+    // Create a custom collection class that implements get()
+    return new class($query) {
+        protected $query;
+        
+        public function __construct($query) {
+            $this->query = $query;
+        }
+        
+        public function get() {
+            $results = $this->query->get();
+            logger('Actual results count from inventory: ' . $results->count());
+            
+            return $results->map(function ($asset) {
+                // Handle expiry_date to leave column empty when null
+                $expiryDate = null;
+                
+                if (!empty($asset->expiry_date) && $asset->expiry_date !== 'N/A') {
+                    try {
+                        if ($asset->expiry_date instanceof \Carbon\Carbon || $asset->expiry_date instanceof \DateTime) {
+                            $expiryDate = $asset->expiry_date->format('Y-m-d');
+                        } elseif (is_string($asset->expiry_date) && strtotime($asset->expiry_date) !== false) {
+                            $expiryDate = \Carbon\Carbon::parse($asset->expiry_date)->format('Y-m-d');
+                        }
+                    } catch (\Exception $e) {
+                        logger('Error parsing expiry_date for asset ID ' . $asset->id . ': ' . $e->getMessage());
+                    }
+                }
+                
+                return (object) [
+                    'id' => $asset->id,
+                    'name' => $asset->name,
+                    'category' => optional($asset->category)->name,
+                    'brand' => optional($asset->brand)->name,
+                    'status' => $asset->status,
+                    'asset_code' => $asset->asset_code ?? 'N/A',
+                    'serial_number' => $asset->serial_number ?? 'N/A',
+                    'expiry_date' => $expiryDate,
+                ];
+            });
+        }
+    };
+}
+
 
     private function queryUsers()
     {

@@ -24,8 +24,9 @@
         this.step = 1.25; // Go to classroom selection
     },
     selectTerminal(terminal) {
-        console.log('Selected terminal:', terminal);
-        this.selectedTerminal = terminal;
+        console.log('Selecting terminal:', terminal);
+        this.selectedTerminal = `T-${terminal}`;
+        $wire.selectTerminal(this.selectedTerminal);
         this.step = 2;
     },
     selectSubType(subType) {
@@ -35,6 +36,7 @@
         this.step = 3;
     },
     selectClassroom(classroom) {
+        console.log('Selecting classroom:', classroom);
         this.selectedClassroom = classroom;
         $wire.selectClassroom(classroom);
         this.step = 1.5; // Move to terminal selection after classroom
@@ -385,33 +387,14 @@
                 <div x-show="step === 1.25" class="p-4">
                     <h3 class="text-lg font-semibold mb-4">Select Classroom</h3>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div @click="selectClassroom('IK503b')" class="cursor-pointer card-hover">
-                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
-                                <div class="h-12 w-12 mx-auto">🏫</div>
-                                <h3 class="mt-4 text-lg font-semibold">IK503b</h3>
+                        @foreach($classrooms as $classroom)
+                            <div @click="selectClassroom('{{ $classroom->name }}')" class="cursor-pointer card-hover">
+                                <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
+                                    <div class="h-12 w-12 mx-auto">🏫</div>
+                                    <h3 class="mt-4 text-lg font-semibold">{{ $classroom->name }}</h3>
+                                </div>
                             </div>
-                        </div>
-
-                        <div @click="selectClassroom('IK504b')" class="cursor-pointer card-hover">
-                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
-                                <div class="h-12 w-12 mx-auto">🏫</div>
-                                <h3 class="mt-4 text-lg font-semibold">IK504b</h3>
-                            </div>
-                        </div>
-
-                        <div @click="selectClassroom('IK603b')" class="cursor-pointer card-hover">
-                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
-                                <div class="h-12 w-12 mx-auto">🏫</div>
-                                <h3 class="mt-4 text-lg font-semibold">IK603b</h3>
-                            </div>
-                        </div>
-
-                        <div @click="selectClassroom('IK604b')" class="cursor-pointer card-hover">
-                            <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
-                                <div class="h-12 w-12 mx-auto">🏫</div>
-                                <h3 class="mt-4 text-lg font-semibold">IK604b</h3>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
 
@@ -419,7 +402,7 @@
                 <div x-show="step === 1.5" class="p-4">
                     <div class="grid grid-cols-5 gap-4">
                         @for ($i = 1; $i <= 50; $i++)
-                            <div @click="selectTerminal('T-' + {{ $i }})" class="cursor-pointer card-hover">
+                            <div @click="selectTerminal('{{ $i }}')" class="cursor-pointer card-hover">
                                 <div class="p-4 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                                     <h3 class="text-lg font-semibold">T-{{ $i }}</h3>
                                 </div>
@@ -590,10 +573,11 @@
 
                     <form class="space-y-4" wire:submit.prevent="submitTicket">
                         <!-- Hidden fields to store selected values -->
-                        <input type="hidden" wire:model="selectedType" x-model="selectedType">
-                        <input type="hidden" wire:model="selectedSubType" x-model="selectedSubType">
-                        <input type="hidden" wire:model="selectedClassroom" x-model="selectedClassroom">
-                        <input type="hidden" wire:model="selectedTerminal" x-model="selectedTerminal">
+                        <input type="hidden" wire:model="selectedType">
+                        <input type="hidden" wire:model="selectedSubType">
+                        <input type="hidden" wire:model="selectedClassroom">
+                        <input type="hidden" wire:model="selectedTerminal">
+                        <input type="hidden" wire:model="classroom_id">
 
                         <div>
                             <label for="title"
@@ -653,7 +637,7 @@
                         </div>
 
                         <!-- Technician Assignment -->
-                        <div>
+                        <div x-show="@auth{{ auth()->user()->hasRole('admin') || auth()->user()->hasRole('technician') }}@endauth">
                             <label for="assigned_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign Technician</label>
                             <select id="assigned_to" 
                                     wire:model="assigned_to"
@@ -752,6 +736,39 @@
     </div>
     @endif
 </div>
+
+                        <!-- Internet-specific fields -->
+                        <div x-show="selectedType === 'internet'" class="space-y-4">
+                            <!-- Hidden fields for internet tickets -->
+                            <input type="hidden" wire:model.defer="selectedType" x-model="selectedType">
+                            <input type="hidden" wire:model.defer="selectedSubType" x-model="selectedSubType">
+                            <input type="hidden" wire:model.defer="selectedTerminal" x-model="selectedTerminal">
+                            <input type="hidden" wire:model.defer="classroom_id" x-model="selectedClassroom">
+                            
+                            <!-- Display selected values for verification -->
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                <p>Selected Classroom: <span x-text="selectedClassroom"></span></p>
+                                <p>Selected Terminal: <span x-text="selectedTerminal"></span></p>
+                                <p>Connection Type: <span x-text="selectedSubType"></span></p>
+                            </div>
+                        </div>
+
+                        <!-- Error messages -->
+                        @if ($errors->any())
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">⚠️</div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Please correct the following errors:</h3>
+                                        <ul class="mt-2 text-sm text-red-700 dark:text-red-300">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="flex justify-end space-x-3 gap-4">
                             <x-filament::button outlined @click.prevent="step = 1" type="button"

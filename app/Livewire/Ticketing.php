@@ -88,6 +88,7 @@ class Ticketing extends Component implements HasTable, HasForms
         if (in_array($this->selectedType, ['hardware', 'internet'])) {
             $rules['classroom_id'] = 'required|exists:classrooms,id';
             $rules['selectedTerminal'] = 'required|string';
+            $rules['terminal'] = 'required|string';  // Add this
         }
 
         // Add conditional validation for asset requests
@@ -118,7 +119,19 @@ class Ticketing extends Component implements HasTable, HasForms
             'start_time' => [
                 'required',
                 'date',
-                'after:now',
+                function ($attribute, $value, $fail) {
+                    $start = Carbon::parse($value);
+                    $now = Carbon::now();
+                    
+                    // Allow same day bookings but prevent past times
+                    if ($start->format('Y-m-d') === $now->format('Y-m-d')) {
+                        if ($start->format('H:i') < $now->format('H:i')) {
+                            $fail('Start time cannot be in the past.');
+                        }
+                    } elseif ($start->startOfDay()->lt($now->startOfDay())) {
+                        $fail('Start date cannot be in the past.');
+                    }
+                }
             ],
             'end_time' => [
                 'required',
@@ -130,6 +143,10 @@ class Ticketing extends Component implements HasTable, HasForms
 
     public function mount()
     {
+        $now = Carbon::now();
+        $this->start_time = $now->format('Y-m-d\TH:i');
+        $this->end_time = $now->addHour()->format('Y-m-d\TH:i');
+
         $this->loadInitialData();
         
         // Add these debug lines
@@ -226,20 +243,29 @@ class Ticketing extends Component implements HasTable, HasForms
 
     public function selectTerminal($terminal)
     {
-        \Log::info('Selecting terminal:', ['terminal' => $terminal]);
-        $this->selectedTerminal = $terminal;
-        $this->terminal = $terminal;
-        $this->generateTicketContent();
+        try {
+            \Log::info('Selecting terminal:', ['terminal' => $terminal]);
+            $this->selectedTerminal = "T-{$terminal}";
+            $this->terminal = $this->selectedTerminal;
+            $this->generateTicketContent();
+        } catch (\Exception $e) {
+            $this->handleError($e, 'selectTerminal', 'Error selecting terminal');
+        }
     }
 
     public function selectClassroom($classroom)
     {
-        \Log::info('Selecting classroom:', ['classroom' => $classroom]);
-        $this->selectedClassroom = $classroom;
-        $this->classroom_id = Classroom::where('name', $classroom)->value('id');
-        
-        if (!$this->classroom_id) {
-            \Log::warning('Classroom not found:', ['classroom_name' => $classroom]);
+        try {
+            \Log::info('Selecting classroom:', ['classroom' => $classroom]);
+            $this->selectedClassroom = $classroom;
+            $this->classroom_id = Classroom::where('name', $classroom)->value('id');
+            
+            if (!$this->classroom_id) {
+                \Log::warning('Classroom not found:', ['classroom_name' => $classroom]);
+                throw new \Exception('Selected classroom not found');
+            }
+        } catch (\Exception $e) {
+            $this->handleError($e, 'selectClassroom', 'Error selecting classroom');
         }
     }
 
@@ -277,17 +303,26 @@ class Ticketing extends Component implements HasTable, HasForms
         try {
             $start = Carbon::parse($this->start_time);
             $end = Carbon::parse($this->end_time);
+            $now = Carbon::now();
 
+            // Check if end time is before or equal to start time
             if ($end->lte($start)) {
                 $this->addError('end_time', 'End time must be after start time');
                 return;
             }
 
-            if ($start->lt(now())) {
-                $this->addError('start_time', 'Start time cannot be in the past');
+            // Only validate time if it's today
+            if ($start->format('Y-m-d') === $now->format('Y-m-d')) {
+                if ($start->format('H:i') < $now->format('H:i')) {
+                    $this->addError('start_time', 'Start time cannot be in the past');
+                    return;
+                }
+            } elseif ($start->startOfDay()->lt($now->startOfDay())) {
+                $this->addError('start_time', 'Start date cannot be in the past');
                 return;
             }
 
+            // Check for existing bookings
             $existingBookings = Ticket::where('classroom_id', $this->classroom_id)
                 ->where('ticket_type', 'classroom_request')
                 ->where('ticket_status', '!=', 'cancelled')
@@ -301,9 +336,30 @@ class Ticketing extends Component implements HasTable, HasForms
                             });
                     });
                 })
-                ->exists();
+                ->get(); // Change exists() to get() to fetch the conflicting bookings
 
-            $this->timeConflictExists = $existingBookings;
+            if ($existingBookings->isNotEmpty()) {
+                $this->timeConflictExists = true;
+                // Format the conflicting bookings for display
+                $conflictingTimes = $existingBookings->map(function ($booking) {
+                    return [
+                        'start' => Carbon::parse($booking->start_time)->format('h:i A'),
+                        'end' => Carbon::parse($booking->end_time)->format('h:i A'),
+                        'section' => optional($booking->section)->name ?? 'Unknown Section'
+                    ];
+                });
+                
+                $this->addError('time_conflict', 'Time slot conflicts with existing bookings:');
+                foreach ($conflictingTimes as $conflict) {
+                    $this->addError(
+                        'time_conflict_details', 
+                        "{$conflict['section']}: {$conflict['start']} - {$conflict['end']}"
+                    );
+                }
+            } else {
+                $this->timeConflictExists = false;
+                $this->resetErrorBag(['time_conflict', 'time_conflict_details']);
+            }
 
         } catch (\Exception $e) {
             \Log::error('Error checking time conflict: ' . $e->getMessage());
@@ -438,6 +494,8 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->selectedType = null;
         $this->selectedSubType = null;
         $this->selectedTerminal = null;
+        $this->selectedClassroom = null;  // Add this
+        $this->terminal = null;  // Add this
         $this->title = '';
         $this->description = '';
         $this->priority = 'medium';
@@ -450,7 +508,7 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->timeConflictExists = false;
         $this->showTicketForm = false;
         $this->resetErrorBag();
-
+        
         // Reset the assets to show all assets
         $this->loadAssets();
     }
@@ -491,14 +549,13 @@ class Ticketing extends Component implements HasTable, HasForms
     // Improve ticket submission validation
     public function submitTicket()
     {
-        $rules = $this->getRules();
-        $this->validate($rules);
-
         try {
+            $rules = $this->getRules();
+            $this->validate($rules);
+
             DB::beginTransaction();
 
-            // Add debug logging
-            \Log::info('Ticket submission data:', [
+            \Log::info('Submitting ticket:', [
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
                 'classroom' => $this->selectedClassroom,
@@ -519,43 +576,37 @@ class Ticketing extends Component implements HasTable, HasForms
             $ticket->assigned_to = $this->assigned_to;
             $ticket->created_by = auth()->id();
 
-            // Add classroom request specific fields
             if ($this->selectedType === 'classroom_request') {
-                $ticket->section_id = $this->section_id;
-                $ticket->start_time = $this->start_time;
-                $ticket->end_time = $this->end_time;
+                $this->validateClassroomRequest($ticket);
             }
 
-            // Add logging for debugging
-            \Log::info('Submitting ticket:', [
-                'type' => $this->selectedType,
-                'subtype' => $this->selectedSubType,
-                'terminal' => $this->selectedTerminal,
-                'classroom' => $this->classroom_id
-            ]);
-
             $ticket->save();
-
             DB::commit();
 
             $this->reset();
+            $this->dispatch('close-ticket-modal');
+            
             Notification::make()
                 ->title('Success')
                 ->body('Ticket submitted successfully!')
                 ->success()
                 ->send();
-            
-            $this->dispatch('close-ticket-modal');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error submitting ticket: ' . $e->getMessage());
-            Notification::make()
-                ->title('Error')
-                ->body('Error submitting ticket: ' . $e->getMessage())
-                ->danger()
-                ->send();
+            $this->handleError($e, 'submitTicket', 'Failed to submit ticket');
         }
+    }
+
+    protected function validateClassroomRequest($ticket)
+    {
+        if ($this->timeConflictExists) {
+            throw new \Exception('Time slot is already booked');
+        }
+        
+        $ticket->section_id = $this->section_id;
+        $ticket->start_time = $this->start_time;
+        $ticket->end_time = $this->end_time;
     }
 
     /**

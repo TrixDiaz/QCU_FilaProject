@@ -717,8 +717,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label for="start_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-            <input type="datetime-local" id="start_time" wire:model="start_time"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+            <input type="datetime-local" 
+                   id="start_time" 
+                   wire:model.defer="start_time"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
             @error('start_time')
                 <span class="text-red-500 text-xs">{{ $message }}</span>
             @enderror
@@ -726,8 +728,10 @@
         
         <div>
             <label for="end_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
-            <input type="datetime-local" id="end_time" wire:model="end_time"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+            <input type="datetime-local" 
+                   id="end_time" 
+                   wire:model.defer="end_time"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
             @error('end_time')
                 <span class="text-red-500 text-xs">{{ $message }}</span>
             @enderror
@@ -746,8 +750,14 @@
                     Time Conflict Detected!
                 </p>
                 <p class="text-sm text-red-700 dark:text-red-200 mt-1">
-                    The selected classroom is already booked during this time period. Please select a different time or classroom.
+                    The selected classroom is already booked during this time period:
                 </p>
+                @error('time_conflict')
+                    <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}</p>
+                @enderror
+                @error('time_conflict_details')
+                    <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     </div>

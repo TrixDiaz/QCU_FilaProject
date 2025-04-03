@@ -539,19 +539,22 @@ class Ticketing extends Component implements HasTable, HasForms
             DB::commit();
 
             $this->reset();
-            $this->dispatch('notify', [
-                'message' => 'Ticket submitted successfully!',
-                'type' => 'success'
-            ]);
+            Notification::make()
+                ->title('Success')
+                ->body('Ticket submitted successfully!')
+                ->success()
+                ->send();
+            
             $this->dispatch('close-ticket-modal');
 
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error submitting ticket: ' . $e->getMessage());
-            $this->dispatch('notify', [
-                'message' => 'Error submitting ticket: ' . $e->getMessage(),
-                'type' => 'error'
-            ]);
+            Notification::make()
+                ->title('Error')
+                ->body('Error submitting ticket: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 

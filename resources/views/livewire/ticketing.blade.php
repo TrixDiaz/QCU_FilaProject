@@ -636,8 +636,25 @@
                             @enderror
                         </div>
 
+                        <!-- Classroom selection for asset requests -->
+                        <div x-show="selectedType === 'asset_request'" class="space-y-4">
+                            <div>
+                                <label for="classroom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Classroom</label>
+                                <select id="classroom" wire:model="classroom_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    <option value="">-- Select Classroom --</option>
+                                    @foreach ($classrooms as $classroom)
+                                        <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('classroom_id')
+                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
                         <!-- Technician Assignment -->
-                        <div x-show="@auth{{ auth()->user()->hasRole('admin') || auth()->user()->hasRole('technician') }}@endauth">
+                        <div x-show="@auth{{ auth()->user()->hasRole(['admin', 'technician']) }}@endauth">
                             <label for="assigned_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign Technician</label>
                             <select id="assigned_to" 
                                     wire:model="assigned_to"

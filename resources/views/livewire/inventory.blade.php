@@ -765,6 +765,22 @@
                                                     Deployed to:
                                                     {{ $asset->assetGroups->first()->classroom->name ?? 'Unknown' }}
                                                 </x-filament::badge>
+                                            @elseif($asset->status === 'broken')
+                                                <x-filament::badge color="danger">
+                                                    Broken
+                                                </x-filament::badge>
+                                            @elseif($asset->status === 'maintenance')
+                                                <x-filament::badge color="warning">
+                                                    Under Maintenance
+                                                </x-filament::badge>
+                                            @elseif($asset->status === 'archived')
+                                                <x-filament::badge color="gray">
+                                                    Archived
+                                                </x-filament::badge>
+                                            @else
+                                                <x-filament::badge color="gray">
+                                                    {{ ucfirst($asset->status) }}
+                                                </x-filament::badge>
                                             @endif
                                         </div>
                                     </div>
@@ -968,6 +984,22 @@
                                                 <x-filament::badge color="primary">
                                                     Deployed to:
                                                     {{ $asset->assetGroups->first()->classroom->name ?? 'Unknown' }}
+                                                </x-filament::badge>
+                                            @elseif($asset->status === 'broken')
+                                                <x-filament::badge color="danger">
+                                                    Broken
+                                                </x-filament::badge>
+                                            @elseif($asset->status === 'maintenance')
+                                                <x-filament::badge color="warning">
+                                                    Under Maintenance
+                                                </x-filament::badge>
+                                            @elseif($asset->status === 'archived')
+                                                <x-filament::badge color="gray">
+                                                    Archived
+                                                </x-filament::badge>
+                                            @else
+                                                <x-filament::badge color="gray">
+                                                    {{ ucfirst($asset->status) }}
                                                 </x-filament::badge>
                                             @endif
                                         </x-filament-tables::cell>

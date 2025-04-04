@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use League\Csv\Writer;
 use SplTempFileObject;
+use Illuminate\Support\Facades\DB;
 
 
 class Rooms extends Component
@@ -62,7 +63,13 @@ class Rooms extends Component
         'selectedSemester' => ['except' => ''],
     ];
 
-
+    // Add validation rules
+    protected $rules = [
+        'assetId' => 'required|exists:assets,id',
+        'groupName' => 'required|string|max:255',
+        'groupCode' => 'required|string|max:255|unique:assets_group,code',
+        'status' => 'required|in:active,maintenance,inactive,broken',
+    ];
 
     public function mount()
     {
@@ -505,11 +512,16 @@ class Rooms extends Component
                 'type' => 'success'
             ]);
 
-            return response()->streamDownload(
+            // Return a StreamedResponse
+            return new StreamedResponse(
                 function () use ($csv) {
                     echo $csv->getContent();
                 },
-                $filename
+                200,
+                [
+                    'Content-Type' => 'text/csv',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                ]
             );
         } catch (\Exception $e) {
             // Dispatch error notification
@@ -518,8 +530,8 @@ class Rooms extends Component
                 'type' => 'error'
             ]);
 
-            // Return empty response or redirect back
-            return response()->noContent(500);
+            // Return an empty StreamedResponse for error case
+            return new StreamedResponse(function () {}, 500, ['Content-Type' => 'text/plain']);
         }
     }
 }

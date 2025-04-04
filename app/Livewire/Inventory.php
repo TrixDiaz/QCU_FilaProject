@@ -43,6 +43,8 @@ class Inventory extends Component
     public $categories = [];
     public $tags = [];
     public $totalAssets = 0;
+
+    public $totalAssetsAvailable = 0;
     public $filteredCount = 0;
     public $perPage = 12;
     public $viewType = 'table';
@@ -196,6 +198,7 @@ class Inventory extends Component
 
         // Get total counts
         $this->totalAssets = Asset::count();
+        $this->totalAssetsAvailable = Asset::where('status', 'available')->count();
         $this->filteredCount = $query->count();
 
         // Get the paginated results
@@ -594,10 +597,6 @@ class Inventory extends Component
 
             // Clean up the uploaded file
             Storage::delete($path);
-
-            // Show success message
-            session()->flash('message', 'Assets imported successfully!');
-            session()->flash('type', 'success');
 
             // Reset file input and hide modal
             $this->resetImportFile();

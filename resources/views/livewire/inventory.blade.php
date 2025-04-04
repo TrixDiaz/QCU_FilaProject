@@ -582,7 +582,7 @@
                         </div>
                         <div class="bg-primary-100 dark:bg-primary-800 rounded-full px-4 py-2">
                             <span class="text-2xl font-bold text-primary-700 dark:text-primary-300">
-                                {{ $assets->where('status', 'available')->count() }}
+                                {{ $totalAssetsAvailable }}
                             </span>
                         </div>
                     </div>

@@ -43,6 +43,8 @@ class Inventory extends Component
     public $categories = [];
     public $tags = [];
     public $totalAssets = 0;
+
+    public $totalAssetsAvailable = 0;
     public $filteredCount = 0;
     public $perPage = 12;
     public $viewType = 'table';
@@ -94,11 +96,13 @@ class Inventory extends Component
 
     public function mount()
     {
-        $this->brands = Brand::withCount('assets')->get();
-        $this->categories = Category::withCount('assets')->get();
-        $this->tags = Tag::withCount('assets')->get();
+        $this->brands = Brand::withCount('assets')->orderByDesc('assets_count')->get();
+        $this->categories = Category::withCount('assets')->orderByDesc('assets_count')->get();
+        $this->tags = Tag::withCount('assets')->orderByDesc('assets_count')->get();
         $this->totalAssets = Asset::where('status', 'available')->count();
-        $this->classrooms = Classroom::with('building')->get();
+        $this->classrooms = Classroom::with(['building' => function ($query) {
+            $query->orderBy('name');
+        }])->orderBy('name')->get();
     }
 
     // Add this method to handle status filter
@@ -111,7 +115,8 @@ class Inventory extends Component
     public function render()
     {
         // Base query with relationships
-        $query = Asset::with(['brand', 'category', 'assetTags', 'assetGroups.classroom.building']);
+        $query = Asset::with(['brand', 'category', 'assetTags', 'assetGroups.classroom.building'])
+            ->orderBy('created_at', 'desc');
 
         // Apply filters based on filterType
         switch ($this->filterType) {
@@ -194,14 +199,15 @@ class Inventory extends Component
             });
         }
 
-        // Get total counts
+        // Get total counts - count ALL assets regardless of pagination
         $this->totalAssets = Asset::count();
+        $this->totalAssetsAvailable = Asset::where('status', 'available')->count();
         $this->filteredCount = $query->count();
 
         // Get the paginated results
         $assets = $query->paginate($this->perPage);
 
-        // Calculate deployment stats
+        // Calculate deployment stats for all deployed assets
         $deploymentStats = [];
         foreach ($this->classrooms as $classroom) {
             $deployedCount = Asset::whereHas('assetGroups', function ($query) use ($classroom) {
@@ -216,7 +222,21 @@ class Inventory extends Component
             }
         }
 
+        // Sort deploymentStats by count in descending order
+        usort($deploymentStats, function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+
+        // Total count of asset groups (not just the current page)
         $assetsGroups = AssetGroup::count();
+
+        // Get category counts for available assets
+        $categoryAvailableCounts = [];
+        foreach ($this->categories as $category) {
+            $categoryAvailableCounts[$category->id] = Asset::where('status', 'available')
+                ->where('category_id', $category->id)
+                ->count();
+        }
 
         return view('livewire.inventory', [
             'assets' => $assets,
@@ -224,6 +244,7 @@ class Inventory extends Component
             'deployedCount' => Asset::where('status', 'deployed')->count(),
             'deploymentStats' => $deploymentStats,
             'assetsGroups' => $assetsGroups,
+            'categoryAvailableCounts' => $categoryAvailableCounts,
         ]);
     }
 
@@ -595,10 +616,6 @@ class Inventory extends Component
             // Clean up the uploaded file
             Storage::delete($path);
 
-            // Show success message
-            session()->flash('message', 'Assets imported successfully!');
-            session()->flash('type', 'success');
-
             // Reset file input and hide modal
             $this->resetImportFile();
             $this->showImportModal = false;
@@ -627,6 +644,48 @@ class Inventory extends Component
                 break;
             default:
                 $this->addError('bulkAction', 'Please select a valid action');
+        }
+    }
+
+    public function pullOutAsset($assetId)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Find the asset
+            $asset = Asset::findOrFail($assetId);
+
+            // Delete all AssetGroup records for this asset
+            AssetGroup::where('asset_id', $assetId)->delete();
+
+            // Update asset status to available
+            $asset->status = 'pull out';
+            $asset->save();
+
+            DB::commit();
+
+            $this->dispatch('notify', ['message' => 'Asset pulled out successfully', 'type' => 'success']);
+
+            // Get all users for notification
+            $users = \App\Models\User::all();
+
+            // Notify all users
+            foreach ($users as $user) {
+                $user->notify(
+                    \Filament\Notifications\Notification::make()
+                        ->title('Asset Pulled Out')
+                        ->body('An asset has been pulled out and is now available.')
+                        ->success()
+                        ->icon('heroicon-m-computer-desktop')
+                        ->toDatabase()
+                );
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('notify', ['message' => 'Error pulling out asset: ' . $e->getMessage(), 'type' => 'error']);
+            return false;
         }
     }
 }

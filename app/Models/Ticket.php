@@ -13,6 +13,7 @@ class Ticket extends Model
 
     protected $fillable = [
         'ticket_number',
+        'terminal',
         'title',
         'description',
         'priority',
@@ -88,74 +89,16 @@ class Ticket extends Model
     protected static function boot()
     {
         parent::boot();
-        
-        static::created(function ($ticket) {
-            // Changed condition to check for 'request' or 'classroom' type in ticket_type
-            if (in_array($ticket->ticket_type, ['request', 'classroom'])) {
-                try {
-                    $approval = Approval::create([
-                        'ticket_number' => $ticket->ticket_number,
-                        'title' => $ticket->title,
-                        'description' => $ticket->description,
-                        'asset_id' => $ticket->asset_id,
-                        'section_id' => $ticket->section_id,
-                        'professor_id' => $ticket->created_by,
-                        'subject_id' => $ticket->subject_id ?? null,
-                        'option' => $ticket->type ?? $ticket->ticket_type, // Use type if available, fallback to ticket_type
-                        'starts_at' => $ticket->start_time,
-                        'ends_at' => $ticket->end_time,
-                        'status' => 'pending',
-                        'classroom_id' => $ticket->classroom_id
-                    ]);
-                    
-                    // Update ticket status to in progress
-                    $ticket->update(['ticket_status' => 'in progress']);
-                    
-                    \Log::info('Approval created successfully', [
-                        'ticket_number' => $ticket->ticket_number,
-                        'approval_id' => $approval->id,
-                        'ticket_type' => $ticket->ticket_type,
-                        'type' => $ticket->type ?? 'not set'
-                    ]);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to create approval', [
-                        'ticket_number' => $ticket->ticket_number,
-                        'error' => $e->getMessage(),
-                        'ticket_type' => $ticket->ticket_type
-                    ]);
-                }
-            }
-        });
 
-        static::updating(function ($ticket) {
-            // Check for both request and classroom types
-            if ($ticket->isDirty('ticket_type') && 
-                ($ticket->ticket_type === 'request' || $ticket->ticket_type === 'classroom')) {
-                try {
-                    Approval::firstOrCreate(
-                        ['ticket_number' => $ticket->ticket_number],
-                        [
-                            'title' => $ticket->title,
-                            'description' => $ticket->description,
-                            'asset_id' => $ticket->asset_id,
-                            'section_id' => $ticket->section_id,
-                            'professor_id' => $ticket->created_by,
-                            'subject_id' => $ticket->subject_id,
-                            'option' => $ticket->ticket_type,
-                            'starts_at' => $ticket->start_time,
-                            'ends_at' => $ticket->end_time,
-                            'status' => 'pending',
-                            'classroom_id' => $ticket->classroom_id
-                        ]
-                    );
-                } catch (\Exception $e) {
-                    \Log::error('Failed to create/update approval', [
-                        'ticket_number' => $ticket->ticket_number,
-                        'error' => $e->getMessage()
-                    ]);
-                }
+        static::created(function ($ticket) {
+            if ($ticket->type === 'classroom_request') {
+                Approval::create([
+                    'ticket_number' => $ticket->ticket_number,
+                    'status' => 'pending',
+                    'approved_by' => null,
+                    'approved_at' => null
+                ]);
             }
         });
     }
-
 }

@@ -582,7 +582,7 @@
                         </div>
                         <div class="bg-primary-100 dark:bg-primary-800 rounded-full px-4 py-2">
                             <span class="text-2xl font-bold text-primary-700 dark:text-primary-300">
-                                {{ $assets->where('status', 'available')->count() }}
+                                {{ $totalAssetsAvailable }}
                             </span>
                         </div>
                     </div>
@@ -593,7 +593,7 @@
                             <div class="flex bg-gray-50 dark:bg-gray-800 p-3 rounded-lg gap-2">
                                 <p class="text-sm font-medium capitalize">{{ $category->name }}</p>
                                 <p class="text-sm font-semibold">
-                                    {{ $assets->where('status', 'available')->where('category_id', $category->id)->count() }}
+                                    {{ $categoryAvailableCounts[$category->id] ?? 0 }}
                                 </p>
                             </div>
                         @endforeach
@@ -609,7 +609,7 @@
                         </div>
                         <div class="bg-success-100 dark:bg-success-800 rounded-full px-4 py-2">
                             <span class="text-2xl font-bold text-success-700 dark:text-success-300">
-                                {{ $assetsGroups }}
+                                {{ $deployedCount }}
                             </span>
                         </div>
                     </div>
@@ -799,15 +799,22 @@
 
                                     <div class="mt-3 flex justify-end gap-2">
                                         @if (count($selected) < 2)
-                                            <x-filament::button
-                                                @click="$dispatch('open-deploy-modal', { 
-                                                assetId: {{ $asset->id }}, 
-                                                assetName: '{{ $asset->name }}',
-                                                assetCode: '{{ $asset->asset_code }}'
-                                            })"
-                                                class="text-sm hover:underline">
-                                                Deploy Asset
-                                            </x-filament::button>
+                                            @if ($asset->status === 'deployed')
+                                                <x-filament::button wire:click="pullOutAsset({{ $asset->id }})"
+                                                    color="danger" class="text-sm hover:underline">
+                                                    Pull Out Asset
+                                                </x-filament::button>
+                                            @else
+                                                <x-filament::button
+                                                    @click="$dispatch('open-deploy-modal', { 
+                                                    assetId: {{ $asset->id }}, 
+                                                    assetName: '{{ $asset->name }}',
+                                                    assetCode: '{{ $asset->asset_code }}'
+                                                })"
+                                                    class="text-sm hover:underline">
+                                                    Deploy Asset
+                                                </x-filament::button>
+                                            @endif
                                             <x-filament::button
                                                 href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
                                                 tag="a" class="text-sm hover:underline">Edit Asset
@@ -948,22 +955,38 @@
                                                     x-transition:leave-start="transform opacity-100 scale-100"
                                                     x-transition:leave-end="transform opacity-0 scale-95">
                                                     <div class="py-1" role="menu">
-                                                        <!-- Deploy Asset Button -->
-                                                        <button
-                                                            @click="
+                                                        @if ($asset->status === 'deployed')
+                                                            <!-- Pull Out Asset Button -->
+                                                            <button
+                                                                @click="
+                                                        open = false;
+                                                        $wire.pullOutAsset({{ $asset->id }})"
+                                                                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-800"
+                                                                role="menuitem">
+                                                                <div class="flex items-center">
+                                                                    <x-heroicon-m-arrow-down-tray
+                                                                        class="w-4 h-4 mr-2" />
+                                                                    Pull Out Asset
+                                                                </div>
+                                                            </button>
+                                                        @else
+                                                            <!-- Deploy Asset Button -->
+                                                            <button
+                                                                @click="
                                                         open = false;
                                                         $dispatch('open-deploy-modal', { 
                                                             assetId: {{ $asset->id }}, 
                                                             assetName: '{{ $asset->name }}',
                                                             assetCode: '{{ $asset->asset_code }}'
                                                         })"
-                                                            class="w-full text-left px-4 py-2 text-sm "
-                                                            role="menuitem">
-                                                            <div class="flex items-center">
-                                                                <x-heroicon-m-arrow-up-tray class="w-4 h-4 mr-2" />
-                                                                Deploy Asset
-                                                            </div>
-                                                        </button>
+                                                                class="w-full text-left px-4 py-2 text-sm "
+                                                                role="menuitem">
+                                                                <div class="flex items-center">
+                                                                    <x-heroicon-m-arrow-up-tray class="w-4 h-4 mr-2" />
+                                                                    Deploy Asset
+                                                                </div>
+                                                            </button>
+                                                        @endif
 
                                                         <!-- Edit Asset Button -->
                                                         <a href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"

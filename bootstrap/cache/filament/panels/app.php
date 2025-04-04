@@ -32,6 +32,7 @@
     'app.filament.app.resources.user-resource.pages.create-user' => 'App\\Filament\\App\\Resources\\UserResource\\Pages\\CreateUser',
     'app.filament.app.resources.user-resource.pages.edit-user' => 'App\\Filament\\App\\Resources\\UserResource\\Pages\\EditUser',
     'app.filament.app.resources.user-resource.pages.list-users' => 'App\\Filament\\App\\Resources\\UserResource\\Pages\\ListUsers',
+    'app.filament.app.pages.approval-page' => 'App\\Filament\\App\\Pages\\ApprovalPage',
     'app.filament.app.pages.attendance' => 'App\\Filament\\App\\Pages\\Attendance',
     'app.filament.app.pages.dashboard' => 'App\\Filament\\App\\Pages\\Dashboard',
     'app.filament.app.pages.inventory' => 'App\\Filament\\App\\Pages\\Inventory',
@@ -65,18 +66,19 @@
   ),
   'pages' => 
   array (
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Attendance.php' => 'App\\Filament\\App\\Pages\\Attendance',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Dashboard.php' => 'App\\Filament\\App\\Pages\\Dashboard',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Inventory.php' => 'App\\Filament\\App\\Pages\\Inventory',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\ReportBuilder.php' => 'App\\Filament\\App\\Pages\\ReportBuilder',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Rooms.php' => 'App\\Filament\\App\\Pages\\Rooms',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Schedule.php' => 'App\\Filament\\App\\Pages\\Schedule',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Terminal.php' => 'App\\Filament\\App\\Pages\\Terminal',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Ticket.php' => 'App\\Filament\\App\\Pages\\Ticket',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\ApprovalPage.php' => 'App\\Filament\\App\\Pages\\ApprovalPage',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Attendance.php' => 'App\\Filament\\App\\Pages\\Attendance',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Dashboard.php' => 'App\\Filament\\App\\Pages\\Dashboard',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Inventory.php' => 'App\\Filament\\App\\Pages\\Inventory',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\ReportBuilder.php' => 'App\\Filament\\App\\Pages\\ReportBuilder',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Rooms.php' => 'App\\Filament\\App\\Pages\\Rooms',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Schedule.php' => 'App\\Filament\\App\\Pages\\Schedule',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Terminal.php' => 'App\\Filament\\App\\Pages\\Terminal',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Pages\\Ticket.php' => 'App\\Filament\\App\\Pages\\Ticket',
   ),
   'pageDirectories' => 
   array (
-    0 => 'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament/App/Pages',
+    0 => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/App/Pages',
   ),
   'pageNamespaces' => 
   array (
@@ -84,21 +86,21 @@
   ),
   'resources' => 
   array (
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ApprovalResource.php' => 'App\\Filament\\App\\Resources\\ApprovalResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\AssetResource.php' => 'App\\Filament\\App\\Resources\\AssetResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\BuildingResource.php' => 'App\\Filament\\App\\Resources\\BuildingResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ClassroomResource.php' => 'App\\Filament\\App\\Resources\\ClassroomResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\EventResource.php' => 'App\\Filament\\App\\Resources\\EventResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\RoleResource.php' => 'App\\Filament\\App\\Resources\\RoleResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SectionResource.php' => 'App\\Filament\\App\\Resources\\SectionResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\StudentReportResource.php' => 'App\\Filament\\App\\Resources\\StudentReportResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SubjectResource.php' => 'App\\Filament\\App\\Resources\\SubjectResource',
-    'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament\\App\\Resources\\UserResource.php' => 'App\\Filament\\App\\Resources\\UserResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ApprovalResource.php' => 'App\\Filament\\App\\Resources\\ApprovalResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\AssetResource.php' => 'App\\Filament\\App\\Resources\\AssetResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\BuildingResource.php' => 'App\\Filament\\App\\Resources\\BuildingResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\ClassroomResource.php' => 'App\\Filament\\App\\Resources\\ClassroomResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\EventResource.php' => 'App\\Filament\\App\\Resources\\EventResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\RoleResource.php' => 'App\\Filament\\App\\Resources\\RoleResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SectionResource.php' => 'App\\Filament\\App\\Resources\\SectionResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\StudentReportResource.php' => 'App\\Filament\\App\\Resources\\StudentReportResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\SubjectResource.php' => 'App\\Filament\\App\\Resources\\SubjectResource',
+    'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament\\App\\Resources\\UserResource.php' => 'App\\Filament\\App\\Resources\\UserResource',
     0 => 'Z3d0X\\FilamentLogger\\Resources\\ActivityResource',
   ),
   'resourceDirectories' => 
   array (
-    0 => 'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament/App/Resources',
+    0 => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/App/Resources',
   ),
   'resourceNamespaces' => 
   array (
@@ -109,7 +111,7 @@
   ),
   'widgetDirectories' => 
   array (
-    0 => 'C:\\Users\\surface\\OneDrive\\Documents\\QCU_FilaProject\\app\\Filament/App/Widgets',
+    0 => 'C:\\Users\\Trix\\Documents\\GitHub\\QCU_FilaProject\\app\\Filament/App/Widgets',
   ),
   'widgetNamespaces' => 
   array (

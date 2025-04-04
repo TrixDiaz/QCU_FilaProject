@@ -77,13 +77,16 @@
             }
         });
     }
-}" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()" @notify.window="(e) => {
+}" class="relative" :class="{ 'dark': darkMode }" @close-ticket-modal.window="closeModal()"
+    @notify.window="(e) => {
     // Handle notification display
     // You might want to use a toast notification library here
     console.log(e.detail.message);
 }">
     <style>
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
 
         /* Theme Variables */
         :root {
@@ -105,13 +108,17 @@
         }
 
         /* Form Elements */
-        input, select, textarea {
+        input,
+        select,
+        textarea {
             background-color: var(--bg-primary);
             color: var(--text-primary);
             border-color: var(--border-color);
         }
 
-        input:focus, select:focus, textarea:focus {
+        input:focus,
+        select:focus,
+        textarea:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
         }
@@ -183,15 +190,15 @@
         .filament-tables-container {
             @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm;
         }
-        
+
         .filament-tables-row {
             @apply hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200;
         }
-        
+
         .filament-tables-header-cell {
             @apply bg-gray-50 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider;
         }
-        
+
         .filament-tables-cell {
             @apply text-sm text-gray-600 dark:text-gray-300;
         }
@@ -235,11 +242,12 @@
         x-transition:leave-start="opacity-100 transform translate-x-0"
         x-transition:leave-end="opacity-0 transform translate-x-full" class="fixed top-4 right-4 z-50 max-w-sm"
         style="display:none;">
-        <div class="notification p-4 rounded-md shadow-md" :class="{
-            'bg-green-50 dark:bg-green-900 border-green-400 text-green-700 dark:text-green-100': type === 'success',
-            'bg-red-50 dark:bg-red-900 border-red-400 text-red-700 dark:text-red-100': type === 'error',
-            'bg-blue-50 dark:bg-blue-900 border-blue-400 text-blue-700 dark:text-blue-100': type === 'info'
-        }">
+        <div class="notification p-4 rounded-md shadow-md"
+            :class="{
+                'bg-green-50 dark:bg-green-900 border-green-400 text-green-700 dark:text-green-100': type === 'success',
+                'bg-red-50 dark:bg-red-900 border-red-400 text-red-700 dark:text-red-100': type === 'error',
+                'bg-blue-50 dark:bg-blue-900 border-blue-400 text-blue-700 dark:text-blue-100': type === 'info'
+            }">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
                     <svg x-show="type === 'success'" class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg"
@@ -345,15 +353,13 @@
                     <div class="flex items-center space-x-4"> <!-- Increased space-x-2 to space-x-4 -->
                         <button
                             x-show="step > 1 && selectedType !== 'asset_request' && selectedType !== 'general_inquiry' && selectedType !== 'classroom_request'"
-                            @click="step = step === 2 ? 1.5 : step - 1" 
-                            type="button" 
+                            @click="step = step === 2 ? 1.5 : step - 1" type="button"
                             class="dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 p-2 rounded-md">
                             ← Back
                         </button>
-                        <button 
-                            @click="closeModal()" 
-                            type="button" 
-                            class="dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 p-2 rounded-md"> <!-- Added padding and hover effects -->
+                        <button @click="closeModal()" type="button"
+                            class="dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 p-2 rounded-md">
+                            <!-- Added padding and hover effects -->
                             ✕
                         </button>
                     </div>
@@ -387,7 +393,7 @@
                 <div x-show="step === 1.25" class="p-4">
                     <h3 class="text-lg font-semibold mb-4">Select Classroom</h3>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        @foreach($classrooms as $classroom)
+                        @foreach ($classrooms as $classroom)
                             <div @click="selectClassroom('{{ $classroom->name }}')" class="cursor-pointer card-hover">
                                 <div class="p-6 rounded-lg shadow-md text-center bg-white dark:bg-gray-700">
                                     <div class="h-12 w-12 mx-auto">🏫</div>
@@ -474,10 +480,9 @@
                                 <h3 class="mt-4 text-lg font-semibold">Other</h3>
                             </div>
                         </div>
-                        
+
                         <!-- Dropdown Menu -->
-                        <div x-show="showOtherDropdown" 
-                            x-transition:enter="transition ease-out duration-200"
+                        <div x-show="showOtherDropdown" x-transition:enter="transition ease-out duration-200"
                             x-transition:enter-start="opacity-0 transform scale-95"
                             x-transition:enter-end="opacity-100 transform scale-100"
                             x-transition:leave="transition ease-in duration-150"
@@ -486,19 +491,19 @@
                             class="absolute z-50 mt-2 w-full rounded-md shadow-lg">
                             <div class="rounded-md bg-white dark:bg-gray-700 shadow-xs">
                                 <div class="py-1">
-                                    <button @click="selectSubType('tv'); showOtherDropdown = false" 
+                                    <button @click="selectSubType('tv'); showOtherDropdown = false"
                                         class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
                                         📺 TV
                                     </button>
-                                    <button @click="selectSubType('printer'); showOtherDropdown = false" 
+                                    <button @click="selectSubType('printer'); showOtherDropdown = false"
                                         class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
                                         🖨️ Printer
                                     </button>
-                                    <button @click="selectSubType('router'); showOtherDropdown = false" 
+                                    <button @click="selectSubType('router'); showOtherDropdown = false"
                                         class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
                                         📡 Router
                                     </button>
-                                    <button @click="selectSubType('ups'); showOtherDropdown = false" 
+                                    <button @click="selectSubType('ups'); showOtherDropdown = false"
                                         class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
                                         🔋 UPS
                                     </button>
@@ -545,11 +550,15 @@
                                         You are submitting a classroom request. Please select the classroom and section
                                         below.
                                     </span>
-                                    <span x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
-                                        You are submitting a ticket for Classroom <strong x-text="selectedClassroom"></strong>
-                                        <span x-show="selectedTerminal"> - Terminal <strong x-text="selectedTerminal"></strong></span>
+                                    <span
+                                        x-show="selectedType !== 'general_inquiry' && selectedType !== 'asset_request'">
+                                        You are submitting a ticket for Classroom <strong
+                                            x-text="selectedClassroom"></strong>
+                                        <span x-show="selectedTerminal"> - Terminal <strong
+                                                x-text="selectedTerminal"></strong></span>
                                         - <strong x-text="selectedType"></strong> issue
-                                        <span x-show="selectedSubType"> - <strong x-text="selectedSubType"></strong></span>
+                                        <span x-show="selectedSubType"> - <strong
+                                                x-text="selectedSubType"></strong></span>
                                     </span>
                                 </p>
                             </div>
@@ -580,31 +589,28 @@
                         <input type="hidden" wire:model="classroom_id">
 
                         <div>
-                            <label for="title"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 <span x-show="selectedType === 'asset_request'">Request Title</span>
                                 <span x-show="selectedType === 'general_inquiry'">Inquiry Title</span>
                                 <span x-show="selectedType === 'classroom_request'">Request Title</span>
-                                <span x-show="!['asset_request', 'general_inquiry', 'classroom_request'].includes(selectedType)">Issue Title</span>
+                                <span
+                                    x-show="!['asset_request', 'general_inquiry', 'classroom_request'].includes(selectedType)">Issue
+                                    Title</span>
                             </label>
                             <input type="text" id="title" wire:model.defer="title"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500"
-                                :placeholder="
-                                    selectedType === 'asset_request' ? 'Enter request title...' :
+                                :placeholder="selectedType === 'asset_request' ? 'Enter request title...' :
                                     selectedType === 'general_inquiry' ? 'Enter inquiry title...' :
                                     selectedType === 'classroom_request' ? 'Enter request title...' :
-                                    'Enter issue title...'
-                                ">
+                                    'Enter issue title...'">
                             @error('title')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                            <textarea 
-                                id="description" 
-                                wire:model.defer="description"
-                                rows="4" 
+                            <label for="description"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                            <textarea id="description" wire:model.defer="description" rows="4"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500"
                                 placeholder="Describe your issue here..."></textarea>
                             @error('description')
@@ -613,14 +619,17 @@
                         </div>
 
                         <!-- Asset Dropdown -->
-                        <div x-show="selectedType !== 'classroom_request' && selectedType !== 'application' && selectedType !== 'internet' && selectedType !== 'general_inquiry'">
-                            <label for="asset_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Asset</label>
-                            <select id="asset_id" wire:model.defer="asset_id"
+                        <div
+                            x-show="selectedType !== 'classroom_request' && selectedType !== 'application' && selectedType !== 'internet' && selectedType !== 'general_inquiry'">
+                            <label for="asset_id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Asset</label>
+                            <select id="asset_id" wire:model.live="asset_id"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="">-- Select Asset --</option>
                                 @forelse ($assets as $asset)
                                     <option value="{{ $asset->id }}">
-                                    {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN: {{ $asset->serial_number ?? 'N/A' }})
+                                        {{ $asset->name }} (Tag: {{ $asset->asset_tag }}, SN:
+                                        {{ $asset->serial_number ?? 'N/A' }})
                                     </option>
                                 @empty
                                     <option value="" disabled>No matching assets found</option>
@@ -639,8 +648,10 @@
                         <!-- Classroom selection for asset requests -->
                         <div x-show="selectedType === 'asset_request'" class="space-y-4">
                             <div>
-                                <label for="classroom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Classroom</label>
-                                <select id="classroom" wire:model="classroom_id"
+                                <label for="classroom"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select
+                                    Classroom</label>
+                                <select id="classroom" wire:model.live="classroom_id"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                     <option value="">-- Select Classroom --</option>
                                     @foreach ($classrooms as $classroom)
@@ -654,13 +665,14 @@
                         </div>
 
                         <!-- Technician Assignment -->
-                        <div x-show="@auth{{ auth()->user()->hasRole(['admin', 'technician']) }}@endauth">
-                            <label for="assigned_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign Technician</label>
-                            <select id="assigned_to" 
-                                    wire:model="assigned_to"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                        <div x-show="@auth{{ auth()->user()->hasRole(['admin', 'technician']) }} @endauth">
+                            <label for="assigned_to"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign
+                                Technician</label>
+                            <select id="assigned_to" wire:model="assigned_to"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
                                 <option value="">-- Select Technician --</option>
-                                @foreach($technicians as $tech)
+                                @foreach ($technicians as $tech)
                                     <option value="{{ $tech->id }}">{{ $tech->name }}</option>
                                 @endforeach
                             </select>
@@ -685,84 +697,91 @@
 
                         <!-- Classroom-specific fields -->
                         <div x-show="selectedType === 'classroom_request'" class="space-y-4">
-                        <div>
-        <label for="classroom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Classroom</label>
-        <select id="classroom" wire:model="classroom_id"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-            <option value="">-- Select Classroom --</option>
-            @foreach ($classrooms as $classroom)
-                <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
-            @endforeach
-        </select>
-        @error('classroom_id')
-            <span class="text-red-500 text-xs">{{ $message }}</span>
-        @enderror
-    </div>
+                            <div>
+                                <label for="classroom"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select
+                                    Classroom</label>
+                                <select id="classroom" wire:model.live="classroom_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    <option value="">-- Select Classroom --</option>
+                                    @foreach ($classrooms as $classroom)
+                                        <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('classroom_id')
+                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                @enderror
+                            </div>
 
-    <div>
-        <label for="section" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Section</label>
-        <select id="section" wire:model="section_id"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-            <option value="">-- Select Section --</option>
-            @foreach ($sections as $section)
-                <option value="{{ $section->id }}">{{ $section->name }}</option>
-            @endforeach
-        </select>
-        @error('section_id')
-            <span class="text-red-500 text-xs">{{ $message }}</span>
-        @enderror
-    </div>
-    
-    <!-- Time selection fields -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label for="start_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-            <input type="datetime-local" 
-                   id="start_time" 
-                   wire:model.defer="start_time"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-            @error('start_time')
-                <span class="text-red-500 text-xs">{{ $message }}</span>
-            @enderror
-        </div>
-        
-        <div>
-            <label for="end_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
-            <input type="datetime-local" 
-                   id="end_time" 
-                   wire:model.defer="end_time"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
-            @error('end_time')
-                <span class="text-red-500 text-xs">{{ $message }}</span>
-            @enderror
-        </div>
-    </div>
-    
-    <!-- Time conflict warning -->
-    @if($timeConflictExists)
-    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                ❌
-            </div>
-            <div class="ml-3">
-                <p class="text-sm text-red-700 dark:text-red-200 font-medium">
-                    Time Conflict Detected!
-                </p>
-                <p class="text-sm text-red-700 dark:text-red-200 mt-1">
-                    The selected classroom is already booked during this time period:
-                </p>
-                @error('time_conflict')
-                    <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}</p>
-                @enderror
-                @error('time_conflict_details')
-                    <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-    </div>
-    @endif
-</div>
+                            <div>
+                                <label for="section"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select
+                                    Section</label>
+                                <select id="section" wire:model.live="section_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    <option value="">-- Select Section --</option>
+                                    @foreach ($sections as $section)
+                                        <option value="{{ $section->id }}">{{ $section->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('section_id')
+                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <!-- Time selection fields -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="start_time"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start
+                                        Time</label>
+                                    <input type="datetime-local" id="start_time" wire:model.defer="start_time"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    @error('start_time')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="end_time"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">End
+                                        Time</label>
+                                    <input type="datetime-local" id="end_time" wire:model.defer="end_time"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    @error('end_time')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Time conflict warning -->
+                            @if ($timeConflictExists)
+                                <div
+                                    class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            ❌
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-red-700 dark:text-red-200 font-medium">
+                                                Time Conflict Detected!
+                                            </p>
+                                            <p class="text-sm text-red-700 dark:text-red-200 mt-1">
+                                                The selected classroom is already booked during this time period:
+                                            </p>
+                                            @error('time_conflict')
+                                                <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}
+                                                </p>
+                                            @enderror
+                                            @error('time_conflict_details')
+                                                <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}
+                                                </p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
 
                         <!-- Internet-specific fields -->
                         <div x-show="selectedType === 'internet'" class="space-y-4">
@@ -771,7 +790,7 @@
                             <input type="hidden" wire:model.defer="selectedSubType" x-model="selectedSubType">
                             <input type="hidden" wire:model.defer="selectedTerminal" x-model="selectedTerminal">
                             <input type="hidden" wire:model.defer="classroom_id" x-model="selectedClassroom">
-                            
+
                             <!-- Display selected values for verification -->
                             <div class="text-sm text-gray-600 dark:text-gray-400">
                                 <p>Selected Classroom: <span x-text="selectedClassroom"></span></p>
@@ -782,11 +801,13 @@
 
                         <!-- Error messages -->
                         @if ($errors->any())
-                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
+                            <div
+                                class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
                                 <div class="flex">
                                     <div class="flex-shrink-0">⚠️</div>
                                     <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Please correct the following errors:</h3>
+                                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Please correct
+                                            the following errors:</h3>
                                         <ul class="mt-2 text-sm text-red-700 dark:text-red-300">
                                             @foreach ($errors->all() as $error)
                                                 <li>{{ $error }}</li>

@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\Indicator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Ticketing extends Component implements HasTable, HasForms
 {
@@ -122,7 +123,7 @@ class Ticketing extends Component implements HasTable, HasForms
                 function ($attribute, $value, $fail) {
                     $start = Carbon::parse($value);
                     $now = Carbon::now();
-                    
+
                     // Allow same day bookings but prevent past times
                     if ($start->format('Y-m-d') === $now->format('Y-m-d')) {
                         if ($start->format('H:i') < $now->format('H:i')) {
@@ -148,15 +149,15 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->end_time = $now->addHour()->format('Y-m-d\TH:i');
 
         $this->loadInitialData();
-        
-        // Add these debug lines
-        $user = auth()->user();
-        \Log::info('User role check:', [
-            'userId' => $user->id,
-            'name' => $user->name,
-            'hasTechnicianRole' => $user->hasRole('technician'),
-            'roles' => $user->roles->pluck('name')
-        ]);
+
+        // Log user info
+        $user = Auth::user();
+        if ($user) {
+            Log::info('User info:', [
+                'userId' => $user->id,
+                'name' => $user->name
+            ]);
+        }
     }
 
     protected function loadInitialData()
@@ -164,12 +165,34 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->loadAssets();
         $this->loadTechnicians();
         $this->loadClassroomsAndSections();
-        
+
         // Add debug logging
-        \Log::info('Initial data loaded:', [
-            'technicians' => $this->technicians->count(),
-            'classrooms' => $this->classrooms->count(),
-            'sections' => $this->sections->count()
+        $techCount = 0;
+        $classCount = 0;
+        $sectCount = 0;
+
+        if (is_object($this->technicians) && method_exists($this->technicians, 'count')) {
+            $techCount = $this->technicians->count();
+        } elseif (is_array($this->technicians)) {
+            $techCount = count($this->technicians);
+        }
+
+        if (is_object($this->classrooms) && method_exists($this->classrooms, 'count')) {
+            $classCount = $this->classrooms->count();
+        } elseif (is_array($this->classrooms)) {
+            $classCount = count($this->classrooms);
+        }
+
+        if (is_object($this->sections) && method_exists($this->sections, 'count')) {
+            $sectCount = $this->sections->count();
+        } elseif (is_array($this->sections)) {
+            $sectCount = count($this->sections);
+        }
+
+        Log::info('Initial data loaded:', [
+            'technicians' => $techCount,
+            'classrooms' => $classCount,
+            'sections' => $sectCount
         ]);
     }
 
@@ -180,45 +203,13 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function loadTechnicians()
     {
-        try {
-            if (!\Spatie\Permission\Models\Role::where('name', 'technician')->exists()) {
-                \Log::warning('Technician role does not exist');
-                $this->technicians = collect();
-                return;
-            }
-
-            $this->technicians = User::role('technician')
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get();
-        } catch (\Exception $e) {
-            $this->handleError(
-                $e,
-                'loadTechnicians',
-                'Error loading technicians. Please try again.'
-            );
-            $this->technicians = collect();
-        }
+        $this->technicians = User::where('id', '!=', Auth::id())->get();
     }
 
     protected function loadClassroomsAndSections()
     {
-        try {
-            // Load all classrooms
-            $this->classrooms = Classroom::select('id', 'name')
-                ->orderBy('name')
-                ->get();
-
-            // Load all sections
-            $this->sections = Section::select('id', 'name')
-                ->orderBy('name')
-                ->get();
-
-        } catch (\Exception $e) {
-            \Log::error('Error loading classrooms and sections: ' . $e->getMessage());
-            $this->classrooms = collect();
-            $this->sections = collect();
-        }
+        $this->classrooms = Classroom::select('id', 'name')->get();
+        $this->sections = Section::select('id', 'name')->get();
     }
 
     public function selectIssueType($type)
@@ -226,6 +217,7 @@ class Ticketing extends Component implements HasTable, HasForms
         $this->selectedType = $type;
         $this->selectedSubType = null;
         $this->showTicketForm = false;
+        $this->asset_id = null; // Reset asset_id when changing issue type
     }
 
     public function selectSubType($subType)
@@ -244,7 +236,7 @@ class Ticketing extends Component implements HasTable, HasForms
     public function selectTerminal($terminal)
     {
         try {
-            \Log::info('Selecting terminal:', ['terminal' => $terminal]);
+            Log::info('Selecting terminal:', ['terminal' => $terminal]);
             $this->selectedTerminal = "T-{$terminal}";
             $this->terminal = $this->selectedTerminal;
             $this->generateTicketContent();
@@ -256,12 +248,12 @@ class Ticketing extends Component implements HasTable, HasForms
     public function selectClassroom($classroom)
     {
         try {
-            \Log::info('Selecting classroom:', ['classroom' => $classroom]);
+            Log::info('Selecting classroom:', ['classroom' => $classroom]);
             $this->selectedClassroom = $classroom;
             $this->classroom_id = Classroom::where('name', $classroom)->value('id');
-            
+
             if (!$this->classroom_id) {
-                \Log::warning('Classroom not found:', ['classroom_name' => $classroom]);
+                Log::warning('Classroom not found:', ['classroom_name' => $classroom]);
                 throw new \Exception('Selected classroom not found');
             }
         } catch (\Exception $e) {
@@ -286,7 +278,7 @@ class Ticketing extends Component implements HasTable, HasForms
 
     public function updated($property)
     {
-        \Log::info('Property updated:', [
+        Log::info('Property updated:', [
             'property' => $property,
             'value' => $this->$property
         ]);
@@ -348,11 +340,11 @@ class Ticketing extends Component implements HasTable, HasForms
                         'section' => optional($booking->section)->name ?? 'Unknown Section'
                     ];
                 });
-                
+
                 $this->addError('time_conflict', 'Time slot conflicts with existing bookings:');
                 foreach ($conflictingTimes as $conflict) {
                     $this->addError(
-                        'time_conflict_details', 
+                        'time_conflict_details',
                         "{$conflict['section']}: {$conflict['start']} - {$conflict['end']}"
                     );
                 }
@@ -360,9 +352,8 @@ class Ticketing extends Component implements HasTable, HasForms
                 $this->timeConflictExists = false;
                 $this->resetErrorBag(['time_conflict', 'time_conflict_details']);
             }
-
         } catch (\Exception $e) {
-            \Log::error('Error checking time conflict: ' . $e->getMessage());
+            Log::error('Error checking time conflict: ' . $e->getMessage());
             $this->addError('time_conflict', 'Error checking availability. Please try again.');
         }
     }
@@ -491,42 +482,48 @@ class Ticketing extends Component implements HasTable, HasForms
 
     public function resetForm()
     {
-        $this->selectedType = null;
-        $this->selectedSubType = null;
-        $this->selectedTerminal = null;
-        $this->selectedClassroom = null;  // Add this
-        $this->terminal = null;  // Add this
-        $this->title = '';
-        $this->description = '';
-        $this->priority = 'medium';
-        $this->asset_id = null;
-        $this->assigned_to = null;
-        $this->classroom_id = null;
-        $this->section_id = null;
-        $this->start_time = null;
-        $this->end_time = null;
-        $this->timeConflictExists = false;
-        $this->showTicketForm = false;
+        $this->reset([
+            'selectedType',
+            'selectedSubType',
+            'selectedTerminal',
+            'selectedClassroom',
+            'terminal',
+            'title',
+            'description',
+            'priority',
+            'asset_id',
+            'assigned_to',
+            'classroom_id',
+            'section_id',
+            'start_time',
+            'end_time',
+            'timeConflictExists',
+            'showTicketForm'
+        ]);
+
         $this->resetErrorBag();
-        
-        // Reset the assets to show all assets
+
+        // Refresh local collections
         $this->loadAssets();
+        $this->loadClassroomsAndSections();
+
+        // Debug log for form reset
+        Log::info('Form reset, asset_id is now: ' . $this->asset_id);
     }
 
     // Add this method to handle manual assignment
     public function manualAssignTechnician($technicianId)
     {
         try {
-            $technician = User::role('technician')->findOrFail($technicianId);
-            
+            $technician = User::findOrFail($technicianId);
+
             $this->assigned_to = $technician->id;
             $this->assigned_technician = $technician->name;
-            
+
             $this->dispatch('notify', [
                 'message' => "Ticket manually assigned to {$technician->name}",
                 'type' => 'success'
             ]);
-
         } catch (\Exception $e) {
             $this->handleError(
                 $e,
@@ -542,8 +539,18 @@ class Ticketing extends Component implements HasTable, HasForms
         if (!$this->assigned_to) {
             return 'Unassigned';
         }
-        
-        return optional($this->technicians->firstWhere('id', $this->assigned_to))->name ?? 'Unassigned';
+
+        $technician = null;
+
+        // Find the technician in the list
+        foreach ($this->technicians as $tech) {
+            if ($tech['id'] == $this->assigned_to) {
+                $technician = $tech;
+                break;
+            }
+        }
+
+        return $technician ? $technician['name'] : 'Unassigned';
     }
 
     // Improve ticket submission validation
@@ -551,16 +558,20 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         try {
             $rules = $this->getRules();
+            Log::info('Validation rules:', $rules);
+
             $this->validate($rules);
 
             DB::beginTransaction();
 
-            \Log::info('Submitting ticket:', [
+            Log::info('Submitting ticket:', [
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
                 'classroom' => $this->selectedClassroom,
                 'terminal' => $this->selectedTerminal,
-                'classroom_id' => $this->classroom_id
+                'classroom_id' => $this->classroom_id,
+                'asset_id' => $this->asset_id,
+                'section_id' => $this->section_id
             ]);
 
             $ticket = new Ticket();
@@ -574,27 +585,55 @@ class Ticketing extends Component implements HasTable, HasForms
             $ticket->classroom_id = $this->classroom_id;
             $ticket->terminal = $this->selectedTerminal;
             $ticket->assigned_to = $this->assigned_to;
-            $ticket->created_by = auth()->id();
+            $ticket->created_by = Auth::id();
 
+            // Add asset_id to the ticket
+            if ($this->asset_id) {
+                $ticket->asset_id = $this->asset_id;
+                Log::info('Setting asset_id on ticket:', ['asset_id' => $this->asset_id]);
+            } else {
+                Log::warning('No asset_id provided for ticket of type: ' . $this->selectedType);
+            }
+
+            // Add section_id to the ticket 
+            if ($this->section_id) {
+                $ticket->section_id = $this->section_id;
+                Log::info('Setting section_id on ticket:', ['section_id' => $this->section_id]);
+            } else if ($this->selectedType === 'classroom_request') {
+                Log::warning('No section_id provided for classroom request');
+            }
+
+            // Validate specific request types
             if ($this->selectedType === 'classroom_request') {
                 $this->validateClassroomRequest($ticket);
+            } else if ($this->selectedType === 'asset_request') {
+                $this->validateAssetRequest($ticket);
             }
 
             $ticket->save();
+
+            // Log the final ticket data after save
+            Log::info('Ticket saved with data:', $ticket->toArray());
+
             DB::commit();
 
             $this->reset();
             $this->dispatch('close-ticket-modal');
-            
+
             Notification::make()
                 ->title('Success')
                 ->body('Ticket submitted successfully!')
                 ->success()
                 ->send();
-
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->handleError($e, 'submitTicket', 'Failed to submit ticket');
+            $this->handleError($e, 'submitTicket', 'Failed to submit ticket: ' . $e->getMessage());
+            // Add error notification
+            Notification::make()
+                ->title('Error')
+                ->body('Failed to submit ticket: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -603,10 +642,26 @@ class Ticketing extends Component implements HasTable, HasForms
         if ($this->timeConflictExists) {
             throw new \Exception('Time slot is already booked');
         }
-        
+
+        if (!$this->section_id) {
+            throw new \Exception('Section is required for classroom requests');
+        }
+
         $ticket->section_id = $this->section_id;
         $ticket->start_time = $this->start_time;
         $ticket->end_time = $this->end_time;
+
+        Log::info('Validated classroom request with section:', ['section_id' => $this->section_id]);
+    }
+
+    // Add a function to validate asset requests
+    protected function validateAssetRequest($ticket)
+    {
+        if (!$this->asset_id) {
+            throw new \Exception('Asset is required for asset requests');
+        }
+
+        Log::info('Validated asset request:', ['asset_id' => $this->asset_id]);
     }
 
     /**
@@ -649,18 +704,23 @@ class Ticketing extends Component implements HasTable, HasForms
             ->with(['assignedTo', 'creator', 'classroom', 'section'])
             ->latest();
 
-        // Filter tickets based on user role
-        if (auth()->user()->hasRole('professor')) {
-            // Professors can only see tickets they created
-            $baseQuery->where('created_by', auth()->id());
-        } elseif (auth()->user()->hasRole('technician')) {
-            // Technicians can see tickets assigned to them or unassigned tickets
-            $baseQuery->where(function ($query) {
-                $query->where('assigned_to', auth()->id())
-                    ->orWhereNull('assigned_to');
-            });
+        // Filter tickets based on user
+        $user = Auth::user();
+
+        // Set basic permissions (can be extended by checking user permissions in the database)
+        $userId = $user ? $user->id : null;
+        $isAdmin = false; // Determine if admin based on your own logic
+
+        if ($userId) {
+            // Limit normal users to see only their tickets
+            if (!$isAdmin) {
+                $baseQuery->where(function ($query) use ($userId) {
+                    $query->where('created_by', $userId)
+                        ->orWhere('assigned_to', $userId)
+                        ->orWhereNull('assigned_to');
+                });
+            }
         }
-        // Admins/supervisors can see all tickets (no additional filter needed)
 
         return $table
             ->query($baseQuery)
@@ -682,7 +742,7 @@ class Ticketing extends Component implements HasTable, HasForms
                 TextColumn::make('priority')
                     ->badge()
                     ->size('sm')
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'high' => 'danger',
                         'medium' => 'warning',
                         'low' => 'success',
@@ -693,7 +753,7 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->label('Status')
                     ->badge()
                     ->size('sm')
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'open' => 'info',
                         'in_progress' => 'warning',
                         'resolved' => 'success',
@@ -704,9 +764,11 @@ class Ticketing extends Component implements HasTable, HasForms
 
                 TextColumn::make('assignedTo.name')
                     ->label('Assigned To')
-                    ->formatStateUsing(fn ($record) => $record->assigned_to ? $record->assignedTo?->name : 'Unassigned')
+                    ->formatStateUsing(fn($record) => $record->assigned_to ? $record->assignedTo?->name : 'Unassigned')
                     ->searchable(query: function ($query, $search) {
-                        return $query->whereHas('assignedTo', fn ($q) =>
+                        return $query->whereHas(
+                            'assignedTo',
+                            fn($q) =>
                             $q->where('name', 'like', "%{$search}%")
                         );
                     })
@@ -717,8 +779,7 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->label('Created By')
                     ->searchable()
                     ->sortable()
-                    ->toggleable()
-                    ->visible(fn () => !auth()->user()->hasRole('professor')),
+                    ->toggleable(),
 
                 TextColumn::make('created_at')
                     ->label('Created')
@@ -763,11 +824,11 @@ class Ticketing extends Component implements HasTable, HasForms
                         return $query
                             ->when(
                                 $data['created_from'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
                             )
                             ->when(
                                 $data['created_until'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {
@@ -813,7 +874,7 @@ class Ticketing extends Component implements HasTable, HasForms
                     Action::make('view')
                         ->icon('heroicon-m-eye')
                         ->color('info')
-                        ->modalContent(fn (Ticket $record) => view(
+                        ->modalContent(fn(Ticket $record) => view(
                             'tickets.view',
                             [
                                 'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
@@ -823,7 +884,7 @@ class Ticketing extends Component implements HasTable, HasForms
                         ))
                         ->modalWidth('md')
                         ->modalSubmitAction(false)
-                        ->modalCancelAction(fn ($action) => $action->label('Close')),
+                        ->modalCancelAction(fn($action) => $action->label('Close')),
 
                     Action::make('edit')
                         ->icon('heroicon-m-pencil-square')
@@ -839,9 +900,9 @@ class Ticketing extends Component implements HasTable, HasForms
                                 ->rows(4),
                             Select::make('asset_id')
                                 ->label('Asset')
-                                ->options(fn () => Asset::pluck('name', 'id'))
+                                ->options(fn() => Asset::pluck('name', 'id'))
                                 ->nullable()
-                                ->visible(fn (Ticket $record) => $record->type === 'hardware')
+                                ->visible(fn(Ticket $record) => $record->type === 'hardware')
                                 ->default(null) // Add default value
                                 ->disabled(),
                             Select::make('priority')
@@ -863,37 +924,37 @@ class Ticketing extends Component implements HasTable, HasForms
                                 ->disabled(),
                             Select::make('assigned_to')
                                 ->label('Assigned To')
-                                ->options(fn () => User::role('technician')->pluck('name', 'id'))
+                                ->options(fn() => User::role('technician')->pluck('name', 'id'))
                                 ->nullable()
                                 ->placeholder('-- Unassigned --')
                                 ->disabled(),
                             Select::make('classroom_id')
                                 ->label('Classroom')
-                                ->options(fn () => Classroom::pluck('name', 'id'))
+                                ->options(fn() => Classroom::pluck('name', 'id'))
                                 ->nullable()
-                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
                                 ->default(null) // Add default value
                                 ->disabled(),
 
                             Select::make('section_id')
                                 ->label('Section')
-                                ->options(fn () => Section::pluck('name', 'id'))
+                                ->options(fn() => Section::pluck('name', 'id'))
                                 ->nullable()
-                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
                                 ->default(null) // Add default value
                                 ->disabled(),
 
                             DatePicker::make('start_time')
                                 ->label('Start Time')
                                 ->nullable()
-                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
                                 ->default(null) // Add default value
                                 ->disabled(),
 
                             DatePicker::make('end_time')
                                 ->label('End Time')
                                 ->nullable()
-                                ->visible(fn (Ticket $record) => $record->type === 'classroom_request')
+                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
                                 ->default(null) // Add default value
                                 ->disabled(),
                         ])
@@ -926,32 +987,72 @@ class Ticketing extends Component implements HasTable, HasForms
                                 ->send();
                         }),
 
+                    Action::make('delete')
+                        ->icon('heroicon-m-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Ticket')
+                        ->modalDescription('Are you sure you want to delete this ticket? This action cannot be undone.')
+                        ->modalSubmitActionLabel('Yes, delete it')
+                        ->visible(fn(Ticket $record) => $isAdmin) // Only show to admins
+                        ->action(function (Ticket $record): void {
+                            try {
+                                DB::beginTransaction();
+
+                                Log::info('Deleting ticket:', [
+                                    'ticket_id' => $record->id,
+                                    'ticket_number' => $record->ticket_number,
+                                    'user' => Auth::id()
+                                ]);
+
+                                // Actually delete the ticket
+                                $record->delete();
+
+                                DB::commit();
+
+                                // Show success notification
+                                Notification::make()
+                                    ->title('Ticket Deleted')
+                                    ->body('The ticket has been permanently deleted.')
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                DB::rollBack();
+                                $this->handleError($e, 'deleteTicket', 'Failed to delete ticket');
+
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('Failed to delete ticket: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+
                     Action::make('assign')
                         ->icon('heroicon-m-user-plus')
                         ->color('success')
                         ->modalWidth('md')
-                        ->label(fn (Ticket $record) =>
+                        ->label(
+                            fn(Ticket $record) =>
                             is_null($record->assigned_to) ? 'Assign' : 'Reassign'
                         )
-                        // Modify the visibility condition
-                        ->visible(function (Ticket $record) {
-                            $userIsTechnician = auth()->user()->hasRole('technician');
+                        // Visibility condition
+                        ->visible(function (Ticket $record) use ($userId) {
                             $ticketIsAssignable = !in_array($record->ticket_status, ['closed', 'archived']);
-                            $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === auth()->id();
-                            
+                            $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === $userId;
+
                             // Add debug logging
-                            \Log::info('Assign button visibility check:', [
-                                'userIsTechnician' => $userIsTechnician,
+                            Log::info('Assign button visibility check:', [
                                 'ticketIsAssignable' => $ticketIsAssignable,
                                 'canAssignTicket' => $canAssignTicket,
                                 'ticketStatus' => $record->ticket_status,
                                 'assignedTo' => $record->assigned_to,
-                                'authId' => auth()->id()
+                                'userId' => $userId
                             ]);
-                            
-                            return $userIsTechnician && $ticketIsAssignable && $canAssignTicket;
+
+                            return $ticketIsAssignable && $canAssignTicket;
                         })
-                        ->modalContent(fn (Ticket $record) => view(
+                        ->modalContent(fn(Ticket $record) => view(
                             'tickets.assign',
                             ['ticket' => $record]
                         ))
@@ -966,7 +1067,7 @@ class Ticketing extends Component implements HasTable, HasForms
                         ])
                         ->action(function (Ticket $record, array $data): void {
                             $record->update([
-                                'assigned_to' => auth()->id(),
+                                'assigned_to' => Auth::id(),
                                 'ticket_status' => 'in_progress'
                             ]);
 
@@ -1006,11 +1107,31 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->modalDescription('Are you sure you want to delete the selected tickets? This cannot be undone.')
                     ->modalSubmitActionLabel('Yes, delete them')
                     ->action(function (Collection $records) {
-                        $records->each->delete();
-                        Notification::make()
-                            ->title('Tickets Deleted Successfully')
-                            ->success()
-                            ->send();
+                        try {
+                            DB::beginTransaction();
+
+                            $count = $records->count();
+                            Log::info("Bulk deleting {$count} tickets");
+
+                            $records->each->delete();
+
+                            DB::commit();
+
+                            Notification::make()
+                                ->title('Tickets Deleted Successfully')
+                                ->body("{$count} tickets have been permanently deleted.")
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            $this->handleError($e, 'bulkDeleteTickets', 'Failed to delete tickets');
+
+                            Notification::make()
+                                ->title('Error')
+                                ->body('Failed to delete tickets: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
             ])
             ->defaultSort('created_at', 'desc');
@@ -1018,8 +1139,8 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function handleError(\Exception $e, string $context, string $userMessage = null)
     {
-        \Log::error("Error in {$context}: " . $e->getMessage());
-        
+        Log::error("Error in {$context}: " . $e->getMessage());
+
         if ($userMessage) {
             $this->dispatch('notify', [
                 'message' => $userMessage,

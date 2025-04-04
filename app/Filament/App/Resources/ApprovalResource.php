@@ -44,7 +44,7 @@ class ApprovalResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = Approval::class;
 
-    protected static ?string $navigationGroup = 'Tickets';
+    protected static ?string $navigationGroup = 'Ticketss';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 

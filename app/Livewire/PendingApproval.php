@@ -25,7 +25,7 @@ class PendingApproval extends BaseWidget implements HasForms, HasTable
                 \Filament\Tables\Columns\TextColumn::make('ticket_number'),
                 \Filament\Tables\Columns\TextColumn::make('title')->label('Title'),
                 \Filament\Tables\Columns\TextColumn::make('type')->label('Type'),
-                \Filament\Tables\Columns\TextColumn::make('status')->badge()->extraAttributes(['class' => 'capitalize']),
+                \Filament\Tables\Columns\TextColumn::make('ticket_status')->badge()->extraAttributes(['class' => 'capitalize']),
             ])
             ->emptyStateHeading('No Tickets yet')
             ->defaultPaginationPageOption(5)

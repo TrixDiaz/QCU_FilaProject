@@ -628,4 +628,46 @@ class Inventory extends Component
                 $this->addError('bulkAction', 'Please select a valid action');
         }
     }
+
+    public function pullOutAsset($assetId)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Find the asset
+            $asset = Asset::findOrFail($assetId);
+
+            // Delete all AssetGroup records for this asset
+            AssetGroup::where('asset_id', $assetId)->delete();
+
+            // Update asset status to available
+            $asset->status = 'pull out';
+            $asset->save();
+
+            DB::commit();
+
+            $this->dispatch('notify', ['message' => 'Asset pulled out successfully', 'type' => 'success']);
+
+            // Get all users for notification
+            $users = \App\Models\User::all();
+
+            // Notify all users
+            foreach ($users as $user) {
+                $user->notify(
+                    \Filament\Notifications\Notification::make()
+                        ->title('Asset Pulled Out')
+                        ->body('An asset has been pulled out and is now available.')
+                        ->success()
+                        ->icon('heroicon-m-computer-desktop')
+                        ->toDatabase()
+                );
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('notify', ['message' => 'Error pulling out asset: ' . $e->getMessage(), 'type' => 'error']);
+            return false;
+        }
+    }
 }

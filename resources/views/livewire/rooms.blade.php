@@ -313,7 +313,7 @@
                                             </thead>
                                             <tbody
                                                 class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                                                @foreach ($classroomAssets as $assetGroup)
+                                                @foreach ($currentClassroom->assetGroups as $assetGroup)
                                                     <tr>
                                                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                                                             {{ $assetGroup->name }}
@@ -341,11 +341,6 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
-                                    </div>
-
-                                    <!-- Pagination Controls -->
-                                    <div class="mt-4">
-                                        {{ $classroomAssets->links() }}
                                     </div>
                                 @endif
                             </div>

@@ -12,7 +12,6 @@ use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use League\Csv\Writer;
 use SplTempFileObject;
-use Illuminate\Support\Facades\DB;
 
 
 class Rooms extends Component
@@ -63,13 +62,7 @@ class Rooms extends Component
         'selectedSemester' => ['except' => ''],
     ];
 
-    // Add validation rules
-    protected $rules = [
-        'assetId' => 'required|exists:assets,id',
-        'groupName' => 'required|string|max:255',
-        'groupCode' => 'required|string|max:255|unique:assets_group,code',
-        'status' => 'required|in:active,maintenance,inactive,broken',
-    ];
+
 
     public function mount()
     {
@@ -272,8 +265,7 @@ class Rooms extends Component
             });
         }
 
-        // Paginate the results to show only 10 assets per page
-        $this->classroomAssets = $query->paginate(10);
+        $this->classroomAssets = $query->get();
     }
 
     // Added missing method for updating asset search
@@ -512,16 +504,11 @@ class Rooms extends Component
                 'type' => 'success'
             ]);
 
-            // Return a StreamedResponse
-            return new StreamedResponse(
+            return response()->streamDownload(
                 function () use ($csv) {
                     echo $csv->getContent();
                 },
-                200,
-                [
-                    'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                ]
+                $filename
             );
         } catch (\Exception $e) {
             // Dispatch error notification
@@ -530,8 +517,8 @@ class Rooms extends Component
                 'type' => 'error'
             ]);
 
-            // Return an empty StreamedResponse for error case
-            return new StreamedResponse(function () {}, 500, ['Content-Type' => 'text/plain']);
+            // Return empty response or redirect back
+            return response()->noContent(500);
         }
     }
 }

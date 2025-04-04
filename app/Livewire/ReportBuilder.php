@@ -452,60 +452,88 @@ class ReportBuilder extends Component implements HasForms
     }
 
     private function queryClassroomSchedule()
-    {
-        $query = Subject::query()
-            ->with(['professor', 'classroom']); // Make sure we load classroom relationship
-        
-        // Filter by school year if specified
-        if (!empty($this->filters['school_years'])) {
-            $query->whereIn('school_year', $this->filters['school_years']);
-        }
-        
-        // Filter by semester if specified
-        if (!empty($this->filters['semesters'])) {
-            $query->whereIn('semester', $this->filters['semesters']);
-        }
-        
-        // Filter by classroom if specified
-        if (!empty($this->filters['classrooms'])) {
+{
+    $query = Subject::query()
+        ->with(['professor', 'classroom']); // Loading classroom relationship
+    
+    // Filter by school year if specified
+    if (!empty($this->filters['school_years'])) {
+        $query->whereIn('school_year', $this->filters['school_years']);
+    }
+    
+    // Filter by semester if specified
+    if (!empty($this->filters['semesters'])) {
+        $query->whereIn('semester', $this->filters['semesters']);
+    }
+    
+    // Filter by classroom if specified - THIS IS THE PROBLEMATIC PART
+    if (!empty($this->filters['classrooms'])) {
+        // Check if the column exists in the subjects table
+        if (Schema::hasColumn('subjects', 'classroom_id')) {
             $query->whereIn('classroom_id', $this->filters['classrooms']);
+        } else {
+            // Use a different approach if the column doesn't exist
+            // For example, we might need to join with another table
+            // or filter after retrieving the results
+            
+            // Since we don't know the exact structure, let's capture all and filter later
+            logger('classroom_id column not found in subjects table. Will filter post-query.');
+        }
+    }
+    
+    // Date filtering
+    if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
+        try {
+            $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
+            $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } catch (\Exception $e) {
+            Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
+        }
+    }
+    
+    return new class($query, $this->filters['classrooms'] ?? []) {
+        protected $query;
+        protected $classroomFilters;
+        
+        public function __construct($query, $classroomFilters) {
+            $this->query = $query;
+            $this->classroomFilters = $classroomFilters;
         }
         
-        // Date filtering
-        if (!empty($this->filters['date_from']) && !empty($this->filters['date_to'])) {
-            try {
-                $startDate = \Carbon\Carbon::parse($this->filters['date_from'])->startOfDay();
-                $endDate = \Carbon\Carbon::parse($this->filters['date_to'])->endOfDay();
-                $query->whereBetween('created_at', [$startDate, $endDate]);
-            } catch (\Exception $e) {
-                Notification::make()->title('Date Error')->body('Invalid date format. Using default date range.')->warning()->send();
-            }
-        }
-        
-        return new class($query) {
-            protected $query;
+        public function get() {
+            $results = $this->query->get();
             
-            public function __construct($query) {
-                $this->query = $query;
-            }
-            
-            public function get() {
-                return $this->query->get()->map(function ($subject) {
-                    return (object) [
-                        'classroom_id' => optional($subject->classroom)->name ?? 'Unassigned',
-                        'subject_name' => $subject->name,
-                        'subject_code' => $subject->subject_code,
-                        'professor' => optional($subject->professor)->name ?? 'Unassigned',
-                        'day' => $subject->day,
-                        'start_time' => optional($subject->lab_time_starts_at)->format('H:i:s'),
-                        'end_time' => optional($subject->lab_time_ends_at)->format('H:i:s'),
-                        'school_year' => $subject->school_year,
-                        'semester' => $subject->semester
-                    ];
+            // If we have classroom filters but couldn't apply them in the query,
+            // filter the results here
+            if (!empty($this->classroomFilters)) {
+                $results = $results->filter(function($subject) {
+                    // Try to get the classroom ID from the relationship
+                    $classroomId = $subject->classroom_id ?? 
+                                  (isset($subject->classroom) ? $subject->classroom->id : null);
+                    
+                    // Keep this record if no classroom ID (show as unassigned)
+                    // or if the ID is in our filter list
+                    return !$classroomId || in_array($classroomId, $this->classroomFilters);
                 });
             }
-        };
-    }
+            
+            return $results->map(function ($subject) {
+                return (object) [
+                    'classroom_id' => optional($subject->classroom)->name ?? 'Unassigned',
+                    'subject_name' => $subject->name,
+                    'subject_code' => $subject->subject_code,
+                    'professor' => optional($subject->professor)->name ?? 'Unassigned',
+                    'day' => $subject->day,
+                    'start_time' => optional($subject->lab_time_starts_at)->format('H:i:s'),
+                    'end_time' => optional($subject->lab_time_ends_at)->format('H:i:s'),
+                    'school_year' => $subject->school_year,
+                    'semester' => $subject->semester
+                ];
+            });
+        }
+    };
+}
 
     private function queryAttendance()
     {

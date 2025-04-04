@@ -38,6 +38,32 @@
             max-height: 400px;
             overflow-y: auto;
         }
+
+        /* New CSS styles to replace Tailwind */
+        .scrollable-div {
+            overflow-y: auto;
+            max-height: 400px;
+            border-radius: 0.375rem;
+            border: 1px solid;
+            border-color: rgba(229, 231, 235, 1);
+            width: 100%;
+        }
+
+        .dark .scrollable-div {
+            border-color: rgba(75, 85, 99, 1);
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .scrollable-modal-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
     </style>
     {{-- Create New Schedule --}}
     <div class="flex justify-end items-center gap-2 my-4">
@@ -280,10 +306,9 @@
                                     <p class="text-gray-500 dark:text-gray-400 italic">No assets found for this
                                         classroom.</p>
                                 @else
-                                    <div
-                                        class="overflow-y-auto h-[400px] rounded-md border border-gray-200 dark:border-gray-600 w-full">
+                                    <div class="scrollable-div">
                                         <table class="w-full divide-y divide-gray-200 dark:divide-gray-600">
-                                            <thead class="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+                                            <thead class="bg-gray-50 dark:bg-gray-800 sticky-header">
                                                 <tr>
                                                     <th scope="col"
                                                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -404,7 +429,7 @@
                     </div> --}}
 
                     <!-- Main Content - Scrollable -->
-                    <div class="flex-1 overflow-y-auto relative">
+                    <div class="scrollable-modal-content">
                         <div class="px-4 py-4 sm:px-6 dark:bg-gray-800">
                             <!-- Classroom Info Card -->
                             <div x-show="show" x-transition:enter="transition ease-out delay-150 duration-300"
@@ -529,13 +554,12 @@
                                                         x-transition:leave-start="opacity-100 transform translate-y-0"
                                                         x-transition:leave-end="opacity-0 transform -translate-y-2"
                                                         class="relative mt-2">
-                                                        <div
-                                                            class="rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
+                                                        <div class="scrollable-div">
                                                             <!-- Fixed width table structure for consistent layout -->
                                                             <div class="w-full">
                                                                 <!-- Header with full width -->
                                                                 <div
-                                                                    class="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10 w-full">
+                                                                    class="bg-gray-100 dark:bg-gray-800 sticky-header w-full">
                                                                     <table
                                                                         class="w-full divide-y divide-gray-200 dark:divide-gray-600">
                                                                         <thead>
@@ -663,7 +687,7 @@
                     </div>
 
                     <!-- Main Content - Scrollable -->
-                    <div class="flex-1 overflow-y-auto relative p-4">
+                    <div class="scrollable-modal-content p-4">
                         <form wire:submit="deployComputerSet">
                             <!-- Classroom Field (Disabled/Read-only) -->
                             <div class="mb-4">

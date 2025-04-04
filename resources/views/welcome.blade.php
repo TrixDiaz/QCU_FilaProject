@@ -108,7 +108,7 @@
                     <a href="{{ route('filament.app.auth.login') }}">
                         <button type='button'
                             class="px-6 py-3.5 rounded-md text-gray-100 bg-blue-700 hover:bg-blue-800 transition-all">
-                            Get Started
+                            Login
                         </button>
                     </a>
                     <a href="{{ route('filament.app.auth.register') }}">

@@ -593,7 +593,7 @@
                             <div class="flex bg-gray-50 dark:bg-gray-800 p-3 rounded-lg gap-2">
                                 <p class="text-sm font-medium capitalize">{{ $category->name }}</p>
                                 <p class="text-sm font-semibold">
-                                    {{ $assets->where('status', 'available')->where('category_id', $category->id)->count() }}
+                                    {{ $categoryAvailableCounts[$category->id] ?? 0 }}
                                 </p>
                             </div>
                         @endforeach
@@ -609,7 +609,7 @@
                         </div>
                         <div class="bg-success-100 dark:bg-success-800 rounded-full px-4 py-2">
                             <span class="text-2xl font-bold text-success-700 dark:text-success-300">
-                                {{ $assetsGroups }}
+                                {{ $deployedCount }}
                             </span>
                         </div>
                     </div>

@@ -56,7 +56,7 @@ class Ticketing extends Component implements HasTable, HasForms
     public $end_time;
     public $timeConflictExists = false;
     public $assigned_technician = null;
-    public $terminal = null;
+    public $terminal_number = null;
 
     // Data Collections
     public $classrooms = [];
@@ -78,7 +78,7 @@ class Ticketing extends Component implements HasTable, HasForms
         'selectedSubType' => 'required_unless:selectedType,asset_request,classroom_request,general_inquiry',
         'selectedTerminal' => 'nullable|string',
         'selectedClassroom' => 'required_with:selectedTerminal',
-        'terminal' => 'required_if:selectedType,internet',
+        'terminal_number' => 'required_if:selectedType,internet',
         'classroom_id' => 'required_if:selectedType,internet'
     ];
 
@@ -89,7 +89,7 @@ class Ticketing extends Component implements HasTable, HasForms
         if (in_array($this->selectedType, ['hardware', 'internet'])) {
             $rules['classroom_id'] = 'required|exists:classrooms,id';
             $rules['selectedTerminal'] = 'required|string';
-            $rules['terminal'] = 'required|string';  // Add this
+            $rules['terminal_number'] = 'required|string';  // Changed from terminal
         }
 
         // Add conditional validation for asset requests
@@ -238,7 +238,7 @@ class Ticketing extends Component implements HasTable, HasForms
         try {
             Log::info('Selecting terminal:', ['terminal' => $terminal]);
             $this->selectedTerminal = "T-{$terminal}";
-            $this->terminal = $this->selectedTerminal;
+            $this->terminal_number = $this->selectedTerminal;  // Changed from terminal
             $this->generateTicketContent();
         } catch (\Exception $e) {
             $this->handleError($e, 'selectTerminal', 'Error selecting terminal');
@@ -487,7 +487,7 @@ class Ticketing extends Component implements HasTable, HasForms
             'selectedSubType',
             'selectedTerminal',
             'selectedClassroom',
-            'terminal',
+            'terminal_number',  // Changed from terminal
             'title',
             'description',
             'priority',
@@ -568,7 +568,7 @@ class Ticketing extends Component implements HasTable, HasForms
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
                 'classroom' => $this->selectedClassroom,
-                'terminal' => $this->selectedTerminal,
+                'terminal_number' => $this->selectedTerminal,  // Updated logging
                 'classroom_id' => $this->classroom_id,
                 'asset_id' => $this->asset_id,
                 'section_id' => $this->section_id
@@ -583,7 +583,7 @@ class Ticketing extends Component implements HasTable, HasForms
             $ticket->type = $this->selectedType;
             $ticket->subtype = $this->selectedSubType;
             $ticket->classroom_id = $this->classroom_id;
-            $ticket->terminal = $this->selectedTerminal;
+            $ticket->terminal_number = $this->selectedTerminal;  // Changed from terminal
             $ticket->assigned_to = $this->assigned_to;
             $ticket->created_by = Auth::id();
 

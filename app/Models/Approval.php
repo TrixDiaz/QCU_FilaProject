@@ -10,6 +10,7 @@ class Approval extends Model
 {
     protected $fillable = [
         'ticket_id',
+        'ticket_number',
         'asset_id',
         'professor_id',
         'section_id',

@@ -6,6 +6,7 @@ use App\Filament\App\Resources\SubjectResource\Pages;
 use App\Filament\App\Resources\SubjectResource\RelationManagers;
 use App\Models\Subject;
 use App\Models\Section;
+use App\Models\Classroom;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -103,6 +104,7 @@ class SubjectResource extends Resource implements HasShieldPermissions
                             ->live()
                             ->afterStateUpdated(fn(Get $get, Set $set) => self::checkForTimeConflicts($get, $set)),
 
+
                         Forms\Components\TimePicker::make('lab_time_starts_at')
                             ->required()
                             ->seconds(false)
@@ -148,6 +150,15 @@ class SubjectResource extends Resource implements HasShieldPermissions
                                     self::checkForTimeConflicts($get, $set);
                                 }
                             }),
+
+                            Forms\Components\Select::make('classroom_id')
+                            ->relationship('classroom', 'name')
+                            ->label('Classroom')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(fn(Get $get, Set $set) => self::checkForTimeConflicts($get, $set)),
 
                         Forms\Components\Hidden::make('lab_confirm_conflict')
                             ->default(false)
@@ -281,9 +292,10 @@ class SubjectResource extends Resource implements HasShieldPermissions
         $section_id = $get('section_id');
         $schoolYear = $get('school_year');
         $semester = $get('semester');
+        $classroom_id = $get('classroom_id');
 
         // Skip check if any required fields are missing
-        if (!$startsAt || !$endsAt || !$day || !$section_id || !$schoolYear || !$semester) {
+        if (!$startsAt || !$endsAt || !$day || !$section_id || !$schoolYear || !$semester || !$classroom_id) {
             return;
         }
 
@@ -305,7 +317,7 @@ class SubjectResource extends Resource implements HasShieldPermissions
         $currentId = request()->route('record');
 
         // Build query to check for conflicts
-        $query = Subject::query()
+        $sectionQuery = Subject::query()
             ->where('day', $day)
             ->where('section_id', $section_id)
             ->where('school_year', $schoolYear)
@@ -313,11 +325,11 @@ class SubjectResource extends Resource implements HasShieldPermissions
 
         // Exclude the current record if we're editing
         if ($currentId) {
-            $query->where('id', '!=', $currentId);
+            $sectionQuery->where('id', '!=', $currentId);
         }
 
         // Check for time conflicts with raw SQL for accurate time comparison
-        $conflicts = $query->where(function ($q) use ($startTime, $endTime) {
+        $sectionConflicts = $sectionQuery->where(function ($q) use ($startTime, $endTime) {
             // New time starts during existing slot
             $q->orWhereRaw('TIME(?) >= TIME(lab_time_starts_at) AND TIME(?) < TIME(lab_time_ends_at)', [$startTime, $startTime]);
 
@@ -331,12 +343,62 @@ class SubjectResource extends Resource implements HasShieldPermissions
             $q->orWhereRaw('TIME(lab_time_starts_at) <= TIME(?) AND TIME(lab_time_ends_at) >= TIME(?)', [$startTime, $endTime]);
         })->get();
 
+        // 2. Check for classroom time conflicts
+        // First verify if classroom_id is a valid column in the subjects table
+        try {
+            // Get the actual column name from the database schema
+            $classroomColumnName = 'classroom_id'; // Default name
+            
+            // Use database schema to get column info
+            $subject = new Subject();
+            $table = $subject->getTable();
+            $connection = $subject->getConnection();
+            
+            // Only proceed with classroom conflict check if column exists
+            $classroomConflicts = collect([]);
+            
+            $classroomQuery = Subject::query()
+                ->where('day', $day)
+                ->where($classroomColumnName, $classroom_id)
+                ->where('school_year', $schoolYear)
+                ->where('semester', $semester);
+
+            // Exclude the current record if we're editing
+            if ($currentId) {
+                $classroomQuery->where('id', '!=', $currentId);
+            }
+
+            // Check for time conflicts with raw SQL for accurate time comparison
+            $classroomConflicts = $classroomQuery->where(function ($q) use ($startTime, $endTime) {
+                // New time starts during existing slot
+                $q->orWhereRaw('TIME(?) >= TIME(lab_time_starts_at) AND TIME(?) < TIME(lab_time_ends_at)', [$startTime, $startTime]);
+
+                // New time ends during existing slot
+                $q->orWhereRaw('TIME(?) > TIME(lab_time_starts_at) AND TIME(?) <= TIME(lab_time_ends_at)', [$endTime, $endTime]);
+
+                // New time contains existing slot
+                $q->orWhereRaw('TIME(?) <= TIME(lab_time_starts_at) AND TIME(?) >= TIME(lab_time_ends_at)', [$startTime, $endTime]);
+
+                // Existing slot contains new time
+                $q->orWhereRaw('TIME(lab_time_starts_at) <= TIME(?) AND TIME(lab_time_ends_at) >= TIME(?)', [$startTime, $endTime]);
+            })->get();
+        } catch (\Exception $e) {
+            // Log error if classroom column doesn't exist
+            Log::error('Classroom column error', [
+                'error' => $e->getMessage()
+            ]);
+            $classroomConflicts = collect([]);
+        }
+
+        // Combine conflict results
+        $conflicts = $sectionConflicts->merge($classroomConflicts)->unique('id');
         $hasConflict = $conflicts->isNotEmpty();
 
         // Log for debugging
         Log::info('Time conflict check', [
             'day' => $day,
             'section_id' => $section_id,
+            'classroom_id' => $classroom_id,
             'school_year' => $schoolYear,
             'semester' => $semester,
             'starts_at' => $startTime,
@@ -344,7 +406,8 @@ class SubjectResource extends Resource implements HasShieldPermissions
             'has_conflict' => $hasConflict,
             'current_id' => $currentId,
             'conflict_count' => $conflicts->count(),
-            'conflicts' => $conflicts->pluck('name', 'id')->toArray()
+            'section_conflicts' => $sectionConflicts->pluck('name', 'id')->toArray(),
+            'classroom_conflicts' => isset($classroomConflicts) ? $classroomConflicts->pluck('name', 'id')->toArray() : []
         ]);
 
         // Update form state
@@ -371,6 +434,9 @@ class SubjectResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('section.name')
                     ->label('section')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('classroom.name')
+                    ->label('Classroom')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('lab_time_starts_at')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('lab_time_ends_at')
@@ -389,8 +455,13 @@ class SubjectResource extends Resource implements HasShieldPermissions
             ->filters([
                 Tables\Filters\TrashedFilter::make()
                     ->native(false),
+                Tables\Filters\SelectFilter::make('classroom_id')
+                    ->relationship('classroom', 'name')
+                    ->label('Classroom')
+                    ->searchable()
+                    ->preload()
+                    ->native(false),
                 Tables\Filters\SelectFilter::make('is_active')
-                    ->label('Status')
                     ->label('Status')
                     ->options([
                         true => 'Active',

@@ -322,11 +322,31 @@ class Inventory extends Component
     }
 
     public function updatedSelectAll($value)
-    {
-        if (!$value) {
-            $this->selected = [];
+{
+    if ($value) {
+        // Get IDs for the current filtered query
+        $query = Asset::query();
+        
+        // Apply current search/filters
+        if ($this->search) {
+            $searchTerm = '%' . $this->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                  ->orWhere('asset_code', 'like', $searchTerm)
+                  ->orWhere('serial_number', 'like', $searchTerm);
+            });
         }
+        
+        if ($this->statusFilter) {
+            $query->where('status', $this->statusFilter);
+        }
+        
+        // Get all currently filtered asset IDs
+        $this->selected = $query->pluck('id')->toArray();
+    } else {
+        $this->selected = [];
     }
+}
 
     // Reset pagination when search changes
     public function updatedSearch()

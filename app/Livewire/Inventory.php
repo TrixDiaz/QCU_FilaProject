@@ -667,6 +667,73 @@ class Inventory extends Component
         }
     }
 
+    public function exportAssets()
+{
+    if (empty($this->selected)) {
+        $this->addError('bulkAction', 'Please select at least one asset to export');
+        return;
+    }
+
+    try {
+        // Create a temporary file
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        
+        // Add the header row
+        $csv->insertOne([
+            'ID', 'Name', 'Serial Number', 'Asset Code', 'Status', 
+            'Brand', 'Category', 'Expiry Date', 'Created At'
+        ]);
+        
+        $assets = Asset::with(['brand', 'category', 'assetTags'])
+            ->whereIn('id', $this->selected)
+            ->get();
+        
+        foreach ($assets as $asset) {
+            // Format dates properly, checking if they're objects first
+            $expiryDate = $asset->expiry_date instanceof \DateTime || $asset->expiry_date instanceof Carbon 
+                ? $asset->expiry_date->format('Y-m-d') 
+                : ($asset->expiry_date ?? '');
+                
+            $createdAt = $asset->created_at instanceof \DateTime || $asset->created_at instanceof Carbon 
+                ? $asset->created_at->format('Y-m-d H:i:s') 
+                : ($asset->created_at ?? '');
+            
+            $csv->insertOne([
+                $asset->id,
+                $asset->name,
+                $asset->serial_number,
+                $asset->asset_code,
+                $asset->status,
+                $asset->brand ? $asset->brand->name : '',
+                $asset->category ? $asset->category->name : '',
+                $expiryDate,
+                $createdAt
+            ]);
+        }
+        
+        // Generate a filename based on current date/time
+        $filename = 'assets_export_' . now()->format('Y-m-d_His') . '.csv';
+        
+        // Set the appropriate headers for a CSV download
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ];
+        
+        $this->selected = [];
+        $this->selectAll = false;
+        
+        return response()->streamDownload(function () use ($csv) {
+            echo $csv->getContent();
+        }, $filename, $headers);
+    } catch (\Exception $e) {
+        $this->dispatch('notify', ['message' => 'Error exporting assets: ' . $e->getMessage(), 'type' => 'error']);
+    }
+}
+
     public function pullOutAsset($assetId)
     {
         try {

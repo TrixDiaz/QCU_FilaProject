@@ -5,12 +5,15 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\StudentReportResource\Pages;
 use App\Filament\App\Resources\StudentReportResource\RelationManagers;
 use App\Models\StudentReport;
+use App\Models\Subject; 
+use App\Models\Section;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -45,6 +48,21 @@ class StudentReportResource extends Resource implements HasShieldPermissions
     protected static ?string $model = StudentReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    // Add this method to filter records based on logged-in professor
+    public static function getEloquentQuery(): Builder 
+    {
+        $query = parent::getEloquentQuery();
+        
+        // Only filter if the user is a professor (not admin)
+        if (Auth::user()->hasRole('professor') && !Auth::user()->hasRole('super_admin')) {
+            return $query->whereHas('attendance.subject.professor', function (Builder $query) {
+                $query->where('id', Auth::id());
+            });
+        }
+        
+        return $query;
+    }
 
     public static function form(Form $form): Form
     {
@@ -83,8 +101,46 @@ class StudentReportResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
-            ])
+                                                // Modified: Use query approach instead of relationship
+                SelectFilter::make('subject')
+                ->label('Subject')
+                ->options(function () {
+                    // Get all subjects related to the current professor
+                    if (Auth::user()->hasRole('professor') && !Auth::user()->hasRole('super_admin')) {
+                        return Subject::whereHas('professor', function (Builder $query) {
+                            $query->where('id', Auth::id());
+                        })->pluck('name', 'id');
+                    }
+                    return Subject::pluck('name', 'id');
+                })
+                ->query(function (Builder $query, array $data) {
+                    if (!$data['value']) {
+                        return $query;
+                    }
+                    
+                    return $query->whereHas('attendance', function (Builder $subQuery) use ($data) {
+                        $subQuery->where('subject_id', $data['value']);
+                    });
+                }),
+            
+            // Modified: Fix the section filter to use the correct column name
+            SelectFilter::make('section')
+    ->label('Section')
+    ->options(function () {
+        return Section::pluck('name', 'id');
+    })
+    ->query(function (Builder $query, array $data) {
+        if (!$data['value']) {
+            return $query;
+        }
+        
+        // Try to find the correct relationship between attendance and section
+        // Option 1: If section is related to subject
+        return $query->whereHas('attendance.subject', function (Builder $subQuery) use ($data) {
+            $subQuery->where('section_id', $data['value']);
+                    });
+                }),
+        ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('report')
@@ -106,7 +162,7 @@ class StudentReportResource extends Resource implements HasShieldPermissions
 
                         // Add formatted description with sender role
                         $userRole = auth()->user()->roles->first()->name ?? 'User';
-                        $ticket->description = [
+                        $ticket->description = json_encode([
                             [
                                 "type" => "message",
                                 "data" => [
@@ -114,7 +170,7 @@ class StudentReportResource extends Resource implements HasShieldPermissions
                                     "sender_role" => $userRole
                                 ]
                             ]
-                        ];
+                        ]);
 
                         $ticket->ticket_type = 'incident';
                         $ticket->option = 'asset';
@@ -165,7 +221,7 @@ class StudentReportResource extends Resource implements HasShieldPermissions
 
                                 // Add formatted description with sender role
                                 $userRole = auth()->user()->roles->first()->name ?? 'User';
-                                $ticket->description = [
+                                $ticket->description = json_encode([
                                     [
                                         "type" => "message",
                                         "data" => [
@@ -173,7 +229,7 @@ class StudentReportResource extends Resource implements HasShieldPermissions
                                             "sender_role" => $userRole
                                         ]
                                     ]
-                                ];
+                                ]);
 
                                 $ticket->ticket_type = 'incident';
                                 $ticket->option = 'asset';

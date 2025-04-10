@@ -40,6 +40,11 @@ class Ticketing extends Component implements HasTable, HasForms
     use InteractsWithTable;
     use InteractsWithForms;
 
+    protected const WORKING_HOURS = [
+        'start' => '07:00',
+        'end' => '21:00'
+    ];
+
     // Form Fields
     public $selectedType;
     public $selectedSubType;
@@ -557,6 +562,11 @@ class Ticketing extends Component implements HasTable, HasForms
     public function submitTicket()
     {
         try {
+            // Check working hours for classroom and asset requests
+            if (in_array($this->selectedType, ['classroom_request', 'asset_request'])) {
+                $this->validateWorkingHours(now());
+            }
+
             // Validate input
             $this->validate($this->getRules());
             
@@ -582,18 +592,18 @@ class Ticketing extends Component implements HasTable, HasForms
                 'section_id' => $this->section_id,
             ]);
 
-            // Handle specific request types
+            // Handle specific request types with working hours validation
             if ($this->selectedType === 'classroom_request') {
                 $this->validateClassroomRequest($ticket);
             } else if ($this->selectedType === 'asset_request') {
-                $this->validateAssetRequest($ticket); 
+                $this->validateAssetRequest($ticket);
             }
 
             $ticket->save();
             
             DB::commit();
 
-            // Reset form
+            // Reset form and show success notification
             $this->reset();
             $this->dispatch('close-ticket-modal');
 
@@ -603,18 +613,26 @@ class Ticketing extends Component implements HasTable, HasForms
                 ->success()
                 ->send();
                 
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Ticket creation failed: ' . $e->getMessage());
             
             Notification::make()
                 ->title('Error')
-                ->body('Failed to create ticket. Please try again.')
+                ->body($e->message())
                 ->danger()
                 ->send();
+        }
+    }
+
+    protected function validateWorkingHours($currentTime)
+    {
+        $timeNow = Carbon::parse($currentTime->format('H:i'));
+        $workingStart = Carbon::parse(self::WORKING_HOURS['start']);
+        $workingEnd = Carbon::parse(self::WORKING_HOURS['end']);
+
+        if ($timeNow->lt($workingStart) || $timeNow->gt($workingEnd)) {
+            throw new \Exception('Requests can only be submitted between 7:00 AM and 9:00 PM');
         }
     }
 
@@ -629,6 +647,16 @@ class Ticketing extends Component implements HasTable, HasForms
         $start = Carbon::parse($this->start_time);
         $end = Carbon::parse($this->end_time);
         $now = Carbon::now();
+
+        // Validate working hours for booking time
+        $startTime = Carbon::parse($start->format('H:i'));
+        $endTime = Carbon::parse($end->format('H:i'));
+        $workingStart = Carbon::parse(self::WORKING_HOURS['start']);
+        $workingEnd = Carbon::parse(self::WORKING_HOURS['end']);
+
+        if ($startTime->lt($workingStart) || $endTime->gt($workingEnd)) {
+            throw new \Exception('Classroom bookings are only allowed between 7:00 AM and 9:00 PM');
+        }
 
         // Validate start time
         if ($start->lt($now)) {
@@ -658,36 +686,52 @@ class Ticketing extends Component implements HasTable, HasForms
             throw new \Exception('Asset is required for asset requests');
         }
 
+        // Validate working hours for asset request submission
+        $now = Carbon::now();
+        $currentTime = Carbon::parse($now->format('H:i'));
+        $workingStart = Carbon::parse(self::WORKING_HOURS['start']);
+        $workingEnd = Carbon::parse(self::WORKING_HOURS['end']);
+
+        if ($currentTime->lt($workingStart) || $currentTime->gt($workingEnd)) {
+            throw new \Exception('Asset requests can only be submitted between 7:00 AM and 9:00 PM');
+        }
+
         Log::info('Validated asset request:', ['asset_id' => $this->asset_id]);
     }
 
     /**
-     * Generate a unique ticket number in the format INC-XXXXXXXX or REQ-XXXXXXXX
+     * Generate a unique ticket number in the format PREFIX-SUBPREFIX-RANDOM
      */
     protected function generateTicketNumber()
     {
+        // Determine if it's a request type ticket
         $isRequest = in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']);
-        $basePrefix = $isRequest ? 'REQ-' : 'INC-';
+        
+        // Base prefix will be either INC (incident) or REQ (request)
+        $prefix = $isRequest ? 'REQ' : 'INC';
 
+        // Add specific sub-prefix based on ticket type
         $subPrefix = match ($this->selectedType) {
-            'classroom_request' => 'CLS-',
-            'asset_request' => 'AST-',
-            'general_inquiry' => 'INQ-',
-            'hardware' => 'HW-',
-            'internet' => 'NET-',
-            'application' => 'APP-',
+            'classroom_request' => 'CLS',
+            'asset_request' => 'AST',
+            'general_inquiry' => 'INQ',
+            'hardware' => 'HW',
+            'internet' => 'NET',
+            'application' => 'APP',
             default => ''
         };
 
+        // Generate random part
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $randomPart = '';
-
+        
         do {
             $randomPart = '';
             for ($i = 0; $i < 8; $i++) {
                 $randomPart .= $characters[random_int(0, strlen($characters) - 1)];
             }
-            $ticketNumber = $basePrefix . $subPrefix . $randomPart;
+            // Format: PREFIX-SUBPREFIX-RANDOM
+            // Example: REQ-CLS-12AB34CD or INC-HW-56EF78GH
+            $ticketNumber = "{$prefix}-{$subPrefix}-{$randomPart}";
         } while (Ticket::where('ticket_number', $ticketNumber)->exists());
 
         return $ticketNumber;
@@ -743,6 +787,31 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->size('sm')
                     ->color('primary'),
 
+                TextColumn::make('type')
+                    ->label('Type')
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'hardware' => 'Hardware',
+                        'internet' => 'Internet',
+                        'application' => 'Application',
+                        'asset_request' => 'Asset Request',
+                        'classroom_request' => 'Classroom Request', 
+                        'general_inquiry' => 'General Inquiry',
+                        default => ucfirst($state)
+                    })
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'hardware' => 'danger',
+                        'internet' => 'warning',
+                        'application' => 'info',
+                        'asset_request' => 'success',
+                        'classroom_request' => 'primary',
+                        'general_inquiry' => 'gray',
+                        default => 'secondary'
+                    })
+                    ->size('sm'),
+
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
@@ -769,7 +838,6 @@ class Ticketing extends Component implements HasTable, HasForms
                         'in_progress' => 'warning',
                         'resolved' => 'success',
                         'closed' => 'success',
-                        'archived' => 'gray',
                         default => 'info'
                     }),
 
@@ -789,14 +857,13 @@ class Ticketing extends Component implements HasTable, HasForms
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->searchable()
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M d, Y H:i')
                     ->sortable()
-                    ->size('sm')
+                    ->size('sm'),
             ])
             ->striped()
             ->defaultSort('created_at', 'desc')

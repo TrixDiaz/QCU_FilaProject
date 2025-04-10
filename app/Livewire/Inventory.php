@@ -135,7 +135,7 @@ class Inventory extends Component
             case 'tag':
                 if ($this->filterValue) {
                     $query->whereHas('assetTags', function ($q) {
-                        $q->where('tag_id', $this->filterValue);
+                        $q->where('asset_tag_id', $this->filterValue);  // Changed from tag_id to asset_tag_id
                     });
                 }
                 break;
@@ -155,7 +155,7 @@ class Inventory extends Component
                 }
                 if ($this->filterTag) {
                     $query->whereHas('assetTags', function ($q) {
-                        $q->where('tag_id', $this->filterTag);
+                        $q->where('asset_tag_id', $this->filterTag);  // Changed from tag_id to asset_tag_id
                     });
                 }
                 break;
@@ -169,7 +169,7 @@ class Inventory extends Component
                 }
                 if ($this->filterTag) {
                     $query->whereHas('assetTags', function ($q) {
-                        $q->where('tag_id', $this->filterTag);
+                        $q->where('asset_tag_id', $this->filterTag);  // Changed from tag_id to asset_tag_id
                     });
                 }
                 break;

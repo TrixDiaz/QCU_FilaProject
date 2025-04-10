@@ -6,8 +6,8 @@ use Livewire\Component;
 use App\Models\Asset;
 use App\Models\User;
 use App\Models\Classroom;
-use App\Models\Subject; // Using Subject instead of Schedule for classroom schedules
-use App\Models\AssetGroup; // Added for classroom assets
+use App\Models\Subject; 
+use App\Models\AssetGroup; 
 use Livewire\WithPagination;
 use App\Models\Category;
 use App\Models\Brand;
@@ -143,7 +143,7 @@ class ReportBuilder extends Component implements HasForms
                             CheckboxList::make('filters.ticket_statuses')
                     ->label('Ticket Statuses')
                     ->options(fn () => $this->selectedModule === 'tickets' ? 
-                        ['open' => 'Open', 'pending' => 'Pending', 'in progress' => 'In Progress', 'resolved' => 'Resolved', 'closed' => 'Closed'] : [])
+                        ['open' => 'Open', 'in progress' => 'In Progress', 'resolved' => 'Resolved', 'closed' => 'Closed'] : [])
                     ->columns(3)
                     ->visible(fn () => $this->selectedModule === 'tickets')
                     ->live(),
@@ -703,9 +703,9 @@ class ReportBuilder extends Component implements HasForms
 // Helper method to generate remarks based on count
 private function generateRemarks($count)
 {
-    if ($count <= 1) return 'Low inventory';
-    if ($count <= 5) return 'Moderate inventory';
-    if ($count <= 10) return 'Good stock';
+    if ($count <= 5) return 'Low inventory';
+    if ($count <= 10) return 'Moderate inventory';
+    if ($count <= 20) return 'Good stock';
     return 'Excess inventory';
 }
 

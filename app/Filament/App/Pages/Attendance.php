@@ -43,12 +43,11 @@ class Attendance extends Page implements HasForms, HasTable
         return $table
             ->query(
                 function (Builder $query) {
-                    // Show today's attendance by default
+                    // Show all attendance records for this professor's subjects
                     return \App\Models\Attendance::query()
-                        ->whereHas('subject', function (Builder $query) {
-                            $query->where('professor_id', auth()->id());
-                        })
-                        ->whereDate('created_at', today());
+                        ->whereHas('subject', function (Builder $subQuery) {
+                            $subQuery->where('professor_id', auth()->id());
+                        });
                 }
             )
             ->columns([

@@ -557,81 +557,62 @@ class Ticketing extends Component implements HasTable, HasForms
     public function submitTicket()
     {
         try {
-            $rules = $this->getRules();
-            Log::info('Validation rules:', $rules);
-
-            $this->validate($rules);
-
+            // Validate input
+            $this->validate($this->getRules());
+            
             DB::beginTransaction();
-
-            Log::info('Submitting ticket:', [
+            
+            // Generate ticket number
+            $ticketNumber = $this->generateTicketNumber();
+            
+            // Create ticket
+            $ticket = Ticket::create([
+                'ticket_number' => $ticketNumber,
+                'title' => $this->title,
+                'description' => $this->description,
+                'priority' => $this->priority,
+                'ticket_status' => 'open',
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
-                'classroom' => $this->selectedClassroom,
-                'terminal_number' => $this->selectedTerminal,  // Updated logging
                 'classroom_id' => $this->classroom_id,
+                'terminal_number' => $this->selectedTerminal,
+                'assigned_to' => $this->assigned_to,
+                'created_by' => Auth::id(),
                 'asset_id' => $this->asset_id,
-                'section_id' => $this->section_id
+                'section_id' => $this->section_id,
             ]);
 
-            $ticket = new Ticket();
-            $ticket->ticket_number = $this->generateTicketNumber();
-            $ticket->title = $this->title;
-            $ticket->description = $this->description;
-            $ticket->priority = $this->priority;
-            $ticket->ticket_status = 'open';
-            $ticket->type = $this->selectedType;
-            $ticket->subtype = $this->selectedSubType;
-            $ticket->classroom_id = $this->classroom_id;
-            $ticket->terminal_number = $this->selectedTerminal;  // Changed from terminal
-            $ticket->assigned_to = $this->assigned_to;
-            $ticket->created_by = Auth::id();
-
-            // Add asset_id to the ticket
-            if ($this->asset_id) {
-                $ticket->asset_id = $this->asset_id;
-                Log::info('Setting asset_id on ticket:', ['asset_id' => $this->asset_id]);
-            } else {
-                Log::warning('No asset_id provided for ticket of type: ' . $this->selectedType);
-            }
-
-            // Add section_id to the ticket 
-            if ($this->section_id) {
-                $ticket->section_id = $this->section_id;
-                Log::info('Setting section_id on ticket:', ['section_id' => $this->section_id]);
-            } else if ($this->selectedType === 'classroom_request') {
-                Log::warning('No section_id provided for classroom request');
-            }
-
-            // Validate specific request types
+            // Handle specific request types
             if ($this->selectedType === 'classroom_request') {
                 $this->validateClassroomRequest($ticket);
             } else if ($this->selectedType === 'asset_request') {
-                $this->validateAssetRequest($ticket);
+                $this->validateAssetRequest($ticket); 
             }
 
             $ticket->save();
-
-            // Log the final ticket data after save
-            Log::info('Ticket saved with data:', $ticket->toArray());
-
+            
             DB::commit();
 
+            // Reset form
             $this->reset();
             $this->dispatch('close-ticket-modal');
 
             Notification::make()
-                ->title('Success')
-                ->body('Ticket submitted successfully!')
+                ->title('Ticket Created')
+                ->body("Ticket #{$ticketNumber} has been created successfully")
                 ->success()
                 ->send();
+                
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->handleError($e, 'submitTicket', 'Failed to submit ticket: ' . $e->getMessage());
-            // Add error notification
+            Log::error('Ticket creation failed: ' . $e->getMessage());
+            
             Notification::make()
                 ->title('Error')
-                ->body('Failed to submit ticket: ' . $e->getMessage())
+                ->body('Failed to create ticket. Please try again.')
                 ->danger()
                 ->send();
         }
@@ -639,19 +620,35 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function validateClassroomRequest($ticket)
     {
+        // Validate time slot
         if ($this->timeConflictExists) {
             throw new \Exception('Time slot is already booked');
         }
 
-        if (!$this->section_id) {
-            throw new \Exception('Section is required for classroom requests');
+        // Parse times
+        $start = Carbon::parse($this->start_time);
+        $end = Carbon::parse($this->end_time);
+        $now = Carbon::now();
+
+        // Validate start time
+        if ($start->lt($now)) {
+            throw new \Exception('Start time cannot be in the past');
         }
 
-        $ticket->section_id = $this->section_id;
-        $ticket->start_time = $this->start_time;
-        $ticket->end_time = $this->end_time;
+        // Validate end time 
+        if ($end->lte($start)) {
+            throw new \Exception('End time must be after start time');
+        }
 
-        Log::info('Validated classroom request with section:', ['section_id' => $this->section_id]);
+        // Maximum booking duration (e.g. 8 hours)
+        $maxDuration = 8;
+        if ($start->diffInHours($end) > $maxDuration) {
+            throw new \Exception("Booking cannot exceed {$maxDuration} hours");
+        }
+
+        $ticket->start_time = $start;
+        $ticket->end_time = $end;
+        $ticket->section_id = $this->section_id;
     }
 
     // Add a function to validate asset requests
@@ -694,6 +691,20 @@ class Ticketing extends Component implements HasTable, HasForms
         } while (Ticket::where('ticket_number', $ticketNumber)->exists());
 
         return $ticketNumber;
+    }
+
+    protected function canManageTicket(Ticket $ticket): bool 
+    {
+        $user = Auth::user();
+        
+        // Admin can manage all tickets
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        
+        // Users can only manage their own tickets or tickets assigned to them
+        return $ticket->created_by === $user->id 
+            || $ticket->assigned_to === $user->id;
     }
 
     // Update the assign action in the table configuration
@@ -870,6 +881,46 @@ class Ticketing extends Component implements HasTable, HasForms
             ])
             ->filtersFormColumns(3)
             ->actions([
+                // Separate assign action
+                Action::make('assign')
+                    ->icon('heroicon-m-user-plus')
+                    ->color('success')
+                    ->modalWidth('md')
+                    ->label(
+                        fn(Ticket $record) =>
+                        is_null($record->assigned_to) ? 'Assign' : 'Reassign'
+                    )
+                    ->visible(function (Ticket $record) use ($userId) {
+                        $ticketIsAssignable = !in_array($record->ticket_status, ['closed', 'archived']);
+                        $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === $userId;
+                        return $ticketIsAssignable && $canAssignTicket;
+                    })
+                    ->modalContent(fn(Ticket $record) => view(
+                        'tickets.assign',
+                        ['ticket' => $record]
+                    ))
+                    ->form([
+                        Select::make('assign_type')
+                            ->label('Assignment Type')
+                            ->options([
+                                'self' => 'Assign to myself'
+                            ])
+                            ->default('self')
+                            ->required()
+                    ])
+                    ->action(function (Ticket $record, array $data): void {
+                        $record->update([
+                            'assigned_to' => Auth::id(),
+                            'ticket_status' => 'in_progress'
+                        ]);
+
+                        Notification::make()
+                            ->title('Ticket assigned successfully')
+                            ->success()
+                            ->send();
+                    }),
+
+                // Action group for other actions
                 ActionGroup::make([
                     Action::make('view')
                         ->icon('heroicon-m-eye')
@@ -985,154 +1036,44 @@ class Ticketing extends Component implements HasTable, HasForms
                                 ->title('Ticket Updated Successfully')
                                 ->success()
                                 ->send();
-                        }),
-
+                        })
+                        ->visible(fn (Ticket $record) => $this->canManageTicket($record)),
+                        
                     Action::make('delete')
                         ->icon('heroicon-m-trash')
                         ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('Delete Ticket')
-                        ->modalDescription('Are you sure you want to delete this ticket? This action cannot be undone.')
-                        ->modalSubmitActionLabel('Yes, delete it')
-                        ->visible(fn(Ticket $record) => $isAdmin) // Only show to admins
+                        ->modalDescription('Are you sure you want to delete this ticket? This cannot be undone.')
+                        ->modalSubmitActionLabel('Yes, delete')
                         ->action(function (Ticket $record): void {
                             try {
                                 DB::beginTransaction();
-
-                                Log::info('Deleting ticket:', [
-                                    'ticket_id' => $record->id,
-                                    'ticket_number' => $record->ticket_number,
-                                    'user' => Auth::id()
-                                ]);
-
-                                // Actually delete the ticket
+                                
                                 $record->delete();
-
+                                
                                 DB::commit();
-
-                                // Show success notification
+                                
                                 Notification::make()
                                     ->title('Ticket Deleted')
-                                    ->body('The ticket has been permanently deleted.')
                                     ->success()
                                     ->send();
+                                    
                             } catch (\Exception $e) {
                                 DB::rollBack();
-                                $this->handleError($e, 'deleteTicket', 'Failed to delete ticket');
-
+                                Log::error('Delete failed: ' . $e->getMessage());
+                                
                                 Notification::make()
-                                    ->title('Error')
-                                    ->body('Failed to delete ticket: ' . $e->getMessage())
+                                    ->title('Delete Failed')
+                                    ->body('Unable to delete the ticket. Please try again.')
                                     ->danger()
                                     ->send();
                             }
-                        }),
-
-                    Action::make('assign')
-                        ->icon('heroicon-m-user-plus')
-                        ->color('success')
-                        ->modalWidth('md')
-                        ->label(
-                            fn(Ticket $record) =>
-                            is_null($record->assigned_to) ? 'Assign' : 'Reassign'
-                        )
-                        // Visibility condition
-                        ->visible(function (Ticket $record) use ($userId) {
-                            $ticketIsAssignable = !in_array($record->ticket_status, ['closed', 'archived']);
-                            $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === $userId;
-
-                            // Add debug logging
-                            Log::info('Assign button visibility check:', [
-                                'ticketIsAssignable' => $ticketIsAssignable,
-                                'canAssignTicket' => $canAssignTicket,
-                                'ticketStatus' => $record->ticket_status,
-                                'assignedTo' => $record->assigned_to,
-                                'userId' => $userId
-                            ]);
-
-                            return $ticketIsAssignable && $canAssignTicket;
                         })
-                        ->modalContent(fn(Ticket $record) => view(
-                            'tickets.assign',
-                            ['ticket' => $record]
-                        ))
-                        ->form([
-                            Select::make('assign_type')
-                                ->label('Assignment Type')
-                                ->options([
-                                    'self' => 'Assign to myself'
-                                ])
-                                ->default('self')
-                                ->required()
-                        ])
-                        ->action(function (Ticket $record, array $data): void {
-                            $record->update([
-                                'assigned_to' => Auth::id(),
-                                'ticket_status' => 'in_progress'
-                            ]);
-
-                            Notification::make()
-                                ->title('Ticket assigned successfully')
-                                ->success()
-                                ->send();
-                        })
+                        ->visible(fn (Ticket $record) => $this->canManageTicket($record))
                 ])
                     ->tooltip('Actions')
                     ->icon('heroicon-m-ellipsis-vertical')
-            ])
-            ->bulkActions([
-                BulkAction::make('archive')
-                    ->label('Archive Selected')
-                    ->icon('heroicon-m-archive-box')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Archive Selected Tickets')
-                    ->modalDescription('Are you sure you want to archive the selected tickets? This action can be reversed.')
-                    ->modalSubmitActionLabel('Yes, archive them')
-                    ->action(function (Collection $records) {
-                        $records->each(function ($record) {
-                            $record->update(['ticket_status' => 'archived']);
-                        });
-                        Notification::make()
-                            ->title('Tickets Archived Successfully')
-                            ->success()
-                            ->send();
-                    }),
-                BulkAction::make('delete')
-                    ->label('Delete Selected')
-                    ->icon('heroicon-m-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Delete Selected Tickets')
-                    ->modalDescription('Are you sure you want to delete the selected tickets? This cannot be undone.')
-                    ->modalSubmitActionLabel('Yes, delete them')
-                    ->action(function (Collection $records) {
-                        try {
-                            DB::beginTransaction();
-
-                            $count = $records->count();
-                            Log::info("Bulk deleting {$count} tickets");
-
-                            $records->each->delete();
-
-                            DB::commit();
-
-                            Notification::make()
-                                ->title('Tickets Deleted Successfully')
-                                ->body("{$count} tickets have been permanently deleted.")
-                                ->success()
-                                ->send();
-                        } catch (\Exception $e) {
-                            DB::rollBack();
-                            $this->handleError($e, 'bulkDeleteTickets', 'Failed to delete tickets');
-
-                            Notification::make()
-                                ->title('Error')
-                                ->body('Failed to delete tickets: ' . $e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    }),
             ])
             ->defaultSort('created_at', 'desc');
     }

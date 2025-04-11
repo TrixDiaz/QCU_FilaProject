@@ -334,7 +334,8 @@
 
                                 <!-- Import Modal with Light/Dark Mode Support -->
                                 <div x-show="showImportModal"
-                                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 transition radius-5"
+                                class="fixed inset-0 z-100 flex items-center justify-center bg-black bg-opacity-20 p-4 transition-all duration-300 backdrop-blur-sm"
+
                                     style="display: none;">
                                     <div
                                         class="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md transition">
@@ -354,17 +355,20 @@
                                         <form wire:submit.prevent="importAssets" class="space-y-6">
                                             <!-- Download Link -->
                                             <div class="text-center mb-4">
-                                                <a href="/example-csv">Download Example CSV</a>
+                                                <x-filament::button tag="a" href="/example-csv" color="primary" size="lg" class="w-full justify-center">
+                                                    Download Example CSV
+                                                </x-filament::button>
                                             </div>
 
                                             <!-- File Input -->
                                             <div>
                                                 <label for="importFile"
-                                                    class="block text-sm font-medium text-gray-200 dark:text-gray-300 mb-2">Excel
+                                                    class="block text-sm font-medium text-gray-500 dark:text-gray-500 mb-2">Excel
                                                     File</label>
                                                 <input type="file" id="importFile" accept=".xlsx,.xls,.csv"
                                                     wire:model="importFile"
-                                                    class="w-full p-3 border rounded-lg bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                                    class="w-full p-3 border rounded-lg bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all duration-300 ease-in-out hover:bg-gray-200 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500">
+
                                             </div>
 
                                             <!-- Action Buttons -->

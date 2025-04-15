@@ -1056,7 +1056,8 @@ class Ticketing extends Component implements HasTable, HasForms
                                 ->readOnly(),
                             Textarea::make('description')
                                 ->required()
-                                ->rows(4),
+                                ->rows(4)
+                                ->readOnly(),
                             Select::make('asset_id')
                                 ->label('Asset')
                                 ->options(fn() => Asset::pluck('name', 'id'))

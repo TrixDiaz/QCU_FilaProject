@@ -48,8 +48,8 @@ class Ticketing extends Component implements HasTable, HasForms
     // Form Fields
     public $selectedType;
     public $selectedSubType;
-    public $selectedClassroom = null; // Updated
-    public $selectedTerminal = null; // Updated
+    public $selectedClassroom = null;
+    public $selectedTerminal = null;
     public $title;
     public $description;
     public $priority = 'low';
@@ -94,7 +94,7 @@ class Ticketing extends Component implements HasTable, HasForms
         if (in_array($this->selectedType, ['hardware', 'internet'])) {
             $rules['classroom_id'] = 'required|exists:classrooms,id';
             $rules['selectedTerminal'] = 'required|string';
-            $rules['terminal_number'] = 'required|string';  // Changed from terminal
+            $rules['terminal_number'] = 'required|string';
         }
 
         // Add conditional validation for asset requests
@@ -242,8 +242,14 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         try {
             Log::info('Selecting terminal:', ['terminal' => $terminal]);
+            
+            // Add validation to ensure terminal is in a valid format
+            if (!is_string($terminal) || trim($terminal) === '') {
+                throw new \Exception('Invalid terminal value');
+            }
+            
             $this->selectedTerminal = "T-{$terminal}";
-            $this->terminal_number = $this->selectedTerminal;  // Changed from terminal
+            $this->terminal_number = $this->selectedTerminal;
             $this->generateTicketContent();
         } catch (\Exception $e) {
             $this->handleError($e, 'selectTerminal', 'Error selecting terminal');
@@ -254,6 +260,11 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         try {
             Log::info('Selecting classroom:', ['classroom' => $classroom]);
+            
+            if (!is_string($classroom) || trim($classroom) === '') {
+                throw new \Exception('Invalid classroom value');
+            }
+            
             $this->selectedClassroom = $classroom;
             $this->classroom_id = Classroom::where('name', $classroom)->value('id');
 
@@ -319,21 +330,28 @@ class Ticketing extends Component implements HasTable, HasForms
                 return;
             }
 
-            // Check for existing bookings
+            // Improved time conflict check query
             $existingBookings = Ticket::where('classroom_id', $this->classroom_id)
-                ->where('ticket_type', 'classroom_request')
+                ->where('type', 'classroom_request')
                 ->where('ticket_status', '!=', 'cancelled')
                 ->where(function ($query) use ($start, $end) {
+                    // Start time falls within existing booking
                     $query->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('start_time', [$start, $end])
-                            ->orWhereBetween('end_time', [$start, $end])
-                            ->orWhere(function ($q) use ($start, $end) {
-                                $q->where('start_time', '<=', $start)
-                                    ->where('end_time', '>=', $end);
-                            });
+                        $q->where('start_time', '<=', $start)
+                          ->where('end_time', '>', $start);
+                    })
+                    // End time falls within existing booking
+                    ->orWhere(function ($q) use ($start, $end) {
+                        $q->where('start_time', '<', $end)
+                          ->where('end_time', '>=', $end);
+                    })
+                    // Booking completely contains the existing booking
+                    ->orWhere(function ($q) use ($start, $end) {
+                        $q->where('start_time', '>=', $start)
+                          ->where('end_time', '<=', $end);
                     });
                 })
-                ->get(); // Change exists() to get() to fetch the conflicting bookings
+                ->get();
 
             if ($existingBookings->isNotEmpty()) {
                 $this->timeConflictExists = true;
@@ -487,12 +505,14 @@ class Ticketing extends Component implements HasTable, HasForms
 
     public function resetForm()
     {
+        $now = Carbon::now();
+        
         $this->reset([
             'selectedType',
             'selectedSubType',
             'selectedTerminal',
             'selectedClassroom',
-            'terminal_number',  // Changed from terminal
+            'terminal_number',
             'title',
             'description',
             'priority',
@@ -505,6 +525,10 @@ class Ticketing extends Component implements HasTable, HasForms
             'timeConflictExists',
             'showTicketForm'
         ]);
+
+        // Set default dates after reset
+        $this->start_time = $now->format('Y-m-d\TH:i');
+        $this->end_time = $now->copy()->addHour()->format('Y-m-d\TH:i');
 
         $this->resetErrorBag();
 
@@ -558,18 +582,26 @@ class Ticketing extends Component implements HasTable, HasForms
         return $technician ? $technician['name'] : 'Unassigned';
     }
 
-    // Improve ticket submission validation
+    // Improve ticket submission validation and error handling
     public function submitTicket()
     {
         try {
+            // First validate the input before starting transaction
+            $this->validate($this->getRules());
+            
             // Check working hours for classroom and asset requests
             if (in_array($this->selectedType, ['classroom_request', 'asset_request'])) {
                 $this->validateWorkingHours(now());
             }
-
-            // Validate input
-            $this->validate($this->getRules());
             
+            // Validate classroom and terminal if needed
+            if (in_array($this->selectedType, ['hardware', 'internet'])) {
+                if (!$this->validateClassroomAndTerminal()) {
+                    return;
+                }
+            }
+            
+            // Start transaction after all validation passes
             DB::beginTransaction();
             
             // Generate ticket number
@@ -584,6 +616,9 @@ class Ticketing extends Component implements HasTable, HasForms
                 'ticket_status' => 'open',
                 'type' => $this->selectedType,
                 'subtype' => $this->selectedSubType,
+                'ticket_type' => in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']) 
+                    ? 'request' 
+                    : 'incident',
                 'classroom_id' => $this->classroom_id,
                 'terminal_number' => $this->selectedTerminal,
                 'assigned_to' => $this->assigned_to,
@@ -592,7 +627,7 @@ class Ticketing extends Component implements HasTable, HasForms
                 'section_id' => $this->section_id,
             ]);
 
-            // Handle specific request types with working hours validation
+            // Handle specific request types
             if ($this->selectedType === 'classroom_request') {
                 $this->validateClassroomRequest($ticket);
             } else if ($this->selectedType === 'asset_request') {
@@ -604,7 +639,7 @@ class Ticketing extends Component implements HasTable, HasForms
             DB::commit();
 
             // Reset form and show success notification
-            $this->reset();
+            $this->resetForm();
             $this->dispatch('close-ticket-modal');
 
             Notification::make()
@@ -614,12 +649,16 @@ class Ticketing extends Component implements HasTable, HasForms
                 ->send();
                 
         } catch (\Exception $e) {
-            DB::rollBack();
+            // Only roll back if transaction was started
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+            
             Log::error('Ticket creation failed: ' . $e->getMessage());
             
             Notification::make()
                 ->title('Error')
-                ->body($e->message())
+                ->body($e->getMessage()) // Fixed method name
                 ->danger()
                 ->send();
         }
@@ -704,11 +743,15 @@ class Ticketing extends Component implements HasTable, HasForms
      */
     protected function generateTicketNumber()
     {
-        // Determine if it's a request type ticket
-        $isRequest = in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']);
+        // Determine ticket type based on the selected type
+        $ticketType = match ($this->selectedType) {
+            'classroom_request', 'asset_request', 'general_inquiry' => 'request',
+            'hardware', 'internet', 'application' => 'incident',
+            default => 'incident'
+        };
         
-        // Base prefix will be either INC (incident) or REQ (request)
-        $prefix = $isRequest ? 'REQ' : 'INC';
+        // Set prefix based on ticket type
+        $prefix = $ticketType === 'request' ? 'REQ' : 'INC';
 
         // Add specific sub-prefix based on ticket type
         $subPrefix = match ($this->selectedType) {
@@ -723,6 +766,7 @@ class Ticketing extends Component implements HasTable, HasForms
 
         // Generate random part
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $randomPart = '';
         
         do {
             $randomPart = '';
@@ -742,13 +786,12 @@ class Ticketing extends Component implements HasTable, HasForms
         $user = Auth::user();
         
         // Admin can manage all tickets
-        if ($user->hasRole('admin')) {
+        if ($user && $user->hasRole('admin')) {
             return true;
         }
         
         // Users can only manage their own tickets or tickets assigned to them
-        return $ticket->created_by === $user->id 
-            || $ticket->assigned_to === $user->id;
+        return $user && ($ticket->created_by === $user->id || $ticket->assigned_to === $user->id);
     }
 
     // Update the assign action in the table configuration
@@ -764,17 +807,15 @@ class Ticketing extends Component implements HasTable, HasForms
 
         // Set basic permissions (can be extended by checking user permissions in the database)
         $userId = $user ? $user->id : null;
-        $isAdmin = false; // Determine if admin based on your own logic
+        $isAdmin = $user && $user->hasRole('admin'); // More accurate role check
 
-        if ($userId) {
+        if ($userId && !$isAdmin) {
             // Limit normal users to see only their tickets
-            if (!$isAdmin) {
-                $baseQuery->where(function ($query) use ($userId) {
-                    $query->where('created_by', $userId)
-                        ->orWhere('assigned_to', $userId)
-                        ->orWhereNull('assigned_to');
-                });
-            }
+            $baseQuery->where(function ($query) use ($userId) {
+                $query->where('created_by', $userId)
+                    ->orWhere('assigned_to', $userId)
+                    ->orWhereNull('assigned_to');
+            });
         }
 
         return $table

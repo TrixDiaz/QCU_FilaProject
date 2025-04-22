@@ -93,7 +93,7 @@ class Ticket extends Model
         static::created(function ($ticket) {
             if ($ticket->type === 'classroom_request') {
                 Approval::create([
-                    'ticket_number' => $ticket->id,
+                    'ticket_id' => $ticket->id,
                     'status' => 'pending',
                     'approved_by' => null,
                     'approved_at' => null

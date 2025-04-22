@@ -677,45 +677,54 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function validateClassroomRequest($ticket)
     {
-        // Validate time slot
-        if ($this->timeConflictExists) {
-            throw new \Exception('Time slot is already booked');
+        try {
+            // Validate time slot
+            if ($this->timeConflictExists) {
+                throw new \Exception('Time slot is already booked');
+            }
+
+            // Parse times
+            $start = Carbon::parse($this->start_time);
+            $end = Carbon::parse($this->end_time);
+            $now = Carbon::now();
+
+            // Validate working hours for booking time
+            $startTime = Carbon::parse($start->format('H:i'));
+            $endTime = Carbon::parse($end->format('H:i'));
+            $workingStart = Carbon::parse(self::WORKING_HOURS['start']);
+            $workingEnd = Carbon::parse(self::WORKING_HOURS['end']);
+
+            if ($startTime->lt($workingStart) || $endTime->gt($workingEnd)) {
+                throw new \Exception('Classroom bookings are only allowed between 7:00 AM and 9:00 PM');
+            }
+
+            // Validate start time
+            if ($start->lt($now)) {
+                throw new \Exception('Start time cannot be in the past');
+            }
+
+            // Validate end time 
+            if ($end->lte($start)) {
+                throw new \Exception('End time must be after start time');
+            }
+
+            // Maximum booking duration (e.g. 8 hours)
+            $maxDuration = 8;
+            if ($start->diffInHours($end) > $maxDuration) {
+                throw new \Exception("Booking cannot exceed {$maxDuration} hours");
+            }
+
+            // Update ticket with validated times and section
+            $ticket->update([
+                'start_time' => $start,
+                'end_time' => $end,
+                'section_id' => $this->section_id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Classroom request validation failed: ' . $e->getMessage());
+            throw $e; // Re-throw to be caught by parent try-catch
         }
-
-        // Parse times
-        $start = Carbon::parse($this->start_time);
-        $end = Carbon::parse($this->end_time);
-        $now = Carbon::now();
-
-        // Validate working hours for booking time
-        $startTime = Carbon::parse($start->format('H:i'));
-        $endTime = Carbon::parse($end->format('H:i'));
-        $workingStart = Carbon::parse(self::WORKING_HOURS['start']);
-        $workingEnd = Carbon::parse(self::WORKING_HOURS['end']);
-
-        if ($startTime->lt($workingStart) || $endTime->gt($workingEnd)) {
-            throw new \Exception('Classroom bookings are only allowed between 7:00 AM and 9:00 PM');
-        }
-
-        // Validate start time
-        if ($start->lt($now)) {
-            throw new \Exception('Start time cannot be in the past');
-        }
-
-        // Validate end time 
-        if ($end->lte($start)) {
-            throw new \Exception('End time must be after start time');
-        }
-
-        // Maximum booking duration (e.g. 8 hours)
-        $maxDuration = 8;
-        if ($start->diffInHours($end) > $maxDuration) {
-            throw new \Exception("Booking cannot exceed {$maxDuration} hours");
-        }
-
-        $ticket->start_time = $start;
-        $ticket->end_time = $end;
-        $ticket->section_id = $this->section_id;
     }
 
     // Add a function to validate asset requests

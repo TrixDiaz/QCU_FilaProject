@@ -1045,7 +1045,7 @@ class Ticketing extends Component implements HasTable, HasForms
                         ->modalContent(fn(Ticket $record) => view(
                             'tickets.view',
                             [
-                                'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator']),
+                                'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator', 'asset']), // Added 'asset' relationship
                                 'classrooms' => Classroom::all(),
                                 'sections' => Section::all(),
                             ]

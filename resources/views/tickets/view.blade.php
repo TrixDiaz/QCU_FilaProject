@@ -44,6 +44,14 @@
             </div>
         @endif
 
+        <!-- Add this where you want to display the asset information -->
+        @if($ticket->asset)
+            <div class="mt-2">
+                <span class="font-medium">Asset:</span>
+                <span>{{ $ticket->asset->name }} (ID: {{ $ticket->asset_id }})</span>
+            </div>
+        @endif
+
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <h3 class="text-sm font-medium text-gray-500">Created By</h3>

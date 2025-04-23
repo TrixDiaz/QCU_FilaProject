@@ -38,14 +38,19 @@
             @error('ticket_status') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
         </div>
 
-         <!-- Asset dropdown for request asset and report issue -->
-         @if(isset($ticket) && in_array($ticket->type, ['request_asset', 'report_issue']))
+        <!-- Asset dropdown for hardware and asset request tickets -->
+        @if(isset($ticket) && in_array($ticket->type, ['hardware', 'asset_request']))
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Asset</label>
                 <select wire:model.defer="asset_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Select Asset</option>
                     @foreach($assets ?? [] as $asset)
-                        <option value="{{ $asset->id }}">{{ $asset->name }} - {{ $asset->asset_tag }}</option>
+                        <option value="{{ $asset->id }}">
+                            {{ $asset->name }}
+                            @if($asset->asset_tag)
+                                - {{ $asset->asset_tag }}
+                            @endif
+                        </option>
                     @endforeach
                 </select>
                 @error('asset_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror

@@ -1045,7 +1045,15 @@ class Ticketing extends Component implements HasTable, HasForms
                         ->modalContent(fn(Ticket $record) => view(
                             'tickets.view',
                             [
-                                'ticket' => $record->load(['classroom', 'section', 'assignedTo', 'creator', 'asset']), // Added 'asset' relationship
+                                'ticket' => $record->load([
+                                    'classroom', 
+                                    'section', 
+                                    'assignedTo', 
+                                    'creator', 
+                                    'asset' => function($query) {
+                                        $query->select('id', 'name', 'serial_number'); // Remove asset_tag from selection
+                                    }
+                                ]),
                                 'classrooms' => Classroom::all(),
                                 'sections' => Section::all(),
                             ]
@@ -1069,10 +1077,18 @@ class Ticketing extends Component implements HasTable, HasForms
                                 ->readOnly(),
                             Select::make('asset_id')
                                 ->label('Asset')
-                                ->options(fn() => Asset::pluck('name', 'id'))
+                                ->options(fn() => Asset::query()
+                                    ->get()
+                                    ->mapWithKeys(function ($asset) {
+                                        $label = $asset->name;
+                                        if ($asset->serial_number) {
+                                            $label .= " (SN: {$asset->serial_number})";
+                                        }
+                                        return [$asset->id => $label];
+                                    }))
                                 ->nullable()
-                                ->visible(fn(Ticket $record) => $record->type === 'hardware')
-                                ->default(null) // Add default value
+                                ->visible(fn(Ticket $record) => in_array($record->type, ['hardware', 'asset_request']))
+                                ->default(fn(Ticket $record) => $record->asset_id)
                                 ->disabled(),
                             Select::make('priority')
                                 ->options([
@@ -1138,6 +1154,7 @@ class Ticketing extends Component implements HasTable, HasForms
                                 'section_id' => $record->section_id ?? null,
                                 'start_time' => $record->start_time ?? null,
                                 'end_time' => $record->end_time ?? null,
+                                'asset_id' => $record->asset_id ?? null, // Add this line
                             ];
                         })
                         ->action(function (Ticket $record, array $data): void {

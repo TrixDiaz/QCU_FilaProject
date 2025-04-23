@@ -44,11 +44,15 @@
             </div>
         @endif
 
-        <!-- Add this where you want to display the asset information -->
         @if($ticket->asset)
-            <div class="mt-2">
-                <span class="font-medium">Asset:</span>
-                <span>{{ $ticket->asset->name }} (ID: {{ $ticket->asset_id }})</span>
+            <div class="mb-4">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Asset:</label>
+                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                    {{ $ticket->asset->name }}
+                    @if($ticket->asset->serial_number)
+                        <span class="text-gray-500">(SN: {{ $ticket->asset->serial_number }})</span>
+                    @endif
+                </p>
             </div>
         @endif
 

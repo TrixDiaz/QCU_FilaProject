@@ -63,13 +63,6 @@
                 <p class="text-4xl font-bold text-yellow-800 dark:text-yellow-100">{{ $maintenanceAssetsCount }}</p>
             </div>
 
-            <!-- Broken Assets -->
-            <div
-                class="bg-orange-100 dark:bg-orange-900 p-6 rounded-lg shadow-md border border-orange-300 dark:border-orange-700">
-                <h3 class="text-lg font-semibold text-orange-700 dark:text-orange-300 mb-2">Broken</h3>
-                <p class="text-4xl font-bold text-orange-800 dark:text-orange-100">{{ $brokenAssetsCount }}</p>
-            </div>
-
             <!-- Inactive Assets -->
             <div class="bg-red-100 dark:bg-red-900 p-6 rounded-lg shadow-md border border-red-300 dark:border-red-700">
                 <h3 class="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Inactive</h3>

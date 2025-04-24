@@ -872,6 +872,7 @@ class Ticketing extends Component implements HasTable, HasForms
                 TextColumn::make('priority')
                     ->badge()
                     ->size('sm')
+                    ->searchable()
                     ->color(fn(string $state): string => match ($state) {
                         'high' => 'danger',
                         'medium' => 'warning',
@@ -883,6 +884,7 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->label('Status')
                     ->badge()
                     ->size('sm')
+                    ->searchable()
                     ->color(fn(string $state): string => match ($state) {
                         'open' => 'info',
                         'in_progress' => 'warning',
@@ -913,6 +915,7 @@ class Ticketing extends Component implements HasTable, HasForms
                     ->label('Created')
                     ->dateTime('M d, Y H:i')
                     ->sortable()
+                    ->searchable()
                     ->size('sm'),
             ])
             ->striped()

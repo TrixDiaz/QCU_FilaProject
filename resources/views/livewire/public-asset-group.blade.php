@@ -7,8 +7,15 @@
         </div>
     @else
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Assets in {{ $classroom->name ?? 'Classroom' }}
-            </h1>
+            <div class="flex items-center space-x-4">
+                <button onclick="window.close()" class="bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 px-4 py-2 rounded-lg shadow flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Back to Rooms</span>
+                </button>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Assets in {{ $classroom->name ?? 'Classroom' }}</h1>
+            </div>
 
             <!-- QR Code Button -->
             <button onclick="generateQR('{{ url()->current() }}')"

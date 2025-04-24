@@ -208,7 +208,7 @@ class Ticketing extends Component implements HasTable, HasForms
 
     protected function loadTechnicians()
     {
-        $this->technicians = User::where('id', '!=', Auth::id())->get();
+        $this->technicians = User::role('technician')->where('id', '!=', Auth::id())->get();
     }
 
     protected function loadClassroomsAndSections()

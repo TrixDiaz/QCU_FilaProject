@@ -665,7 +665,7 @@
                         </div>
 
                         <!-- Technician Assignment -->
-                        <div x-show="@auth{{ auth()->user()->hasRole(['admin', 'technician']) }} @endauth">
+                        <div>
                             <label for="assigned_to"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign
                                 Technician</label>
@@ -676,6 +676,9 @@
                                     <option value="{{ $tech->id }}">{{ $tech->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Available technicians will handle your request. If you don't assign one, the ticket will be automatically assigned.
+                            </div>
                             @error('assigned_to')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror

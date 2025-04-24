@@ -819,10 +819,6 @@
                                                     Deploy Asset
                                                 </x-filament::button>
                                             @endif
-                                            <x-filament::button
-                                                href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
-                                                tag="a" class="text-sm hover:underline">Edit Asset
-                                            </x-filament::button>
                                         @endif
                                     </div>
                                 </div>
@@ -990,16 +986,16 @@
                                                                     Deploy Asset
                                                                 </div>
                                                             </button>
+                                                            
+                                                            <!-- Edit Asset Button -->
+                                                            <a href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
+                                                                class="block px-4 py-2 text-sm " role="menuitem">
+                                                                <div class="flex items-center">
+                                                                    <x-heroicon-m-pencil-square class="w-4 h-4 mr-2" />
+                                                                    Edit Asset
+                                                                </div>
+                                                            </a>
                                                         @endif
-
-                                                        <!-- Edit Asset Button -->
-                                                        <a href="{{ route('filament.app.resources.assets.edit', $asset->id) }}"
-                                                            class="block px-4 py-2 text-sm " role="menuitem">
-                                                            <div class="flex items-center">
-                                                                <x-heroicon-m-pencil-square class="w-4 h-4 mr-2" />
-                                                                Edit Asset
-                                                            </div>
-                                                        </a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1025,7 +1021,7 @@
                                                     Archived
                                                 </x-filament::badge>
                                             @else
-                                                <x-filament::badge color="gray">
+                                                <x-filament::badge color="danger">
                                                     {{ ucfirst($asset->status) }}
                                                 </x-filament::badge>
                                             @endif

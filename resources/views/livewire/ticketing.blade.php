@@ -837,7 +837,35 @@
         </div>
     </div>
 
-    <section class="my-4">
+    <section class="my-4" 
+        x-data="{
+            refreshTable() {
+                // Force refresh the tickets table
+                setTimeout(() => {
+                    console.log('Refreshing tickets table');
+                    window.dispatchEvent(new CustomEvent('refreshTableData'));
+                }, 500);
+            }
+        }"
+        @refreshTable.window="refreshTable"
+    >
         {{ $this->table }}
     </section>
 </div>
+
+<!-- Script to handle table refreshes -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Listen for custom table refresh events
+        window.addEventListener('refreshTableData', function() {
+            // Find and click on Filament's refresh button if present
+            const refreshButton = document.querySelector('.filament-tables-refreshing-indicator button');
+            if (refreshButton) {
+                refreshButton.click();
+            } else {
+                // Fallback - force entire component refresh
+                Livewire.dispatch('$refresh');
+            }
+        });
+    });
+</script>

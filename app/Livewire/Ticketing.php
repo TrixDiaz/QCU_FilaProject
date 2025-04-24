@@ -601,64 +601,103 @@ class Ticketing extends Component implements HasTable, HasForms
                 }
             }
             
-            // Start transaction after all validation passes
-            DB::beginTransaction();
-            
-            // Generate ticket number
-            $ticketNumber = $this->generateTicketNumber();
-            
-            // Create ticket
-            $ticket = Ticket::create([
-                'ticket_number' => $ticketNumber,
-                'title' => $this->title,
-                'description' => $this->description,
-                'priority' => $this->priority,
-                'ticket_status' => 'open',
-                'type' => $this->selectedType,
-                'subtype' => $this->selectedSubType,
-                'ticket_type' => in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']) 
-                    ? 'request' 
-                    : 'incident',
-                'classroom_id' => $this->classroom_id,
-                'terminal_number' => $this->selectedTerminal,
-                'assigned_to' => $this->assigned_to,
-                'created_by' => Auth::id(),
-                'asset_id' => $this->asset_id,
-                'section_id' => $this->section_id,
-            ]);
-
-            // Handle specific request types
-            if ($this->selectedType === 'classroom_request') {
-                $this->validateClassroomRequest($ticket);
-            } else if ($this->selectedType === 'asset_request') {
-                $this->validateAssetRequest($ticket);
-            }
-
-            $ticket->save();
-            
-            DB::commit();
-
-            // Reset form and show success notification
-            $this->resetForm();
-            $this->dispatch('close-ticket-modal');
-
-            Notification::make()
-                ->title('Ticket Created')
-                ->body("Ticket #{$ticketNumber} has been created successfully")
-                ->success()
-                ->send();
+            try {
+                // Start transaction after all validation passes
+                DB::beginTransaction();
                 
-        } catch (\Exception $e) {
-            // Only roll back if transaction was started
-            if (DB::transactionLevel() > 0) {
+                // Generate ticket number
+                $ticketNumber = $this->generateTicketNumber();
+                
+                // Create ticket
+                $ticket = Ticket::create([
+                    'ticket_number' => $ticketNumber,
+                    'title' => $this->title,
+                    'description' => $this->description,
+                    'priority' => $this->priority,
+                    'ticket_status' => 'open',
+                    'type' => $this->selectedType,
+                    'subtype' => $this->selectedSubType,
+                    'ticket_type' => in_array($this->selectedType, ['classroom_request', 'asset_request', 'general_inquiry']) 
+                        ? 'request' 
+                        : 'incident',
+                    'classroom_id' => $this->classroom_id,
+                    'terminal_number' => $this->selectedTerminal,
+                    'assigned_to' => $this->assigned_to,
+                    'created_by' => Auth::id(),
+                    'asset_id' => $this->asset_id,
+                    'section_id' => $this->section_id,
+                    'created_at' => now(), // Ensure creation time is set
+                    'updated_at' => now(),
+                ]);
+
+                // Handle specific request types
+                if ($this->selectedType === 'classroom_request') {
+                    $this->validateClassroomRequest($ticket);
+                } else if ($this->selectedType === 'asset_request') {
+                    $this->validateAssetRequest($ticket);
+                }
+
+                $ticket->save();
+                
+                DB::commit();
+
+                // Reset form and show success notification
+                $this->resetForm();
+                $this->dispatch('close-ticket-modal');
+
+                // Force table to refresh with latest data
+                $this->dispatch('refreshTable');
+                
+                // Dispatch dashboard-update event to refresh dashboard components
+                $this->dispatch('dashboard-updated');
+                
+                // Also dispatch to refresh any dashboard widgets
+                if ($this->selectedType === 'asset_request' || $this->selectedType === 'classroom_request') {
+                    $this->dispatch('pending-approval-updated');
+                }
+
+                Notification::make()
+                    ->title('Ticket Created')
+                    ->body("Ticket #{$ticketNumber} has been created successfully")
+                    ->success()
+                    ->send();
+            } catch (\Exception $dbError) {
+                // Specific database operation error handling
                 DB::rollBack();
+                Log::error('Database operation failed: ' . $dbError->getMessage(), [
+                    'exception' => $dbError,
+                    'trace' => $dbError->getTraceAsString()
+                ]);
+                
+                throw new \Exception('Failed to save ticket: ' . $dbError->getMessage());
             }
+                
+        } catch (\Illuminate\Validation\ValidationException $validationError) {
+            // Handle validation errors specifically
+            Log::warning('Ticket validation failed', [
+                'errors' => $validationError->errors(),
+                'data' => $this->only(['selectedType', 'title', 'priority', 'assigned_to'])
+            ]);
             
-            Log::error('Ticket creation failed: ' . $e->getMessage());
+            // Re-throw validation exception to show errors in the form
+            throw $validationError;
+            
+        } catch (\Exception $e) {
+            // Generic error handling for any other exceptions
+            Log::error('Ticket creation failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+                'ticket_data' => [
+                    'type' => $this->selectedType,
+                    'subtype' => $this->selectedSubType,
+                    'title' => $this->title,
+                    'priority' => $this->priority
+                ]
+            ]);
             
             Notification::make()
-                ->title('Error')
-                ->body($e->getMessage()) // Fixed method name
+                ->title('Error Creating Ticket')
+                ->body($e->getMessage())
                 ->danger()
                 ->send();
         }
@@ -794,8 +833,8 @@ class Ticketing extends Component implements HasTable, HasForms
     {
         $user = Auth::user();
         
-        // Admin can manage all tickets
-        if ($user && $user->hasRole('admin')) {
+        // Admin can manage all tickets - check for admin role
+        if ($user && $user->is_admin) {
             return true;
         }
         
@@ -806,414 +845,454 @@ class Ticketing extends Component implements HasTable, HasForms
     // Update the assign action in the table configuration
     public function table(Table $table): Table
     {
-        // Start with base ticket query
-        $baseQuery = Ticket::query()
-            ->with(['assignedTo', 'creator', 'classroom', 'section'])
-            ->latest();
+        try {
+            // Start with base ticket query - always sort by creation date descending for newest first
+            $baseQuery = Ticket::query()
+                ->with(['assignedTo', 'creator', 'classroom', 'section'])
+                ->orderBy('created_at', 'desc'); // Always sort by newest first
 
-        // Filter tickets based on user
-        $user = Auth::user();
+            // Filter tickets based on user
+            $user = Auth::user();
 
-        // Set basic permissions (can be extended by checking user permissions in the database)
-        $userId = $user ? $user->id : null;
-        $isAdmin = $user && $user->hasRole('admin'); // More accurate role check
+            // Set basic permissions (can be extended by checking user permissions in the database)
+            $userId = $user ? $user->id : null;
+            $isAdmin = $user && $user->is_admin; // Check admin flag
 
-        if ($userId && !$isAdmin) {
-            // Limit normal users to see only their tickets
-            $baseQuery->where(function ($query) use ($userId) {
-                $query->where('created_by', $userId)
-                    ->orWhere('assigned_to', $userId)
-                    ->orWhereNull('assigned_to');
-            });
-        }
+            if ($userId && !$isAdmin) {
+                // Limit normal users to see only their tickets
+                $baseQuery->where(function ($query) use ($userId) {
+                    $query->where('created_by', $userId)
+                        ->orWhere('assigned_to', $userId)
+                        ->orWhereNull('assigned_to');
+                });
+            }
 
-        return $table
-            ->query($baseQuery)
-            ->columns([
-                TextColumn::make('ticket_number')
-                    ->label('Ticket No.')
-                    ->searchable()
-                    ->sortable()
-                    ->size('sm')
-                    ->color('primary'),
+            return $table
+                ->query($baseQuery)
+                ->columns([
+                    TextColumn::make('ticket_number')
+                        ->label('Ticket No.')
+                        ->searchable()
+                        ->sortable()
+                        ->size('sm')
+                        ->color('primary'),
 
-                TextColumn::make('type')
-                    ->label('Type')
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'hardware' => 'Hardware',
-                        'internet' => 'Internet',
-                        'application' => 'Application',
-                        'asset_request' => 'Asset Request',
-                        'classroom_request' => 'Classroom Request', 
-                        'general_inquiry' => 'General Inquiry',
-                        default => ucfirst($state)
-                    })
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'hardware' => 'danger',
-                        'internet' => 'warning',
-                        'application' => 'info',
-                        'asset_request' => 'success',
-                        'classroom_request' => 'primary',
-                        'general_inquiry' => 'gray',
-                        default => 'secondary'
-                    })
-                    ->size('sm'),
-
-                TextColumn::make('title')
-                    ->searchable()
-                    ->sortable()
-                    ->limit(30)
-                    ->size('sm')
-                    ->wrap(),
-
-                TextColumn::make('priority')
-                    ->badge()
-                    ->size('sm')
-                    ->searchable()
-                    ->color(fn(string $state): string => match ($state) {
-                        'high' => 'danger',
-                        'medium' => 'warning',
-                        'low' => 'success',
-                        default => 'info'
-                    }),
-
-                TextColumn::make('ticket_status')
-                    ->label('Status')
-                    ->badge()
-                    ->size('sm')
-                    ->searchable()
-                    ->color(fn(string $state): string => match ($state) {
-                        'open' => 'info',
-                        'in_progress' => 'warning',
-                        'resolved' => 'success',
-                        'closed' => 'success',
-                        default => 'info'
-                    }),
-
-                TextColumn::make('assignedTo.name')
-                    ->label('Assigned To')
-                    ->formatStateUsing(fn($record) => $record->assigned_to ? $record->assignedTo?->name : 'Unassigned')
-                    ->searchable(query: function ($query, $search) {
-                        return $query->whereHas(
-                            'assignedTo',
-                            fn($q) =>
-                            $q->where('name', 'like', "%{$search}%")
-                        );
-                    })
-                    ->sortable()
-                    ->size('sm'),
-
-                TextColumn::make('creator.name')
-                    ->label('Created By')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('created_at')
-                    ->label('Created')
-                    ->dateTime('M d, Y H:i')
-                    ->sortable()
-                    ->searchable()
-                    ->size('sm'),
-            ])
-            ->striped()
-            ->defaultSort('created_at', 'desc')
-            ->paginated([10, 25, 50, 100])
-            ->filters([
-                SelectFilter::make('priority')
-                    ->options([
-                        'high' => 'High',
-                        'medium' => 'Medium',
-                        'low' => 'Low',
-                    ])
-                    ->placeholder('All Priorities')
-                    ->label('Priority')
-                    ->indicator('Priority'),
-
-                SelectFilter::make('ticket_status')
-                    ->options([
-                        'open' => 'Open',
-                        'in_progress' => 'In Progress',
-                        'resolved' => 'Resolved',
-                        'closed' => 'Closed',
-                        'archived' => 'Archived',
-                    ])
-                    ->placeholder('All Statuses')
-                    ->label('Status')
-                    ->indicator('Status'),
-
-                Filter::make('created_at')
-                    ->form([
-                        DatePicker::make('created_from')
-                            ->label('Created From'),
-                        DatePicker::make('created_until')
-                            ->label('Created Until'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['created_from'] ?? null,
-                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
-                            )
-                            ->when(
-                                $data['created_until'] ?? null,
-                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
-                            );
-                    })
-                    ->indicateUsing(function (array $data): array {
-                        $indicators = [];
-
-                        if ($data['created_from'] ?? null) {
-                            $indicators[] = Indicator::make('Created from ' . Carbon::parse($data['created_from'])->toFormattedDateString())
-                                ->removeField('created_from');
-                        }
-
-                        if ($data['created_until'] ?? null) {
-                            $indicators[] = Indicator::make('Created until ' . Carbon::parse($data['created_until'])->toFormattedDateString())
-                                ->removeField('created_until');
-                        }
-
-                        return $indicators;
-                    }),
-
-                SelectFilter::make('assigned_to')
-                    ->relationship('assignedTo', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('All Technicians')
-                    ->label('Assigned To')
-                    ->indicator('Assigned'),
-
-                SelectFilter::make('type')
-                    ->options([
-                        'hardware' => 'Hardware',
-                        'internet' => 'Internet',
-                        'application' => 'Application',
-                        'asset_request' => 'Asset Request',
-                        'classroom_request' => 'Classroom Request',
-                        'general_inquiry' => 'General Inquiry',
-                    ])
-                    ->placeholder('All Categories')
-                    ->label('Category')
-                    ->indicator('Category'),
-            ])
-            ->filtersFormColumns(3)
-            ->actions([
-                // Separate assign action
-                Action::make('assign')
-                    ->icon('heroicon-m-user-plus')
-                    ->color('success')
-                    ->modalWidth('md')
-                    ->label(
-                        fn(Ticket $record) =>
-                        is_null($record->assigned_to) ? 'Assign' : 'Reassign'
-                    )
-                    ->visible(function (Ticket $record) use ($userId) {
-                        $ticketIsAssignable = !in_array($record->ticket_status, ['closed', 'archived']);
-                        $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === $userId;
-                        return $ticketIsAssignable && $canAssignTicket;
-                    })
-                    ->modalContent(fn(Ticket $record) => view(
-                        'tickets.assign',
-                        ['ticket' => $record]
-                    ))
-                    ->form([
-                        Select::make('assign_type')
-                            ->label('Assignment Type')
-                            ->options([
-                                'self' => 'Assign to myself'
-                            ])
-                            ->default('self')
-                            ->required()
-                    ])
-                    ->action(function (Ticket $record, array $data): void {
-                        $record->update([
-                            'assigned_to' => Auth::id(),
-                            'ticket_status' => 'in_progress'
-                        ]);
-
-                        Notification::make()
-                            ->title('Ticket assigned successfully')
-                            ->success()
-                            ->send();
-                    }),
-
-                // Action group for other actions
-                ActionGroup::make([
-                    Action::make('view')
-                        ->icon('heroicon-m-eye')
-                        ->color('info')
-                        ->modalContent(fn(Ticket $record) => view(
-                            'tickets.view',
-                            [
-                                'ticket' => $record->load([
-                                    'classroom', 
-                                    'section', 
-                                    'assignedTo', 
-                                    'creator', 
-                                    'asset' => function($query) {
-                                        $query->select('id', 'name', 'serial_number'); // Remove asset_tag from selection
-                                    }
-                                ]),
-                                'classrooms' => Classroom::all(),
-                                'sections' => Section::all(),
-                            ]
-                        ))
-                        ->modalWidth('md')
-                        ->modalSubmitAction(false)
-                        ->modalCancelAction(fn($action) => $action->label('Close')),
-
-                    Action::make('edit')
-                        ->icon('heroicon-m-pencil-square')
-                        ->color('warning')
-                        ->modalWidth('md')
-                        ->form([
-                            TextInput::make('title')
-                                ->required()
-                                ->maxLength(255)
-                                ->readOnly(),
-                            Textarea::make('description')
-                                ->required()
-                                ->rows(4)
-                                ->readOnly(),
-                            Select::make('asset_id')
-                                ->label('Asset')
-                                ->options(fn() => Asset::query()
-                                    ->get()
-                                    ->mapWithKeys(function ($asset) {
-                                        $label = $asset->name;
-                                        if ($asset->serial_number) {
-                                            $label .= " (SN: {$asset->serial_number})";
-                                        }
-                                        return [$asset->id => $label];
-                                    }))
-                                ->nullable()
-                                ->visible(fn(Ticket $record) => in_array($record->type, ['hardware', 'asset_request']))
-                                ->default(fn(Ticket $record) => $record->asset_id)
-                                ->disabled(),
-                            Select::make('priority')
-                                ->options([
-                                    'low' => 'Low',
-                                    'medium' => 'Medium',
-                                    'high' => 'High',
-                                ])
-                                ->required()
-                                ->disabled(),
-                            Select::make('ticket_status')
-                                ->options([
-                                    'open' => 'Open',
-                                    'in_progress' => 'In Progress',
-                                    'closed' => 'Closed',
-                                    'archived' => 'Archived',
-                                ])
-                                ->required()
-                                ->disabled(),
-                            Select::make('assigned_to')
-                                ->label('Assigned To')
-                                ->options(fn() => User::role('technician')->pluck('name', 'id'))
-                                ->nullable()
-                                ->placeholder('-- Unassigned --')
-                                ->disabled(),
-                            Select::make('classroom_id')
-                                ->label('Classroom')
-                                ->options(fn() => Classroom::pluck('name', 'id'))
-                                ->nullable()
-                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
-                                ->default(null) // Add default value
-                                ->disabled(),
-
-                            Select::make('section_id')
-                                ->label('Section')
-                                ->options(fn() => Section::pluck('name', 'id'))
-                                ->nullable()
-                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
-                                ->default(null) // Add default value
-                                ->disabled(),
-
-                            DatePicker::make('start_time')
-                                ->label('Start Time')
-                                ->nullable()
-                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
-                                ->default(null) // Add default value
-                                ->disabled(),
-
-                            DatePicker::make('end_time')
-                                ->label('End Time')
-                                ->nullable()
-                                ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
-                                ->default(null) // Add default value
-                                ->disabled(),
-                        ])
-                        ->fillForm(function (Ticket $record): array {
-                            return [
-                                'title' => $record->title,
-                                'description' => $record->description,
-                                'priority' => $record->priority,
-                                'ticket_status' => $record->ticket_status,
-                                'assigned_to' => $record->assigned_to,
-                                'classroom_id' => $record->classroom_id ?? null,
-                                'section_id' => $record->section_id ?? null,
-                                'start_time' => $record->start_time ?? null,
-                                'end_time' => $record->end_time ?? null,
-                                'asset_id' => $record->asset_id ?? null, // Add this line
-                            ];
+                    TextColumn::make('type')
+                        ->label('Type')
+                        ->formatStateUsing(fn ($state) => match ($state) {
+                            'hardware' => 'Hardware',
+                            'internet' => 'Internet',
+                            'application' => 'Application',
+                            'asset_request' => 'Asset Request',
+                            'classroom_request' => 'Classroom Request', 
+                            'general_inquiry' => 'General Inquiry',
+                            default => ucfirst($state)
                         })
-                        ->action(function (Ticket $record, array $data): void {
-                            // Filter out null values for non-classroom requests
-                            if ($record->type !== 'classroom_request') {
-                                unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
+                        ->searchable()
+                        ->sortable()
+                        ->badge()
+                        ->color(fn ($state) => match ($state) {
+                            'hardware' => 'danger',
+                            'internet' => 'warning',
+                            'application' => 'info',
+                            'asset_request' => 'success',
+                            'classroom_request' => 'primary',
+                            'general_inquiry' => 'gray',
+                            default => 'secondary'
+                        })
+                        ->size('sm'),
+
+                    TextColumn::make('title')
+                        ->searchable()
+                        ->sortable()
+                        ->limit(30)
+                        ->size('sm')
+                        ->wrap(),
+
+                    TextColumn::make('priority')
+                        ->badge()
+                        ->size('sm')
+                        ->searchable()
+                        ->color(fn(string $state): string => match ($state) {
+                            'high' => 'danger',
+                            'medium' => 'warning',
+                            'low' => 'success',
+                            default => 'info'
+                        }),
+
+                    TextColumn::make('ticket_status')
+                        ->label('Status')
+                        ->badge()
+                        ->size('sm')
+                        ->searchable()
+                        ->color(fn(string $state): string => match ($state) {
+                            'open' => 'info',
+                            'in_progress' => 'warning',
+                            'resolved' => 'success',
+                            'closed' => 'success',
+                            default => 'info'
+                        }),
+
+                    TextColumn::make('assignedTo.name')
+                        ->label('Assigned To')
+                        ->formatStateUsing(fn($record) => $record->assigned_to ? $record->assignedTo?->name : 'Unassigned')
+                        ->searchable(query: function ($query, $search) {
+                            return $query->whereHas(
+                                'assignedTo',
+                                fn($q) =>
+                                $q->where('name', 'like', "%{$search}%")
+                            );
+                        })
+                        ->sortable()
+                        ->size('sm'),
+
+                    TextColumn::make('creator.name')
+                        ->label('Created By')
+                        ->searchable()
+                        ->sortable(),
+
+                    TextColumn::make('created_at')
+                        ->label('Created')
+                        ->dateTime('M d, Y H:i')
+                        ->sortable()
+                        ->searchable()
+                        ->size('sm'),
+                ])
+                ->striped()
+                ->defaultSort('created_at', 'desc')
+                ->paginated([10, 25, 50, 100])
+                ->filters([
+                    SelectFilter::make('priority')
+                        ->options([
+                            'high' => 'High',
+                            'medium' => 'Medium',
+                            'low' => 'Low',
+                        ])
+                        ->placeholder('All Priorities')
+                        ->label('Priority')
+                        ->indicator('Priority'),
+
+                    SelectFilter::make('ticket_status')
+                        ->options([
+                            'open' => 'Open',
+                            'in_progress' => 'In Progress',
+                            'resolved' => 'Resolved',
+                            'closed' => 'Closed',
+                            'archived' => 'Archived',
+                        ])
+                        ->placeholder('All Statuses')
+                        ->label('Status')
+                        ->indicator('Status'),
+
+                    Filter::make('created_at')
+                        ->form([
+                            DatePicker::make('created_from')
+                                ->label('Created From'),
+                            DatePicker::make('created_until')
+                                ->label('Created Until'),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['created_from'] ?? null,
+                                    fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                )
+                                ->when(
+                                    $data['created_until'] ?? null,
+                                    fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                );
+                        })
+                        ->indicateUsing(function (array $data): array {
+                            $indicators = [];
+
+                            if ($data['created_from'] ?? null) {
+                                $indicators[] = Indicator::make('Created from ' . Carbon::parse($data['created_from'])->toFormattedDateString())
+                                    ->removeField('created_from');
                             }
 
-                            $record->update(array_filter($data, function ($value) {
-                                return !is_null($value);
-                            }));
+                            if ($data['created_until'] ?? null) {
+                                $indicators[] = Indicator::make('Created until ' . Carbon::parse($data['created_until'])->toFormattedDateString())
+                                    ->removeField('created_until');
+                            }
+
+                            return $indicators;
+                        }),
+
+                    SelectFilter::make('assigned_to')
+                        ->relationship('assignedTo', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->placeholder('All Technicians')
+                        ->label('Assigned To')
+                        ->indicator('Assigned'),
+
+                    SelectFilter::make('type')
+                        ->options([
+                            'hardware' => 'Hardware',
+                            'internet' => 'Internet',
+                            'application' => 'Application',
+                            'asset_request' => 'Asset Request',
+                            'classroom_request' => 'Classroom Request',
+                            'general_inquiry' => 'General Inquiry',
+                        ])
+                        ->placeholder('All Categories')
+                        ->label('Category')
+                        ->indicator('Category'),
+                    
+                    Filter::make('terminal')
+                        ->form([
+                            TextInput::make('terminal_number')
+                                ->label('Terminal Number')
+                                ->placeholder('Enter terminal number (e.g. T-1)')
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query->when(
+                                $data['terminal_number'] ?? null,
+                                fn (Builder $query, $terminal): Builder => 
+                                    $query->where('terminal_number', 'like', '%' . $terminal . '%')
+                            );
+                        })
+                        ->indicateUsing(function (array $data): array {
+                            $indicators = [];
+                            
+                            if ($data['terminal_number'] ?? null) {
+                                $indicators[] = Indicator::make('Terminal: ' . $data['terminal_number'])
+                                    ->removeField('terminal_number');
+                            }
+                            
+                            return $indicators;
+                        }),
+                ])
+                ->filtersFormColumns(3)
+                ->actions([
+                    // Separate assign action
+                    Action::make('assign')
+                        ->icon('heroicon-m-user-plus')
+                        ->color('success')
+                        ->modalWidth('md')
+                        ->label(
+                            fn(Ticket $record) =>
+                            is_null($record->assigned_to) ? 'Assign' : 'Reassign'
+                        )
+                        ->visible(function (Ticket $record) use ($userId) {
+                            $ticketIsAssignable = !in_array($record->ticket_status, ['closed', 'archived']);
+                            $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === $userId;
+                            return $ticketIsAssignable && $canAssignTicket;
+                        })
+                        ->modalContent(fn(Ticket $record) => view(
+                            'tickets.assign',
+                            ['ticket' => $record]
+                        ))
+                        ->form([
+                            Select::make('assign_type')
+                                ->label('Assignment Type')
+                                ->options([
+                                    'self' => 'Assign to myself'
+                                ])
+                                ->default('self')
+                                ->required()
+                        ])
+                        ->action(function (Ticket $record, array $data): void {
+                            $record->update([
+                                'assigned_to' => Auth::id(),
+                                'ticket_status' => 'in_progress'
+                            ]);
 
                             Notification::make()
-                                ->title('Ticket Updated Successfully')
+                                ->title('Ticket assigned successfully')
                                 ->success()
                                 ->send();
-                        })
-                        ->visible(fn (Ticket $record) => $this->canManageTicket($record)),
-                        
-                    Action::make('delete')
-                        ->icon('heroicon-m-trash')
-                        ->color('danger')
-                        ->requiresConfirmation()
-                        ->modalHeading('Delete Ticket')
-                        ->modalDescription('Are you sure you want to delete this ticket? This cannot be undone.')
-                        ->modalSubmitActionLabel('Yes, delete')
-                        ->action(function (Ticket $record): void {
-                            try {
-                                DB::beginTransaction();
-                                
-                                $record->delete();
-                                
-                                DB::commit();
-                                
+                        }),
+
+                    // Action group for other actions
+                    ActionGroup::make([
+                        Action::make('view')
+                            ->icon('heroicon-m-eye')
+                            ->color('info')
+                            ->modalContent(fn(Ticket $record) => view(
+                                'tickets.view',
+                                [
+                                    'ticket' => $record->load([
+                                        'classroom', 
+                                        'section', 
+                                        'assignedTo', 
+                                        'creator', 
+                                        'asset' => function($query) {
+                                            $query->select('id', 'name', 'serial_number'); // Remove asset_tag from selection
+                                        }
+                                    ]),
+                                    'classrooms' => Classroom::all(),
+                                    'sections' => Section::all(),
+                                ]
+                            ))
+                            ->modalWidth('md')
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn($action) => $action->label('Close')),
+
+                        Action::make('edit')
+                            ->icon('heroicon-m-pencil-square')
+                            ->color('warning')
+                            ->modalWidth('md')
+                            ->form([
+                                TextInput::make('title')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->readOnly(),
+                                Textarea::make('description')
+                                    ->required()
+                                    ->rows(4)
+                                    ->readOnly(),
+                                Select::make('asset_id')
+                                    ->label('Asset')
+                                    ->options(fn() => Asset::query()
+                                        ->get()
+                                        ->mapWithKeys(function ($asset) {
+                                            $label = $asset->name;
+                                            if ($asset->serial_number) {
+                                                $label .= " (SN: {$asset->serial_number})";
+                                            }
+                                            return [$asset->id => $label];
+                                        }))
+                                    ->nullable()
+                                    ->visible(fn(Ticket $record) => in_array($record->type, ['hardware', 'asset_request']))
+                                    ->default(fn(Ticket $record) => $record->asset_id)
+                                    ->disabled(),
+                                Select::make('priority')
+                                    ->options([
+                                        'low' => 'Low',
+                                        'medium' => 'Medium',
+                                        'high' => 'High',
+                                    ])
+                                    ->required()
+                                    ->disabled(),
+                                Select::make('ticket_status')
+                                    ->options([
+                                        'open' => 'Open',
+                                        'in_progress' => 'In Progress',
+                                        'closed' => 'Closed',
+                                        'archived' => 'Archived',
+                                    ])
+                                    ->required()
+                                    ->disabled(),
+                                Select::make('assigned_to')
+                                    ->label('Assigned To')
+                                    ->options(fn() => User::role('technician')->pluck('name', 'id'))
+                                    ->nullable()
+                                    ->placeholder('-- Unassigned --')
+                                    ->disabled(),
+                                Select::make('classroom_id')
+                                    ->label('Classroom')
+                                    ->options(fn() => Classroom::pluck('name', 'id'))
+                                    ->nullable()
+                                    ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
+                                    ->default(null) // Add default value
+                                    ->disabled(),
+
+                                Select::make('section_id')
+                                    ->label('Section')
+                                    ->options(fn() => Section::pluck('name', 'id'))
+                                    ->nullable()
+                                    ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
+                                    ->default(null) // Add default value
+                                    ->disabled(),
+
+                                DatePicker::make('start_time')
+                                    ->label('Start Time')
+                                    ->nullable()
+                                    ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
+                                    ->default(null) // Add default value
+                                    ->disabled(),
+
+                                DatePicker::make('end_time')
+                                    ->label('End Time')
+                                    ->nullable()
+                                    ->visible(fn(Ticket $record) => $record->type === 'classroom_request')
+                                    ->default(null) // Add default value
+                                    ->disabled(),
+                            ])
+                            ->fillForm(function (Ticket $record): array {
+                                return [
+                                    'title' => $record->title,
+                                    'description' => $record->description,
+                                    'priority' => $record->priority,
+                                    'ticket_status' => $record->ticket_status,
+                                    'assigned_to' => $record->assigned_to,
+                                    'classroom_id' => $record->classroom_id ?? null,
+                                    'section_id' => $record->section_id ?? null,
+                                    'start_time' => $record->start_time ?? null,
+                                    'end_time' => $record->end_time ?? null,
+                                    'asset_id' => $record->asset_id ?? null, // Add this line
+                                ];
+                            })
+                            ->action(function (Ticket $record, array $data): void {
+                                // Filter out null values for non-classroom requests
+                                if ($record->type !== 'classroom_request') {
+                                    unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
+                                }
+
+                                $record->update(array_filter($data, function ($value) {
+                                    return !is_null($value);
+                                }));
+
                                 Notification::make()
-                                    ->title('Ticket Deleted')
+                                    ->title('Ticket Updated Successfully')
                                     ->success()
                                     ->send();
+                            })
+                            ->visible(fn (Ticket $record) => $this->canManageTicket($record)),
+                        
+                        Action::make('delete')
+                            ->icon('heroicon-m-trash')
+                            ->color('danger')
+                            ->requiresConfirmation()
+                            ->modalHeading('Delete Ticket')
+                            ->modalDescription('Are you sure you want to delete this ticket? This cannot be undone.')
+                            ->modalSubmitActionLabel('Yes, delete')
+                            ->action(function (Ticket $record): void {
+                                try {
+                                    DB::beginTransaction();
                                     
-                            } catch (\Exception $e) {
-                                DB::rollBack();
-                                Log::error('Delete failed: ' . $e->getMessage());
-                                
-                                Notification::make()
-                                    ->title('Delete Failed')
-                                    ->body('Unable to delete the ticket. Please try again.')
-                                    ->danger()
-                                    ->send();
-                            }
-                        })
-                        ->visible(fn (Ticket $record) => $this->canManageTicket($record))
+                                    $record->delete();
+                                    
+                                    DB::commit();
+                                    
+                                    Notification::make()
+                                        ->title('Ticket Deleted')
+                                        ->success()
+                                        ->send();
+                                        
+                                } catch (\Exception $e) {
+                                    DB::rollBack();
+                                    Log::error('Delete failed: ' . $e->getMessage());
+                                    
+                                    Notification::make()
+                                        ->title('Delete Failed')
+                                        ->body('Unable to delete the ticket. Please try again.')
+                                        ->danger()
+                                        ->send();
+                                }
+                            })
+                            ->visible(fn (Ticket $record) => $this->canManageTicket($record))
+                    ])
+                        ->tooltip('Actions')
+                        ->icon('heroicon-m-ellipsis-vertical')
                 ])
-                    ->tooltip('Actions')
-                    ->icon('heroicon-m-ellipsis-vertical')
-            ])
-            ->defaultSort('created_at', 'desc');
+                ->defaultSort('created_at', 'desc');
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Table error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Use a simpler fallback approach
+            $fallbackQuery = Ticket::query()
+                ->with(['assignedTo', 'creator', 'classroom', 'section'])
+                ->orderBy('created_at', 'desc');
+                
+            return $table
+                ->query($fallbackQuery)
+                ->defaultSort('created_at', 'desc');
+        }
     }
 
     protected function handleError(\Exception $e, string $context, string $userMessage = null)
@@ -1231,5 +1310,85 @@ class Ticketing extends Component implements HasTable, HasForms
     public function render()
     {
         return view('livewire.ticketing');
+    }
+
+    // Override tableFilters property accessor with robust error handling
+    public function getTableFiltersProperty()
+    {
+        try {
+            // Start with an empty array if not set or not an array
+            if (!isset($this->tableFilters) || !is_array($this->tableFilters)) {
+                $this->tableFilters = [];
+            }
+            
+            // For SelectFilters, ensure they have a default value property
+            $selectFilters = ['ticket_status', 'priority', 'assigned_to', 'type'];
+            foreach ($selectFilters as $filter) {
+                if (!isset($this->tableFilters[$filter])) {
+                    $this->tableFilters[$filter] = [];
+                }
+                if (!array_key_exists('value', $this->tableFilters[$filter])) {
+                    $this->tableFilters[$filter]['value'] = null;
+                }
+            }
+            
+            // For the terminal filter, ensure it has the right structure
+            if (!isset($this->tableFilters['terminal'])) {
+                $this->tableFilters['terminal'] = [];
+            }
+            if (!array_key_exists('terminal_number', $this->tableFilters['terminal'])) {
+                $this->tableFilters['terminal']['terminal_number'] = null;
+            }
+            
+            return $this->tableFilters;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('TableFilters error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'current_table_filters' => $this->tableFilters ?? 'undefined'
+            ]);
+            
+            // Return a completely fresh filters array with all required properties
+            return [
+                'ticket_status' => ['value' => null],
+                'priority' => ['value' => null],
+                'assigned_to' => ['value' => null],
+                'type' => ['value' => null],
+                'terminal' => ['terminal_number' => null]
+            ];
+        }
+    }
+    
+    // Add a fallback method for property access errors
+    public function __get($property)
+    {
+        try {
+            // First try the normal property access
+            return parent::__get($property);
+        } catch (\Exception $e) {
+            // If there's an error and it's related to tableFilters
+            if (strpos($property, 'tableFilters') === 0 || strpos($e->getMessage(), 'tableFilters') !== false) {
+                Log::warning('Handled property access error: ' . $e->getMessage());
+                
+                // For nested tableFilters property access errors, return null
+                if (strpos($property, 'tableFilters.') === 0) {
+                    return null;
+                }
+                
+                // If it's just 'tableFilters', return default structure
+                if ($property === 'tableFilters') {
+                    return [
+                        'ticket_status' => ['value' => null],
+                        'priority' => ['value' => null],
+                        'assigned_to' => ['value' => null],
+                        'type' => ['value' => null],
+                        'terminal' => ['terminal_number' => null]
+                    ];
+                }
+            }
+            
+            // For other properties, rethrow the exception
+            throw $e;
+        }
     }
 }

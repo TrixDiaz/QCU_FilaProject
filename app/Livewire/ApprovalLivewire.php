@@ -26,14 +26,16 @@ class ApprovalLivewire extends Component
         $ticketType = $ticket->type ?? null;
 
         // Update ticket status to 'resolved'
-        $ticket->update(['status' => 'resolved']);
+        $ticket->update(['ticket_status' => 'resolved']);
 
-        // Handle asset option
-        if ($option === 'asset') {
+        // Handle asset request
+        if ($ticketType === 'asset_request') {
             // Check if asset_id exists, if not, we cannot proceed with asset group creation
             if (!$ticket->asset_id) {
                 session()->flash('warning', 'Cannot create asset group: Missing asset ID');
                 $this->dispatch('refreshTickets');
+                $this->dispatch('refreshTable');
+                $this->dispatch('pending-approval-updated');
                 return;
             }
 
@@ -98,49 +100,47 @@ class ApprovalLivewire extends Component
                     ->update(['status' => 'deploy']);
             }
         }
-        // Handle classroom option
-        else {
+        // Handle classroom request
+        else if ($ticketType === 'classroom_request') {
             // For classroom/event option, retrieve dates
             $startsAt = $ticket->starts_at;
             $endsAt = $ticket->ends_at;
 
             // Create event record for classroom option
-            if ($ticketType === 'request' && $option === 'classroom') {
-                $event = Event::create([
-                    'professor_id' => $ticket->professor_id ?? Auth::id(),
-                    'section_id' => $ticket->section_id,
-                    'subject_id' => $ticket->subject_id,
-                    'title' => $ticket->title ?? 'Classroom Request',
-                    'color' => $ticket->color ?? '#a855f7',
-                    'starts_at' => $startsAt ?? now(),
-                    'ends_at' => $endsAt ?? now()->addHour(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'is_visible' => true,
-                    'calendar_id' => 1,
+            $event = Event::create([
+                'professor_id' => $ticket->professor_id ?? Auth::id(),
+                'section_id' => $ticket->section_id,
+                'subject_id' => $ticket->subject_id,
+                'title' => $ticket->title ?? 'Classroom Request',
+                'color' => $ticket->color ?? '#a855f7',
+                'starts_at' => $startsAt ?? now(),
+                'ends_at' => $endsAt ?? now()->addHour(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_visible' => true,
+                'calendar_id' => 1,
+            ]);
+
+            // If classroom_id is available, associate it with the event
+            $classroomId = null;
+            if ($ticket->subject && $ticket->subject->classroom_id) {
+                $classroomId = $ticket->subject->classroom_id;
+            } else if ($ticket && $ticket->classroom_id) {
+                $classroomId = $ticket->classroom_id;
+            } else if ($ticket->section && $ticket->section->classroom_id) {
+                $classroomId = $ticket->section->classroom_id;
+            }
+
+            if ($classroomId) {
+                // Update the event with classroom information
+                $event->update(['classroom_id' => $classroomId]);
+
+                // Log successful calendar registration
+                Log::info('Calendar event created', [
+                    'event_id' => $event->id,
+                    'classroom_id' => $classroomId,
+                    'title' => $ticket->title
                 ]);
-
-                // If classroom_id is available, associate it with the event
-                $classroomId = null;
-                if ($ticket->subject && $ticket->subject->classroom_id) {
-                    $classroomId = $ticket->subject->classroom_id;
-                } else if ($ticket && $ticket->classroom_id) {
-                    $classroomId = $ticket->classroom_id;
-                } else if ($ticket->section && $ticket->section->classroom_id) {
-                    $classroomId = $ticket->section->classroom_id;
-                }
-
-                if ($classroomId) {
-                    // Update the event with classroom information
-                    $event->update(['classroom_id' => $classroomId]);
-
-                    // Log successful calendar registration
-                    Log::info('Calendar event created', [
-                        'event_id' => $event->id,
-                        'classroom_id' => $classroomId,
-                        'title' => $ticket->title
-                    ]);
-                }
             }
         }
 
@@ -161,6 +161,8 @@ class ApprovalLivewire extends Component
 
         session()->flash('message', 'Ticket approved successfully.');
         $this->dispatch('refreshTickets');
+        $this->dispatch('refreshTable');
+        $this->dispatch('pending-approval-updated');
     }
 
     // Method to decline/cancel a ticket
@@ -173,6 +175,8 @@ class ApprovalLivewire extends Component
 
         session()->flash('message', 'Ticket declined and deleted.');
         $this->dispatch('refreshTickets');
+        $this->dispatch('refreshTable');
+        $this->dispatch('pending-approval-updated');
     }
 
     public function mount()
@@ -184,6 +188,7 @@ class ApprovalLivewire extends Component
     {
         // Get tickets of type asset_request or classroom_request
         $this->tickets = Ticket::whereIn('type', ['asset_request', 'classroom_request'])
+            ->where('ticket_status', '!=', 'resolved') // Filter out resolved tickets
             ->with(['creator', 'asset', 'classroom', 'section'])
             ->orderBy('created_at', 'desc')
             ->get();

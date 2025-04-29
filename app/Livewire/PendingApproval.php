@@ -41,6 +41,7 @@ class PendingApproval extends BaseWidget implements HasForms, HasTable
                 \App\Models\Ticket::query()
                     ->whereIn('type', ['asset_request', 'classroom_request']) // Fix the query to properly filter
                     ->where('ticket_status', 'open') // Only show open tickets
+                    ->where('ticket_status', '!=', 'resolved') // Filter out resolved tickets
                     ->orderBy('created_at', 'desc') // Show newest first
             )
             ->columns([

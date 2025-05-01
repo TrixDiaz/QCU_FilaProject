@@ -157,6 +157,8 @@ class AssetResource extends Resource implements HasShieldPermissions
                             ->options([
                                 'available' => 'Available',
                                 'broken' => 'Broken',
+                                'inactive' => 'Inactive',
+                                'maintenance' => 'Maintenance',
                             ])
                             ->native(false)
                             ->extraAttributes(['style' => 'text-transform:uppercase'])

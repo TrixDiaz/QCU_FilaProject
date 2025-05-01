@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use League\Csv\Writer;
 use SplTempFileObject;
+use Illuminate\Support\Facades\DB;
 
 
 class Rooms extends Component
@@ -361,7 +362,7 @@ class Rooms extends Component
 
         try {
             // Start a database transaction
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             // Create the asset group
             AssetGroup::create([
@@ -380,7 +381,7 @@ class Rooms extends Component
             }
 
             // Commit the transaction
-            \DB::commit();
+            DB::commit();
 
             // Show success notification
             session()->flash('message', 'Computer set deployed successfully!');
@@ -394,7 +395,7 @@ class Rooms extends Component
             }
         } catch (\Exception $e) {
             // Rollback the transaction if something goes wrong
-            \DB::rollBack();
+            DB::rollBack();
             session()->flash('error', 'Error deploying computer set: ' . $e->getMessage());
         }
     }
@@ -517,8 +518,8 @@ class Rooms extends Component
                 'type' => 'error'
             ]);
 
-            // Return empty response or redirect back
-            return response()->noContent(500);
+            // Return empty StreamedResponse instead of noContent
+            return new StreamedResponse(function () {}, 500);
         }
     }
 }

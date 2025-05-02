@@ -34,6 +34,7 @@ use Filament\Tables\Filters\Indicator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class Ticketing extends Component implements HasTable, HasForms
 {
@@ -90,6 +91,11 @@ class Ticketing extends Component implements HasTable, HasForms
     public function getRules()
     {
         $rules = $this->rules;
+
+        // For professors, make assigned_to field optional
+        if ($this->isProfessor()) {
+            $rules['assigned_to'] = 'nullable|exists:users,id';
+        }
 
         if (in_array($this->selectedType, ['hardware', 'internet'])) {
             $rules['classroom_id'] = 'required|exists:classrooms,id';
@@ -729,6 +735,11 @@ class Ticketing extends Component implements HasTable, HasForms
                 // Generate ticket number
                 $ticketNumber = $this->generateTicketNumber();
                 
+                // For professors, if assigned_to is not set, leave it as null
+                if ($this->isProfessor() && empty($this->assigned_to)) {
+                    $this->assigned_to = null;
+                }
+                
                 // Create ticket
                 $ticket = Ticket::create([
                     'ticket_number' => $ticketNumber,
@@ -1003,7 +1014,12 @@ class Ticketing extends Component implements HasTable, HasForms
             return true;
         }
         
-        // Users can only manage their own tickets or tickets assigned to them
+        // If user is a professor, they can only manage tickets they created
+        if ($user && $this->isProfessor()) {
+            return $ticket->created_by === $user->id;
+        }
+        
+        // Other users (technicians) can manage their own tickets or tickets assigned to them
         return $user && ($ticket->created_by === $user->id || $ticket->assigned_to === $user->id);
     }
 
@@ -1240,6 +1256,11 @@ class Ticketing extends Component implements HasTable, HasForms
                             is_null($record->assigned_to) ? 'Assign' : 'Reassign'
                         )
                         ->visible(function (Ticket $record) use ($userId) {
+                            // Hide assign button if user is a professor
+                            if ($this->isProfessor()) {
+                                return false;
+                            }
+                            
                             $ticketIsAssignable = !in_array($record->ticket_status, ['closed', 'archived']);
                             $canAssignTicket = is_null($record->assigned_to) || $record->assigned_to === $userId;
                             return $ticketIsAssignable && $canAssignTicket;
@@ -1564,5 +1585,25 @@ class Ticketing extends Component implements HasTable, HasForms
         // This is a Livewire lifecycle hook that runs when the component boots
         // It's used for class-level setup that happens once
         Log::info('Ticketing component booted');
+    }
+
+    protected function isProfessor()
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return false;
+            }
+            
+            // Alternative approach using DB query directly
+            return DB::table('model_has_roles')
+                ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+                ->where('model_has_roles.model_id', $user->id)
+                ->where('roles.name', 'professor')
+                ->exists();
+        } catch (\Exception $e) {
+            Log::error('Error checking professor role: ' . $e->getMessage());
+            return false;
+        }
     }
 }

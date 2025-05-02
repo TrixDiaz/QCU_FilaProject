@@ -680,7 +680,11 @@
                                 @endforeach
                             </select>
                             <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Available technicians will handle your request. If you don't assign one, the ticket will be automatically assigned.
+                                @if(Auth::user() && $this->isProfessor())
+                                    Technician assignment is optional for professors. If you don't select a technician, one will be assigned later.
+                                @else
+                                    Available technicians will handle your request. Selection is required.
+                                @endif
                             </div>
                             @error('assigned_to')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>

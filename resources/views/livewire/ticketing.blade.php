@@ -658,6 +658,9 @@
                                         <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
                                     @endforeach
                                 </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Select a classroom for your booking
+                                </p>
                                 @error('classroom_id')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
@@ -711,6 +714,9 @@
                                         <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
                                     @endforeach
                                 </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Select a classroom for your booking
+                                </p>
                                 @error('classroom_id')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
@@ -721,12 +727,16 @@
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select
                                     Section</label>
                                 <select id="section" wire:model.live="section_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500"
+                                    :disabled="!classroom_id">
                                     <option value="">-- Select Section --</option>
                                     @foreach ($sections as $section)
                                         <option value="{{ $section->id }}">{{ $section->name }}</option>
                                     @endforeach
                                 </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ !$classroom_id ? 'Please select a classroom first' : 'Select your section' }}
+                                </p>
                                 @error('section_id')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
@@ -738,8 +748,11 @@
                                     <label for="start_time"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start
                                         Time</label>
-                                    <input type="datetime-local" id="start_time" wire:model.defer="start_time"
+                                    <input type="datetime-local" id="start_time" wire:model.live="start_time"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Select a future date and time between 7:00 AM and 9:00 PM
+                                    </p>
                                     @error('start_time')
                                         <span class="text-red-500 text-xs">{{ $message }}</span>
                                     @enderror
@@ -749,8 +762,11 @@
                                     <label for="end_time"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300">End
                                         Time</label>
-                                    <input type="datetime-local" id="end_time" wire:model.defer="end_time"
+                                    <input type="datetime-local" id="end_time" wire:model.live="end_time"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm transition duration-75 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-500">
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Must be after start time (max 8 hours duration)
+                                    </p>
                                     @error('end_time')
                                         <span class="text-red-500 text-xs">{{ $message }}</span>
                                     @enderror
@@ -772,10 +788,6 @@
                                             <p class="text-sm text-red-700 dark:text-red-200 mt-1">
                                                 The selected classroom is already booked during this time period:
                                             </p>
-                                            @error('time_conflict')
-                                                <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}
-                                                </p>
-                                            @enderror
                                             @error('time_conflict_details')
                                                 <p class="text-sm text-red-700 dark:text-red-200 mt-1">{{ $message }}
                                                 </p>
@@ -783,6 +795,44 @@
                                         </div>
                                     </div>
                                 </div>
+                            @endif
+                            
+                            <!-- Working hours and booking rules information -->
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 dark:bg-blue-900 dark:border-blue-400">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        ℹ️
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-blue-700 dark:text-blue-200 font-medium">
+                                            Classroom Booking Rules:
+                                        </p>
+                                        <ul class="list-disc ml-5 text-sm text-blue-700 dark:text-blue-200 mt-1">
+                                            <li>Bookings are only allowed between 7:00 AM and 9:00 PM</li>
+                                            <li>Maximum booking duration is 8 hours</li>
+                                            <li>Bookings cannot be made for past dates/times</li>
+                                            <li>End time must be after start time</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Time conflict errors - only show if not already showing the conflict box -->
+                            @if (!$timeConflictExists)
+                                @error('time_conflict')
+                                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4 dark:bg-yellow-900 dark:border-yellow-400">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            ⚠️
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-yellow-700 dark:text-yellow-200 font-medium">
+                                                {{ $message }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                @enderror
                             @endif
                         </div>
 
@@ -802,8 +852,8 @@
                             </div>
                         </div>
 
-                        <!-- Error messages -->
-                        @if ($errors->any())
+                        <!-- Error messages - only show errors not already displayed -->
+                        @if ($errors->hasAny(['title', 'description', 'priority', 'assigned_to', 'asset_id']))
                             <div
                                 class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
                                 <div class="flex">
@@ -812,8 +862,10 @@
                                         <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Please correct
                                             the following errors:</h3>
                                         <ul class="mt-2 text-sm text-red-700 dark:text-red-300">
-                                            @foreach ($errors->all() as $error)
-                                                <li>{{ $error }}</li>
+                                            @foreach (['title', 'description', 'priority', 'assigned_to', 'asset_id'] as $field)
+                                                @error($field)
+                                                    <li>{{ $message }}</li>
+                                                @enderror
                                             @endforeach
                                         </ul>
                                     </div>

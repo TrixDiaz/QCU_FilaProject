@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class Approval extends Model
 {
@@ -33,17 +34,37 @@ class Approval extends Model
     protected static function booted()
     {
         static::creating(function ($approval) {
-            // If we have a ticket_id but no dates set, get them from the ticket
-            if ($approval->ticket_id && (!$approval->starts_at || !$approval->ends_at)) {
+            // If we have a ticket_id but no ticket_number set, get it from the ticket
+            if ($approval->ticket_id && !$approval->ticket_number) {
                 $ticket = Ticket::find($approval->ticket_id);
                 if ($ticket) {
-                    $approval->starts_at = $approval->starts_at ?? $ticket->starts_at;
-                    $approval->ends_at = $approval->ends_at ?? $ticket->ends_at;
+                    $approval->ticket_number = $ticket->ticket_number;
+                    
+                    // Also set dates if needed
+                    if (!$approval->starts_at && $ticket->start_time) {
+                        $approval->starts_at = $ticket->start_time;
+                    }
+                    
+                    if (!$approval->ends_at && $ticket->end_time) {
+                        $approval->ends_at = $ticket->end_time;
+                    }
+
+                    // Copy section_id if available
+                    if (!$approval->section_id && $ticket->section_id) {
+                        $approval->section_id = $ticket->section_id;
+                    }
 
                     // Also copy option field if needed
-                    if (!$approval->option && $ticket->option) {
+                    if (!$approval->option && isset($ticket->option)) {
                         $approval->option = $ticket->option;
                     }
+                    
+                    Log::info('Approval creating with data:', [
+                        'ticket_id' => $approval->ticket_id,
+                        'ticket_number' => $approval->ticket_number,
+                        'starts_at' => $approval->starts_at,
+                        'ends_at' => $approval->ends_at
+                    ]);
                 }
             }
         });

@@ -668,6 +668,7 @@
                         </div>
 
                         <!-- Technician Assignment -->
+                        @if(!Auth::user() || !$this->isProfessor())
                         <div>
                             <label for="assigned_to"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign
@@ -680,16 +681,13 @@
                                 @endforeach
                             </select>
                             <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                @if(Auth::user() && $this->isProfessor())
-                                    Technician assignment is optional for professors. If you don't select a technician, one will be assigned later.
-                                @else
-                                    Available technicians will handle your request. Selection is required.
-                                @endif
+                                Available technicians will handle your request. Selection is required.
                             </div>
                             @error('assigned_to')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
                         </div>
+                        @endif
 
                         <div>
                             <label for="priority"
@@ -857,7 +855,7 @@
                         </div>
 
                         <!-- Error messages - only show errors not already displayed -->
-                        @if ($errors->hasAny(['title', 'description', 'priority', 'assigned_to', 'asset_id']))
+                        @if ($errors->hasAny(Auth::user() && $this->isProfessor() ? ['title', 'description', 'priority', 'asset_id'] : ['title', 'description', 'priority', 'assigned_to', 'asset_id']))
                             <div
                                 class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 dark:bg-red-900 dark:border-red-500">
                                 <div class="flex">
@@ -866,7 +864,7 @@
                                         <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Please correct
                                             the following errors:</h3>
                                         <ul class="mt-2 text-sm text-red-700 dark:text-red-300">
-                                            @foreach (['title', 'description', 'priority', 'assigned_to', 'asset_id'] as $field)
+                                            @foreach (Auth::user() && $this->isProfessor() ? ['title', 'description', 'priority', 'asset_id'] : ['title', 'description', 'priority', 'assigned_to', 'asset_id'] as $field)
                                                 @error($field)
                                                     <li>{{ $message }}</li>
                                                 @enderror

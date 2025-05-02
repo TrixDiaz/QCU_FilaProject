@@ -1356,10 +1356,10 @@ class Ticketing extends Component implements HasTable, HasForms
                                         'open' => 'Open',
                                         'in_progress' => 'In Progress',
                                         'closed' => 'Closed',
-                                        'archived' => 'Archived',
+                                        'resolved' => 'Resolved',
                                     ])
                                     ->required()
-                                    ->disabled(),
+                                    ->disabled(fn() => $this->isProfessor()),
                                 Select::make('assigned_to')
                                     ->label('Assigned To')
                                     ->options(fn() => User::role('technician')->pluck('name', 'id'))
@@ -1416,9 +1416,15 @@ class Ticketing extends Component implements HasTable, HasForms
                                     unset($data['classroom_id'], $data['section_id'], $data['start_time'], $data['end_time']);
                                 }
 
-                                $record->update(array_filter($data, function ($value) {
+                                // Ensure created_by field remains unchanged
+                                $data = array_filter($data, function ($value) {
                                     return !is_null($value);
-                                }));
+                                });
+                                
+                                // Don't allow changing the creator
+                                unset($data['created_by']);
+
+                                $record->update($data);
 
                                 Notification::make()
                                     ->title('Ticket Updated Successfully')
